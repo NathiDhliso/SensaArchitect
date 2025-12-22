@@ -77,9 +77,14 @@ export default function Home() {
           </div>
         </div>
 
-        <button onClick={() => navigate('/settings')} className={styles.settingsButton}>
-          Settings
-        </button>
+        <div className={styles.actionButtons}>
+          <button onClick={() => navigate('/learn')} className={styles.learnButton}>
+            Start Learning Journey
+          </button>
+          <button onClick={() => navigate('/settings')} className={styles.settingsButton}>
+            Settings
+          </button>
+        </div>
       </div>
     </div>
   );

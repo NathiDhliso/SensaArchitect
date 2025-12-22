@@ -1,14 +1,18 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Copy, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
+import { useLearningStore } from '@/store/learning-store';
+import { parseGeneratedContent, transformGeneratedContent } from '@/lib/content-adapter';
 import { QUALITY_THRESHOLDS } from '@/constants/ui-constants';
 import styles from './Results.module.css';
 
 export default function Results() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [loadingLearn, setLoadingLearn] = useState(false);
   const { fullDocument, validation, pass1Data, currentSubject } = useGenerationStore();
+  const { loadCustomContent } = useLearningStore();
 
   const handleCopy = async () => {
     if (fullDocument) {
@@ -29,6 +33,21 @@ export default function Results() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleStartLearning = () => {
+    if (!fullDocument) return;
+    
+    setLoadingLearn(true);
+    try {
+      const parsed = parseGeneratedContent(fullDocument);
+      const transformed = transformGeneratedContent(parsed);
+      loadCustomContent(transformed);
+      navigate('/learn');
+    } catch (error) {
+      console.error('Failed to parse content for learning:', error);
+      setLoadingLearn(false);
     }
   };
 
@@ -81,6 +100,14 @@ export default function Results() {
             <button onClick={handleDownload} className={styles.primaryButton}>
               <Download className={styles.buttonIcon} />
               Download
+            </button>
+            <button 
+              onClick={handleStartLearning} 
+              className={styles.learnButton}
+              disabled={loadingLearn}
+            >
+              <BookOpen className={styles.buttonIcon} />
+              {loadingLearn ? 'Loading...' : 'Start Learning'}
             </button>
           </div>
         </div>
