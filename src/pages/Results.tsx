@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen } from 'lucide-react';
+import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen, Save } from 'lucide-react';
 import { useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 import { useLearningStore } from '@/store/learning-store';
 import { parseGeneratedContent, transformGeneratedContent } from '@/lib/content-adapter';
+import { storageManager } from '@/lib/storage';
+import type { SavedResult } from '@/lib/storage';
 import { QUALITY_THRESHOLDS } from '@/constants/ui-constants';
 import styles from './Results.module.css';
 
@@ -11,6 +13,8 @@ export default function Results() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [loadingLearn, setLoadingLearn] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const { fullDocument, validation, pass1Data, currentSubject } = useGenerationStore();
   const { loadCustomContent } = useLearningStore();
 
@@ -48,6 +52,44 @@ export default function Results() {
     } catch (error) {
       console.error('Failed to parse content for learning:', error);
       setLoadingLearn(false);
+    }
+  };
+
+  const handleSaveResult = async () => {
+    if (!fullDocument || !currentSubject || !pass1Data || !validation) return;
+    
+    setSaving(true);
+    try {
+      const savedResult: SavedResult = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        subject: currentSubject,
+        generatedAt: new Date().toISOString(),
+        fullDocument,
+        pass1Data: {
+          domain: pass1Data.domain,
+          roleScope: pass1Data.roleScope,
+          lifecycle: pass1Data.lifecycle,
+          concepts: pass1Data.concepts,
+        },
+        validation: {
+          lifecycleConsistency: validation.lifecycleConsistency,
+          positiveFraming: validation.positiveFraming,
+          formatConsistency: validation.formatConsistency,
+          completeness: validation.completeness,
+        },
+        savedLocally: true,
+      };
+
+      const result = await storageManager.saveResult(savedResult);
+      
+      if (result.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to save result:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -100,6 +142,23 @@ export default function Results() {
             <button onClick={handleDownload} className={styles.primaryButton}>
               <Download className={styles.buttonIcon} />
               Download
+            </button>
+            <button 
+              onClick={handleSaveResult} 
+              className={styles.saveButton}
+              disabled={saving || saved}
+            >
+              {saved ? (
+                <>
+                  <CheckCircle2 className={styles.buttonIcon} />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Save className={styles.buttonIcon} />
+                  {saving ? 'Saving...' : 'Save Result'}
+                </>
+              )}
             </button>
             <button 
               onClick={handleStartLearning} 

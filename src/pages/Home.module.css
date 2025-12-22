@@ -192,15 +192,16 @@
 }
 
 .learnButton {
-  display: flex;
+  flex: 1;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
   border: none;
   border-radius: 0.5rem;
-  color: white;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -212,21 +213,41 @@
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
 }
 
-.settingsButton {
-  display: flex;
+.savedButton {
+  flex: 1;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: transparent;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.savedButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.settingsButton {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #334155;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
-  color: #64748b;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .settingsButton:hover {
-  background: white;
-  color: #334155;
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }

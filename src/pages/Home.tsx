@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { Archive } from 'lucide-react';
 import { useGenerationStore } from '@/store/generation-store';
 import styles from './Home.module.css';
 
@@ -80,6 +81,10 @@ export default function Home() {
         <div className={styles.actionButtons}>
           <button onClick={() => navigate('/learn')} className={styles.learnButton}>
             Start Learning Journey
+          </button>
+          <button onClick={() => navigate('/saved')} className={styles.savedButton}>
+            <Archive size={18} />
+            Saved Results
           </button>
           <button onClick={() => navigate('/settings')} className={styles.settingsButton}>
             Settings
