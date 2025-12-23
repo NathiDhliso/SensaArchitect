@@ -67,7 +67,7 @@
 
 .errorBox {
   padding: 1.5rem;
-  background: linear-gradient(135deg, var(--color-error-bg) 0%, #fff1f2 100%);
+  background: var(--color-error-bg);
   border: 1px solid var(--color-error-border);
   border-radius: 0.75rem;
   margin-bottom: 1.5rem;
@@ -110,7 +110,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
-  background: linear-gradient(135deg, var(--color-error) 0%, #b91c1c 100%);
+  background: var(--color-error);
   color: white;
   border: none;
   border-radius: 0.5rem;

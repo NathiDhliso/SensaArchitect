@@ -17,63 +17,70 @@ const PLACEMENT_SLOTS = [
 export const PALACE_ROUTES: PalaceRoute[] = [
     {
         id: 'tech-campus',
-        name: 'Tech Campus',
-        description: 'Walk through a modern technology campus with 7 distinct buildings',
+        name: 'NYC Tech Walk',
+        description: 'Walk through famous NYC landmarks with distinct buildings',
         buildings: [
             {
                 id: 'glass-tower',
-                name: 'The Glass Tower',
-                visualTheme: 'Modern glass entrance, represents foundations',
-                coordinates: { lat: 47.6405, lng: -122.1297 },
-                heading: 90,
+                name: 'Empire State Building',
+                visualTheme: 'Iconic skyscraper, represents foundations',
+                // Street level on 5th Ave looking at Empire State
+                coordinates: { lat: 40.7479, lng: -73.9851 },
+                heading: 30,
                 placements: PLACEMENT_SLOTS,
             },
             {
                 id: 'brick-security',
-                name: 'The Brick Security Office',
-                visualTheme: 'Red brick building, represents protection/security',
-                coordinates: { lat: 47.6410, lng: -122.1285 },
-                heading: 180,
+                name: 'Grand Central Terminal',
+                visualTheme: 'Historic station, represents organization',
+                // Park Ave looking at Grand Central facade
+                coordinates: { lat: 40.7531, lng: -73.9768 },
+                heading: 200,
                 placements: PLACEMENT_SLOTS,
             },
             {
                 id: 'steel-factory',
-                name: 'The Steel Factory',
-                visualTheme: 'Industrial building, represents heavy processing',
-                coordinates: { lat: 47.6415, lng: -122.1275 },
-                heading: 45,
+                name: 'Times Square',
+                visualTheme: 'Busy intersection, represents processing',
+                // Broadway in Times Square, looking at billboards
+                coordinates: { lat: 40.7589, lng: -73.9851 },
+                heading: 0,
                 placements: PLACEMENT_SLOTS,
             },
             {
                 id: 'warehouse',
-                name: 'The Warehouse',
-                visualTheme: 'Wide storage building, represents data/storage',
-                coordinates: { lat: 47.6420, lng: -122.1265 },
+                name: 'New York Public Library',
+                visualTheme: 'Classic library, represents storage',
+                // 5th Ave looking at library steps
+                coordinates: { lat: 40.7528, lng: -73.9815 },
                 heading: 270,
                 placements: PLACEMENT_SLOTS,
             },
             {
                 id: 'network-hub',
-                name: 'The Network Hub',
-                visualTheme: 'Building with cables/infrastructure',
-                coordinates: { lat: 47.6425, lng: -122.1255 },
-                heading: 135,
+                name: 'Rockefeller Center',
+                visualTheme: 'Business complex, represents networking',
+                // 5th Ave looking at Rockefeller plaza
+                coordinates: { lat: 40.7589, lng: -73.9782 },
+                heading: 270,
                 placements: PLACEMENT_SLOTS,
             },
             {
                 id: 'library',
-                name: 'The Library',
-                visualTheme: 'Classic building with windows, represents knowledge',
-                coordinates: { lat: 47.6430, lng: -122.1245 },
-                heading: 0,
+                name: 'Bryant Park',
+                visualTheme: 'Green space, represents knowledge',
+                // 6th Ave looking into Bryant Park
+                coordinates: { lat: 40.7536, lng: -73.9845 },
+                heading: 90,
                 placements: PLACEMENT_SLOTS,
             },
             {
                 id: 'control-tower',
-                name: 'The Control Tower',
-                visualTheme: 'Tall observation building, represents oversight',
-                coordinates: { lat: 47.6435, lng: -122.1235 },
-                heading: 225,
+                name: 'One World Trade Center',
+                visualTheme: 'Tall tower, represents oversight',
+                // Church St looking up at Freedom Tower
+                coordinates: { lat: 40.7118, lng: -74.0128 },
+                heading: 30,
                 placements: PLACEMENT_SLOTS,
             },
         ],
@@ -210,7 +217,8 @@ export const PALACE_ROUTES: PalaceRoute[] = [
  * Generate Street View URL for a location
  */
 export function getStreetViewUrl(lat: number, lng: number, heading = 90): string {
-    return `https://www.google.com/maps/@${lat},${lng},3a,75y,${heading}h,90t/data=!3m6!1e1!3m4`;
+    // Use the correct Street View URL format
+    return `https://www.google.com/maps?q=&layer=c&cbll=${lat},${lng}&cbp=12,${heading},0,0,0`;
 }
 
 export function getRouteById(id: string): PalaceRoute | undefined {

@@ -113,17 +113,17 @@
 
 .provisionLabel {
     background: rgba(59, 130, 246, 0.15);
-    color: #3b82f6;
+    color: var(--color-info);
 }
 
 .configureLabel {
     background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    color: var(--color-secondary-amber);
 }
 
 .monitorLabel {
     background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
+    color: var(--color-success);
 }
 
 .lifecycleItems {

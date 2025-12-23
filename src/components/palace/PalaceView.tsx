@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -9,7 +9,8 @@ import {
     Target,
     Footprints,
     BarChart3,
-    Map
+    Map,
+    HelpCircle
 } from 'lucide-react';
 import { usePalaceStore } from '@/store/palace-store';
 import { getRouteById, getStreetViewUrl } from '@/constants/palace-routes';
@@ -17,13 +18,24 @@ import LifecycleCard from './LifecycleCard';
 import DailyWalk from './DailyWalk';
 import QuizMode from './QuizMode';
 import ProgressPanel from './ProgressPanel';
+import { PlacementGuide } from './PlacementGuide';
 import styles from './PalaceView.module.css';
 
 export default function PalaceView() {
     const navigate = useNavigate();
-    const { currentPalace, currentBuildingIndex, setCurrentBuilding, updateStreak } = usePalaceStore();
+    const { currentPalace, currentBuildingIndex, setCurrentBuilding, updateStreak, customRoutes } = usePalaceStore();
     const [showQuiz, setShowQuiz] = useState(false);
     const [showProgress, setShowProgress] = useState(false);
+    const [showGuide, setShowGuide] = useState(false);
+
+    // Show guide on first visit
+    useEffect(() => {
+        const hasSeenGuide = localStorage.getItem('palace-guide-seen');
+        if (!hasSeenGuide && currentPalace) {
+            setShowGuide(true);
+            localStorage.setItem('palace-guide-seen', 'true');
+        }
+    }, [currentPalace]);
 
     if (!currentPalace) {
         return (
@@ -43,7 +55,9 @@ export default function PalaceView() {
         );
     }
 
-    const route = getRouteById(currentPalace.routeId);
+    // Check pre-built routes first, then custom routes
+    const route = getRouteById(currentPalace.routeId) ||
+        customRoutes.find(r => r.id === currentPalace.routeId);
     const currentBuilding = currentPalace.buildings[currentBuildingIndex];
     const routeBuilding = route?.buildings.find(b => b.id === currentBuilding?.routeBuildingId);
 
@@ -72,6 +86,9 @@ export default function PalaceView() {
         <div className={styles.palaceContainer}>
             {/* Quiz Mode Overlay */}
             {showQuiz && <QuizMode onClose={() => setShowQuiz(false)} />}
+
+            {/* Placement Guide Overlay */}
+            <PlacementGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
 
             {/* Header */}
             <header className={styles.header}>
@@ -116,7 +133,13 @@ export default function PalaceView() {
                     </button>
                 </div>
 
-                <div style={{ width: '150px' }} /> {/* Spacer for centering */}
+                <button
+                    className={styles.helpButton}
+                    onClick={() => setShowGuide(true)}
+                    title="How to use Memory Palace"
+                >
+                    <HelpCircle size={20} />
+                </button>
             </header>
 
             {/* Main Content */}

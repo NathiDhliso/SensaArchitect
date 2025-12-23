@@ -177,7 +177,7 @@
 .errorBanner {
   padding: 1rem;
   background: var(--color-error-bg);
-  border: 1px solid #fca5a5;
+  border: 1px solid var(--color-error-border);
   border-radius: 0.5rem;
   color: var(--color-error-text);
   font-size: 0.875rem;
@@ -403,7 +403,7 @@
 }
 
 .qualityPoor {
-  color: #ef4444;
+  color: var(--color-error);
 }
 
 .cardActions {
@@ -457,7 +457,7 @@
 
 .deleteButton:hover:not(:disabled) {
   background: var(--color-error-bg);
-  color: #ef4444;
+  color: var(--color-error);
 }
 
 .deleteButton:disabled {

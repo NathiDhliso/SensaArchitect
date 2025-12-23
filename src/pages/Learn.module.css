@@ -11,7 +11,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1rem;
-  background: rgba(26, 11, 46, 0.95);
+  background: var(--color-bg-primary);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -25,14 +25,14 @@
   background: rgba(255, 255, 255, 0.1);
   border: none;
   border-radius: 0.5rem;
-  color: rgba(243, 232, 255, 0.8);
+  color: var(--color-text-light);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .backButton:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: var(--color-bg-neutral-alt);
+  color: var(--color-text-dark);
 }
 
 .headerTitle {
@@ -48,7 +48,7 @@
 
 .logoText {
   font-size: 1rem;
-  color: #f3e8ff;
+  color: var(--color-text-dark);
   font-weight: 500;
 }
 
@@ -111,6 +111,26 @@
   font-size: 0.8rem;
   color: var(--color-secondary-amber);
   font-weight: 600;
+}
+
+.palaceButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: var(--color-accent-alt);
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.palaceButton:hover {
+  background: var(--color-accent-alt-hover);
+  transform: translateY(-1px);
 }
 
 .mainLayout {

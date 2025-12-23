@@ -38,6 +38,26 @@
     background: var(--color-surface-subtle);
 }
 
+.helpButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.helpButton:hover {
+    background: var(--color-surface-subtle);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
 .buildingNav {
     display: flex;
     align-items: center;

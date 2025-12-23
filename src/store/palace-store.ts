@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { MemoryPalace, PalaceProgress, PlacedConcept, PalaceBuilding } from '@/lib/types/palace';
+import type { MemoryPalace, PalaceProgress, PlacedConcept, PalaceBuilding, PalaceRoute, RouteBuilding } from '@/lib/types/palace';
 import { getRouteById } from '@/constants/palace-routes';
 
 interface PalaceState {
@@ -8,11 +8,16 @@ interface PalaceState {
     currentPalace: MemoryPalace | null;
     currentBuildingIndex: number;
 
+    // Custom routes created by user
+    customRoutes: PalaceRoute[];
+
     // Progress
     progress: Record<string, PalaceProgress>; // palaceId -> progress
 
     // Actions
     createPalace: (subjectId: string, routeId: string, stages: StageData[]) => MemoryPalace;
+    createCustomPalace: (subjectId: string, routeName: string, customBuildings: RouteBuilding[], stages: StageData[]) => MemoryPalace;
+    saveCustomRoute: (routeName: string, buildings: RouteBuilding[]) => PalaceRoute;
     setCurrentBuilding: (index: number) => void;
     loadPalace: (palaceId: string) => void;
     clearPalace: () => void;
@@ -43,6 +48,7 @@ export const usePalaceStore = create<PalaceState>()(
         (set, get) => ({
             currentPalace: null,
             currentBuildingIndex: 0,
+            customRoutes: [],
             progress: {},
 
             createPalace: (subjectId, routeId, stages) => {
@@ -96,6 +102,82 @@ export const usePalaceStore = create<PalaceState>()(
                 }));
 
                 return palace;
+            },
+
+            createCustomPalace: (subjectId, routeName, customBuildings, stages) => {
+                const routeId = `custom-${Date.now()}`;
+                const palaceId = `${subjectId}-${routeId}`;
+
+                // Map stages to custom buildings
+                const buildings: PalaceBuilding[] = stages.slice(0, customBuildings.length).map((stage, idx) => {
+                    const routeBuilding = customBuildings[idx];
+
+                    // Distribute concepts across placement slots
+                    const concepts: PlacedConcept[] = stage.concepts.slice(0, 6).map((concept, cIdx) => ({
+                        conceptId: concept.id,
+                        conceptName: concept.name,
+                        slotId: routeBuilding.placements[cIdx]?.id || `slot-${cIdx}`,
+                        lifecycle: concept.lifecycle,
+                        mastery: 0,
+                    }));
+
+                    return {
+                        routeBuildingId: routeBuilding.id,
+                        stageId: stage.id,
+                        stageName: stage.name,
+                        concepts,
+                    };
+                });
+
+                const palace: MemoryPalace = {
+                    id: palaceId,
+                    subjectId,
+                    routeId,
+                    buildings,
+                    createdAt: new Date().toISOString(),
+                };
+
+                // Initialize progress
+                const newProgress: PalaceProgress = {
+                    palaceId,
+                    buildingProgress: {},
+                    conceptMastery: {},
+                    streak: 0,
+                    lastWalkDate: null,
+                };
+
+                // Save custom route for future use
+                const customRoute: PalaceRoute = {
+                    id: routeId,
+                    name: routeName,
+                    description: `Custom route: ${routeName}`,
+                    buildings: customBuildings,
+                };
+
+                set(state => ({
+                    currentPalace: palace,
+                    currentBuildingIndex: 0,
+                    customRoutes: [...state.customRoutes, customRoute],
+                    progress: { ...state.progress, [palaceId]: newProgress },
+                }));
+
+                return palace;
+            },
+
+            saveCustomRoute: (routeName, buildings) => {
+                const routeId = `custom-${Date.now()}`;
+                const customRoute: PalaceRoute = {
+                    id: routeId,
+                    name: routeName,
+                    description: `Custom route: ${routeName}`,
+                    buildings,
+                };
+
+                set(state => ({
+                    customRoutes: [...state.customRoutes, customRoute],
+                }));
+
+                return customRoute;
             },
 
             setCurrentBuilding: (index) => {

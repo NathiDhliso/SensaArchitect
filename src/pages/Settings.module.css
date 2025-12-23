@@ -292,7 +292,7 @@
 }
 
 .dangerConfirm:hover {
-  background: #b91c1c;
+  background: var(--color-error);
 }
 
 /* Collapsible Section */

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Map } from 'lucide-react';
 import { JourneyMap, ConceptCard, CelebrationModal } from '@/components/learning';
 import { useLearningStore } from '@/store/learning-store';
 import styles from './Learn.module.css';
@@ -76,6 +76,13 @@ export default function Learn() {
             🔥 {progress.conceptsLearnedToday}
           </div>
         )}
+        <button
+          className={styles.palaceButton}
+          onClick={() => navigate('/palace')}
+          title="Open Memory Palace & Street View"
+        >
+          <Map size={18} />
+        </button>
       </header>
 
       <div className={styles.mainLayout}>

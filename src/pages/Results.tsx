@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen, Save, FolderDown, Map } from 'lucide-react';
+import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen, Save, FolderDown, Map, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 import { useLearningStore } from '@/store/learning-store';
@@ -8,6 +8,8 @@ import { parseGeneratedContent, transformGeneratedContent } from '@/lib/content-
 import { storageManager } from '@/lib/storage';
 import type { SavedResult } from '@/lib/storage';
 import { QUALITY_THRESHOLDS } from '@/constants/ui-constants';
+import { RouteBuilder } from '@/components/palace';
+import type { RouteBuilding } from '@/lib/types/palace';
 import styles from './Results.module.css';
 
 export default function Results() {
@@ -16,6 +18,7 @@ export default function Results() {
   const [loadingLearn, setLoadingLearn] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showRouteBuilder, setShowRouteBuilder] = useState(false);
   const { fullDocument, validation, pass1Data, currentSubject } = useGenerationStore();
   const { loadCustomContent } = useLearningStore();
 
@@ -104,7 +107,7 @@ export default function Results() {
     return value >= threshold ? 'good' : 'warning';
   };
 
-  const { createPalace } = usePalaceStore();
+  const { createPalace, createCustomPalace } = usePalaceStore();
 
   const handleCreatePalace = () => {
     if (!fullDocument || !pass1Data) return;
@@ -117,16 +120,39 @@ export default function Results() {
     }
 
     const { learningPath, concepts } = parseResult.data;
+    console.log('Palace creation - Parsed concepts:', concepts.length, concepts.map(c => c.name));
+    console.log('Palace creation - Learning path stages:', learningPath.stages);
+
+    // If no concepts parsed, abort
+    if (concepts.length === 0) {
+      console.error('No concepts found in parsed content');
+      return;
+    }
+
+    // Calculate how many concepts per stage (distribute evenly across buildings)
+    const conceptsPerStage = Math.max(1, Math.ceil(concepts.length / Math.max(learningPath.stages.length, 1)));
 
     // Convert parsed stages to palace format
-    const stages = learningPath.stages.map(stage => {
-      // Find concepts that belong to this stage
-      const stageConcepts = concepts.filter(c => stage.concepts.includes(c.id));
+    const stages = learningPath.stages.map((stage, stageIndex) => {
+      // Find concepts that belong to this stage (matching by name, as learningPath uses names)
+      const stageConcepts = concepts.filter(c =>
+        stage.concepts.some(stageConcept =>
+          stageConcept.toLowerCase().includes(c.name.toLowerCase()) ||
+          c.name.toLowerCase().includes(stageConcept.toLowerCase())
+        )
+      );
+
+      // If no match found, distribute concepts evenly using 0-based stageIndex
+      const conceptsToUse = stageConcepts.length > 0
+        ? stageConcepts
+        : concepts.slice(stageIndex * conceptsPerStage, (stageIndex + 1) * conceptsPerStage);
+
+      console.log(`Stage ${stageIndex} "${stage.name}": ${conceptsToUse.length} concepts assigned`);
 
       return {
         id: `stage-${stage.order}`,
         name: stage.name,
-        concepts: stageConcepts.map(concept => ({
+        concepts: conceptsToUse.map(concept => ({
           id: concept.id,
           name: concept.name,
           lifecycle: {
@@ -148,6 +174,62 @@ export default function Results() {
 
     // Create palace with first route
     createPalace(currentSubject || 'study', 'tech-campus', stages);
+    navigate('/palace');
+  };
+
+  // Parse stages for palace creation - extract as helper
+  const getPalaceStages = () => {
+    if (!fullDocument || !pass1Data) return null;
+    const parseResult = parseGeneratedContent(fullDocument);
+    if (!parseResult.success) return null;
+
+    const { learningPath, concepts } = parseResult.data;
+    if (concepts.length === 0) return null;
+
+    const conceptsPerStage = Math.max(1, Math.ceil(concepts.length / Math.max(learningPath.stages.length, 1)));
+
+    return learningPath.stages.map((stage, stageIndex) => {
+      const stageConcepts = concepts.filter(c =>
+        stage.concepts.some(stageConcept =>
+          stageConcept.toLowerCase().includes(c.name.toLowerCase()) ||
+          c.name.toLowerCase().includes(stageConcept.toLowerCase())
+        )
+      );
+      // Use 0-based stageIndex for even distribution
+      const conceptsToUse = stageConcepts.length > 0
+        ? stageConcepts
+        : concepts.slice(stageIndex * conceptsPerStage, (stageIndex + 1) * conceptsPerStage);
+
+      return {
+        id: `stage-${stage.order}`,
+        name: stage.name,
+        concepts: conceptsToUse.map(concept => ({
+          id: concept.id,
+          name: concept.name,
+          lifecycle: {
+            provision: [
+              concept.provision.prerequisite,
+              ...concept.provision.selection,
+              concept.provision.execution,
+            ].filter(Boolean),
+            configure: concept.configure || [],
+            monitor: [
+              concept.monitor.tool,
+              ...concept.monitor.metrics,
+              concept.monitor.thresholds,
+            ].filter(Boolean),
+          },
+        })),
+      };
+    });
+  };
+
+  const handleCreateCustomPalace = (routeName: string, buildings: RouteBuilding[]) => {
+    const stages = getPalaceStages();
+    if (!stages) return;
+
+    createCustomPalace(currentSubject || 'study', routeName, buildings, stages);
+    setShowRouteBuilder(false);
     navigate('/palace');
   };
 
@@ -194,13 +276,24 @@ export default function Results() {
               <BookOpen className={styles.buttonIcon} />
               {loadingLearn ? 'Loading...' : 'Start Learning'}
             </button>
-            <button
-              onClick={handleCreatePalace}
-              className={styles.palaceButton}
-            >
-              <Map className={styles.buttonIcon} />
-              Create Memory Palace
-            </button>
+
+            {/* Palace buttons - pre-built and custom */}
+            <div className={styles.palaceButtons}>
+              <button
+                onClick={handleCreatePalace}
+                className={styles.palaceButton}
+              >
+                <Map className={styles.buttonIcon} />
+                NYC Memory Palace
+              </button>
+              <button
+                onClick={() => setShowRouteBuilder(true)}
+                className={styles.customPalaceButton}
+              >
+                <Plus className={styles.buttonIcon} />
+                Custom Palace
+              </button>
+            </div>
             <button
               onClick={handleSaveResult}
               className={styles.saveButton}
@@ -298,6 +391,13 @@ export default function Results() {
           </div>
         </main>
       </div>
+
+      {/* Route Builder Modal */}
+      <RouteBuilder
+        isOpen={showRouteBuilder}
+        onClose={() => setShowRouteBuilder(false)}
+        onSave={handleCreateCustomPalace}
+      />
     </div>
   );
 }
