@@ -66,7 +66,12 @@ export default function QuizMode({ onClose }: QuizModeProps) {
             });
         });
 
-        return allQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
+        const shuffled = [...allQuestions];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor((i + 1) * 0.7);
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0, 10);
     }, [currentPalace, allConcepts]);
 
     if (!currentPalace || questions.length === 0) {

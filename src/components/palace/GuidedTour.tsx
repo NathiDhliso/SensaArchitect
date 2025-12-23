@@ -31,7 +31,6 @@ export default function GuidedTour({
 
   useEffect(() => {
     if (!isPlaying) {
-      setProgress(0);
       return;
     }
 

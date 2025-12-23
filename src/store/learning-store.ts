@@ -129,7 +129,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
           newCompletedConcepts.includes(id)
         );
 
-        let newCompletedStages = [...state.progress.completedStages];
+        const newCompletedStages = [...state.progress.completedStages];
         if (allStageConceptsComplete && !newCompletedStages.includes(stage.id)) {
           newCompletedStages.push(stage.id);
         }

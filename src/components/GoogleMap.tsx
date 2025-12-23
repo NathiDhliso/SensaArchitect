@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 const containerStyle = {
@@ -31,14 +31,10 @@ export const GoogleMapComponent: React.FC<GoogleMapProps> = ({
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '', // Ensure this is set in .env
     });
 
-    const [_map, setMap] = useState<google.maps.Map | null>(null);
-
-    const onLoad = useCallback((map: google.maps.Map) => {
-        setMap(map);
+    const onLoad = useCallback(() => {
     }, []);
 
     const onUnmount = useCallback(() => {
-        setMap(null);
     }, []);
 
     if (loadError) {

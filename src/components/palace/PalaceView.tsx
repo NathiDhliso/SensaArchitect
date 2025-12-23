@@ -66,34 +66,16 @@ export default function PalaceView() {
         }
     }, [currentPalace]);
 
-    if (!currentPalace) {
-        return (
-            <div className={styles.palaceContainer}>
-                <div className={styles.emptyState}>
-                    <Map size={64} strokeWidth={1} />
-                    <h2>No Memory Palace Active</h2>
-                    <p>Generate learning content first, then create a Memory Palace from the Results page.</p>
-                    <button
-                        className={styles.openMapsButton}
-                        onClick={() => navigate('/')}
-                    >
-                        Go to Home
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // Check pre-built routes first, then custom routes
-    const route = getRouteById(currentPalace.routeId) ||
-        customRoutes.find(r => r.id === currentPalace.routeId);
-    const currentBuilding = currentPalace.buildings[currentBuildingIndex];
+    const route = currentPalace 
+        ? (getRouteById(currentPalace.routeId) || customRoutes.find(r => r.id === currentPalace.routeId))
+        : null;
+    const currentBuilding = currentPalace?.buildings[currentBuildingIndex];
     const routeBuilding = route?.buildings.find(b => b.id === currentBuilding?.routeBuildingId);
 
     const canGoPrev = currentBuildingIndex > 0;
-    const canGoNext = currentBuildingIndex < currentPalace.buildings.length - 1;
+    const canGoNext = currentPalace ? currentBuildingIndex < currentPalace.buildings.length - 1 : false;
 
-    const handleOpenStreetView = () => {
+    const handleOpenStreetView = useCallback(() => {
         if (!routeBuilding) return;
         const url = getStreetViewUrl(
             routeBuilding.coordinates.lat,
@@ -101,7 +83,7 @@ export default function PalaceView() {
             routeBuilding.heading
         );
         window.open(url, '_blank');
-    };
+    }, [routeBuilding]);
 
     const updateMarkerPositions = useCallback(() => {
         if (!panoramaRef.current || !currentBuilding || !routeBuilding) return;
@@ -302,14 +284,15 @@ export default function PalaceView() {
         };
     }, [tourPlaying, markerPositions]);
 
-    const handleStartWalk = () => {
+    const handleStartWalk = useCallback(() => {
+        if (!currentPalace) return;
         updateStreak();
         const today = new Date().getDay();
         const startBuilding = today % currentPalace.buildings.length;
         setCurrentBuilding(startBuilding);
-    };
+    }, [currentPalace, updateStreak, setCurrentBuilding]);
 
-    const toggleFullscreen = () => {
+    const toggleFullscreen = useCallback(() => {
         if (!fullscreenRef.current) return;
         
         if (!document.fullscreenElement) {
@@ -323,7 +306,25 @@ export default function PalaceView() {
                 setTimeout(updateMarkerPositions, 100);
             }).catch(() => {});
         }
-    };
+    }, [updateMarkerPositions]);
+
+    if (!currentPalace) {
+        return (
+            <div className={styles.palaceContainer}>
+                <div className={styles.emptyState}>
+                    <Map size={64} strokeWidth={1} />
+                    <h2>No Memory Palace Active</h2>
+                    <p>Generate learning content first, then create a Memory Palace from the Results page.</p>
+                    <button
+                        className={styles.openMapsButton}
+                        onClick={() => navigate('/')}
+                    >
+                        Go to Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.palaceContainer}>

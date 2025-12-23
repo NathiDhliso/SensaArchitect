@@ -31,14 +31,19 @@ export default function Learn() {
 
   useEffect(() => {
     startSession();
-
-    if (currentConcept && progress.completedConcepts.length > 0) {
-      setShowWelcomeToast(true);
-      setTimeout(() => setShowWelcomeToast(false), 5000);
-    }
-
     return () => endSession();
   }, [startSession, endSession]);
+
+  useEffect(() => {
+    if (currentConcept && progress.completedConcepts.length > 0) {
+      const showTimer = setTimeout(() => setShowWelcomeToast(true), 0);
+      const hideTimer = setTimeout(() => setShowWelcomeToast(false), 5000);
+      return () => {
+        clearTimeout(showTimer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [currentConcept, progress.completedConcepts.length]);
 
   const handleConceptComplete = () => {
     completeConcept(progress.currentConceptId);

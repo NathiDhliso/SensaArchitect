@@ -66,13 +66,14 @@ export function FocusTimer({ isOpen, onClose }: FocusTimerProps) {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isRunning, isBreak]);
+    }, [isRunning, isBreak, timeLeft]);
 
     useEffect(() => {
-        if (timeLeft === 0 && isRunning) {
-            switchMode();
+        if (timeLeft === 0) {
+            const timer = setTimeout(() => switchMode(), 0);
+            return () => clearTimeout(timer);
         }
-    }, [timeLeft, isRunning, switchMode]);
+    }, [timeLeft, switchMode]);
 
     useEffect(() => {
         if ('Notification' in window && Notification.permission === 'default') {

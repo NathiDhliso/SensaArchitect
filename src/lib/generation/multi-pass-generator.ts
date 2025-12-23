@@ -109,7 +109,7 @@ CRITICAL: Use the EXACT lifecycle phases provided above. Do NOT modify them.
     abortSignal
   );
 
-  let pass1Data = parseJsonFromResponse<Pass1Result>(pass1Text);
+  const pass1Data = parseJsonFromResponse<Pass1Result>(pass1Text);
 
   pass1Data.lifecycle = {
     phase1: dynamicLifecycle.phase1,

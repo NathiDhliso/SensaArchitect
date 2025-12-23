@@ -120,7 +120,7 @@ export default function SavedResults() {
         setImportError(importResult.error || 'Failed to import file');
         setTimeout(() => setImportError(null), 5000);
       }
-    } catch (error) {
+    } catch {
       setImportError('Failed to import file');
       setTimeout(() => setImportError(null), 5000);
     } finally {
@@ -216,7 +216,7 @@ export default function SavedResults() {
             
             <select 
               value={sortBy} 
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as 'date' | 'subject' | 'quality')}
               className={styles.sortSelect}
             >
               <option value="date">Sort by Date</option>

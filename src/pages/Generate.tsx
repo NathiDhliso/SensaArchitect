@@ -256,7 +256,7 @@ export default function Generate() {
               })()}
             </p>
             <p>
-              Progress saved: Pass {getCheckpointResumeData()?.startFromPass! - 1} complete
+              Progress saved: Pass {(getCheckpointResumeData()?.startFromPass ?? 1) - 1} complete
             </p>
             <div className={styles.dialogActions}>
               <button onClick={handleResumeFromCheckpoint} className={styles.primaryButton}>

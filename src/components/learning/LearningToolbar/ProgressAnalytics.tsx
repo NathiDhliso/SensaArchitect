@@ -29,7 +29,7 @@ export function ProgressAnalytics({ isOpen, onClose }: ProgressAnalyticsProps) {
         const dayOfWeek = today.getDay();
         const weeklyData = DAYS.map((day, idx) => ({
             day,
-            count: idx === dayOfWeek ? progress.conceptsLearnedToday : Math.floor(Math.random() * 3),
+            count: idx === dayOfWeek ? progress.conceptsLearnedToday : (idx < dayOfWeek ? Math.floor((idx + 1) * 0.7) : 0),
             isToday: idx === dayOfWeek,
         }));
 
@@ -49,12 +49,12 @@ export function ProgressAnalytics({ isOpen, onClose }: ProgressAnalyticsProps) {
     }, [concepts, stages, progress]);
 
     const dueForReview = useMemo(() => {
-        return progress.completedConcepts.slice(0, 3).map(id => {
+        return progress.completedConcepts.slice(0, 3).map((id, idx) => {
             const concept = concepts.find(c => c.id === id);
             return {
                 id,
                 name: concept?.name || 'Unknown',
-                dueIn: Math.floor(Math.random() * 3),
+                dueIn: idx,
             };
         });
     }, [progress.completedConcepts, concepts]);

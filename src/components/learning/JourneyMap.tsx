@@ -43,15 +43,6 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
     });
   };
 
-  if (stages.length === 0 || concepts.length === 0) {
-    return (
-      <div className={styles.emptyState}>
-        <div className={styles.emptyIcon}>🏗️</div>
-        <p className={styles.emptyText}>Generate content to start building your knowledge</p>
-      </div>
-    );
-  }
-
   const handleConceptClick = (conceptId: string) => {
     const status = getConceptStatus(conceptId);
     if (status !== 'locked' && onConceptClick) {
@@ -67,7 +58,16 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
       
       return { stage, status, stageConcepts, completedInStage };
     });
-  }, [stages, concepts, progress.completedConcepts, getStageStatus, getConceptStatus]);
+  }, [stages, concepts, getStageStatus, getConceptStatus]);
+
+  if (stages.length === 0 || concepts.length === 0) {
+    return (
+      <div className={styles.emptyState}>
+        <div className={styles.emptyIcon}>🏗️</div>
+        <p className={styles.emptyText}>Generate content to start building your knowledge</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>

@@ -187,8 +187,7 @@ export const usePalaceStore = create<PalaceState>()(
                 set({ currentBuildingIndex: Math.max(0, Math.min(index, maxIndex)) });
             },
 
-            loadPalace: (_palaceId) => {
-                // Would load from storage - for now just sets index
+            loadPalace: () => {
                 set({ currentBuildingIndex: 0 });
             },
 

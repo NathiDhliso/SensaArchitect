@@ -124,11 +124,20 @@ export async function* invokeClaudeModelStream(
   }
 }
 
-function extractTextFromBedrockResponse(response: any): string {
+interface BedrockContentBlock {
+  type: string;
+  text?: string;
+}
+
+interface BedrockResponse {
+  content?: BedrockContentBlock[];
+}
+
+function extractTextFromBedrockResponse(response: BedrockResponse): string {
   if (response.content && Array.isArray(response.content)) {
     return response.content
-      .filter((block: any) => block.type === 'text')
-      .map((block: any) => block.text)
+      .filter((block) => block.type === 'text')
+      .map((block) => block.text || '')
       .join('\n');
   }
   return '';

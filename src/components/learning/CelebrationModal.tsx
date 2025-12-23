@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Share2, Check } from 'lucide-react';
 import { LEARNING_CONCEPTS } from '@/constants/learning-content';
 import type { CelebrationData } from '@/lib/types/learning';
@@ -12,17 +12,30 @@ interface CelebrationModalProps {
 
 const CONFETTI_COLORS = ['#fbbf24', '#3b82f6', '#22c55e', '#f43f5e', '#8b5cf6', '#06b6d4'];
 
-export default function CelebrationModal({ data, onContinue, onTakeBreak }: CelebrationModalProps) {
-  const confettiPieces = useMemo(() => {
-    return Array.from({ length: 50 }, (_, i) => ({
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+const generateConfetti = () => {
+  return Array.from({ length: 50 }, (_, i) => {
+    const seed = i * 1000;
+    return {
       id: i,
-      left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 2}s`,
-      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-      size: Math.random() * 8 + 6,
-      rotation: Math.random() * 360,
-    }));
-  }, []);
+      left: `${seededRandom(seed) * 100}%`,
+      delay: `${seededRandom(seed + 1) * 2}s`,
+      color: CONFETTI_COLORS[Math.floor(seededRandom(seed + 2) * CONFETTI_COLORS.length)],
+      size: seededRandom(seed + 3) * 8 + 6,
+      rotation: seededRandom(seed + 4) * 360,
+      isCircle: seededRandom(seed + 5) > 0.5,
+    };
+  });
+};
+
+const CONFETTI_PIECES = generateConfetti();
+
+export default function CelebrationModal({ data, onContinue, onTakeBreak }: CelebrationModalProps) {
+  const confettiPieces = CONFETTI_PIECES;
 
   const completedConceptNames = useMemo(() => {
     if (!data.conceptsCompleted) return [];
@@ -62,12 +75,6 @@ export default function CelebrationModal({ data, onContinue, onTakeBreak }: Cele
     }
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <div className={styles.overlay}>
       <div className={styles.modal}>
@@ -82,7 +89,7 @@ export default function CelebrationModal({ data, onContinue, onTakeBreak }: Cele
                 backgroundColor: piece.color,
                 width: piece.size,
                 height: piece.size,
-                borderRadius: Math.random() > 0.5 ? '50%' : '0',
+                borderRadius: piece.isCircle ? '50%' : '0',
                 transform: `rotate(${piece.rotation}deg)`,
               }}
             />
