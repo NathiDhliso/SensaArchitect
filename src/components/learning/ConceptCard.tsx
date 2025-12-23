@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { Check, Lightbulb } from 'lucide-react';
 import { useLearningStore } from '@/store/learning-store';
 import styles from './ConceptCard.module.css';
 
@@ -9,8 +9,7 @@ interface ConceptCardProps {
 }
 
 export default function ConceptCard({ conceptId, onComplete }: ConceptCardProps) {
-  const [showWhy, setShowWhy] = useState(false);
-  const [showDeepDive, setShowDeepDive] = useState(false);
+  const [activeTab, setActiveTab] = useState<'why' | 'how' | 'details'>('why');
   const { getConceptStatus, getConcepts } = useLearningStore();
 
   const concepts = getConcepts();
@@ -28,145 +27,145 @@ export default function ConceptCard({ conceptId, onComplete }: ConceptCardProps)
 
   return (
     <div className={styles.container}>
-      <div className={styles.visualSection}>
-        <div className={styles.visualContainer}>
-          <div className={styles.glowRing} />
-          <span className={styles.visualIcon}>{concept.icon}</span>
+      <div className={styles.conceptHeader}>
+        <span className={styles.conceptIcon}>{concept.icon}</span>
+        <div className={styles.conceptInfo}>
+          <h1 className={styles.conceptName}>{concept.name}</h1>
+          <p className={styles.metaphor}>{concept.metaphor}</p>
         </div>
+        {isCompleted && (
+          <div className={styles.completedBadge}>
+            <Check size={16} />
+          </div>
+        )}
       </div>
 
-      <div className={styles.contentSection}>
-        <div className={styles.conceptIcon}>{concept.icon}</div>
-        <h1 className={styles.conceptName}>{concept.name}</h1>
-        <p className={styles.metaphor}>{concept.metaphor}</p>
-        <p className={styles.hookSentence}>{concept.hookSentence}</p>
+      <p className={styles.hookSentence}>{concept.hookSentence}</p>
 
-        <div className={styles.expandableSection}>
-          <button
-            className={styles.expandButton}
-            onClick={() => setShowWhy(!showWhy)}
-          >
-            <span>Learn more about this concept</span>
-            <ChevronDown
-              className={`${styles.expandIcon} ${showWhy ? styles.expandIconOpen : ''}`}
-              size={18}
-            />
-          </button>
+      {concept.logicalConnection && (
+        <div className={styles.connectionBadge}>
+          <Lightbulb size={14} />
+          <span>{concept.logicalConnection}</span>
+        </div>
+      )}
 
-          <div className={`${styles.expandContent} ${showWhy ? styles.expandContentOpen : ''}`}>
-            <div className={styles.whySection}>
-              <h3 className={styles.sectionTitle}>Why You Need This</h3>
-              <p className={styles.sectionText}>{concept.whyYouNeed}</p>
+      <div className={styles.tabBar}>
+        <button
+          className={`${styles.tab} ${activeTab === 'why' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('why')}
+        >
+          Why
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'how' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('how')}
+        >
+          How
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'details' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('details')}
+        >
+          Details
+        </button>
+      </div>
+
+      <div className={styles.tabContent}>
+        {activeTab === 'why' && (
+          <div className={styles.whyContent}>
+            <div className={styles.infoCard}>
+              <h3 className={styles.cardTitle}>Why You Need This</h3>
+              <p className={styles.cardText}>{concept.whyYouNeed}</p>
             </div>
-
-            <div className={styles.exampleSection}>
-              <h3 className={styles.exampleTitle}>Real-World Example</h3>
-              <p className={styles.sectionText}>{concept.realWorldExample}</p>
+            <div className={styles.infoCard}>
+              <h3 className={styles.cardTitle}>Real-World Example</h3>
+              <p className={styles.cardText}>{concept.realWorldExample}</p>
             </div>
+          </div>
+        )}
 
-            {concept.lifecycle && (
-              <div className={styles.lifecycleSection}>
-                <h3 className={styles.lifecycleTitle}>Universal Lifecycle</h3>
-                <div className={styles.lifecyclePhases}>
-                  <div className={styles.lifecyclePhase}>
-                    <div className={styles.phaseHeader}>
-                      <span className={styles.phaseIcon}>🚀</span>
-                      <span className={styles.phaseTitle}>{concept.lifecycle.phase1.title}</span>
-                    </div>
-                    <ul className={styles.phaseSteps}>
+        {activeTab === 'how' && (
+          <div className={styles.howContent}>
+            {concept.lifecycle ? (
+              <div className={styles.lifecycleFlow}>
+                <div className={styles.lifecycleStep}>
+                  <div className={styles.stepBadge}>1</div>
+                  <div className={styles.stepContent}>
+                    <span className={styles.stepLabel}>{concept.lifecycle.phase1.title}</span>
+                    <ul className={styles.stepItems}>
                       {concept.lifecycle.phase1.steps.map((step, idx) => (
-                        <li key={idx} className={styles.phaseStep}>{step}</li>
+                        <li key={idx}>{step}</li>
                       ))}
                     </ul>
                   </div>
-                  <div className={styles.phaseConnector}>→</div>
-                  <div className={styles.lifecyclePhase}>
-                    <div className={styles.phaseHeader}>
-                      <span className={styles.phaseIcon}>⚙️</span>
-                      <span className={styles.phaseTitle}>{concept.lifecycle.phase2.title}</span>
-                    </div>
-                    <ul className={styles.phaseSteps}>
+                </div>
+                <div className={styles.flowArrow}>→</div>
+                <div className={styles.lifecycleStep}>
+                  <div className={styles.stepBadge}>2</div>
+                  <div className={styles.stepContent}>
+                    <span className={styles.stepLabel}>{concept.lifecycle.phase2.title}</span>
+                    <ul className={styles.stepItems}>
                       {concept.lifecycle.phase2.steps.map((step, idx) => (
-                        <li key={idx} className={styles.phaseStep}>{step}</li>
+                        <li key={idx}>{step}</li>
                       ))}
                     </ul>
                   </div>
-                  <div className={styles.phaseConnector}>→</div>
-                  <div className={styles.lifecyclePhase}>
-                    <div className={styles.phaseHeader}>
-                      <span className={styles.phaseIcon}>📊</span>
-                      <span className={styles.phaseTitle}>{concept.lifecycle.phase3.title}</span>
-                    </div>
-                    <ul className={styles.phaseSteps}>
+                </div>
+                <div className={styles.flowArrow}>→</div>
+                <div className={styles.lifecycleStep}>
+                  <div className={styles.stepBadge}>3</div>
+                  <div className={styles.stepContent}>
+                    <span className={styles.stepLabel}>{concept.lifecycle.phase3.title}</span>
+                    <ul className={styles.stepItems}>
                       {concept.lifecycle.phase3.steps.map((step, idx) => (
-                        <li key={idx} className={styles.phaseStep}>{step}</li>
+                        <li key={idx}>{step}</li>
                       ))}
                     </ul>
                   </div>
                 </div>
               </div>
+            ) : (
+              <ol className={styles.stepList}>
+                {concept.howToUse.map((step, index) => (
+                  <li key={index} className={styles.stepItem}>
+                    <span className={styles.stepNum}>{index + 1}</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
             )}
+          </div>
+        )}
 
-            {!concept.lifecycle && (
-              <div className={styles.howSection}>
-                <h3 className={styles.howTitle}>How To Use It</h3>
-                <ol className={styles.stepList}>
-                  {concept.howToUse.map((step, index) => (
-                    <li key={index} className={styles.step}>
-                      <span className={styles.stepNumber}>{index + 1}</span>
-                      <span className={styles.stepText}>{step}</span>
-                    </li>
+        {activeTab === 'details' && (
+          <div className={styles.detailsContent}>
+            <p className={styles.technicalText}>{concept.technicalDetails}</p>
+            {concept.prerequisites.length > 0 && (
+              <div className={styles.prereqSection}>
+                <h4 className={styles.prereqTitle}>Prerequisites</h4>
+                <div className={styles.prereqList}>
+                  {concept.prerequisites.map((prereq, idx) => (
+                    <span key={idx} className={styles.prereqBadge}>{prereq}</span>
                   ))}
-                </ol>
+                </div>
               </div>
             )}
           </div>
-        </div>
+        )}
+      </div>
 
+      <div className={styles.actionBar}>
         {isCompleted ? (
-          <div className={styles.completedBadge}>
-            <Check size={24} />
-            <span>Concept Mastered</span>
+          <div className={styles.masteredStatus}>
+            <Check size={18} />
+            <span>Mastered</span>
           </div>
         ) : (
           <button className={styles.actionButton} onClick={handleComplete}>
-            {concept.actionButtonText}
+            {concept.actionButtonText || 'Mark as Complete'}
           </button>
         )}
-
-        <div className={styles.secondaryActions}>
-          <button
-            className={styles.deepDiveLink}
-            onClick={() => setShowDeepDive(true)}
-          >
-            View technical details →
-          </button>
-        </div>
       </div>
-
-      {showDeepDive && (
-        <div className={styles.deepDiveModal} onClick={() => setShowDeepDive(false)}>
-          <div
-            className={styles.deepDiveContent}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className={styles.deepDiveClose}
-              onClick={() => setShowDeepDive(false)}
-            >
-              ×
-            </button>
-            <h2 className={styles.deepDiveTitle}>{concept.name} - Technical Details</h2>
-            <p className={styles.deepDiveText}>{concept.technicalDetails}</p>
-            <button
-              className={styles.backToLearning}
-              onClick={() => setShowDeepDive(false)}
-            >
-              Back to learning
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -47,52 +47,94 @@
 
 .floor {
   display: flex;
-  align-items: stretch;
-  gap: 1rem;
-  padding: 0.75rem;
+  flex-direction: column;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 0.5rem;
   border-bottom: 2px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.floorCollapsed {
+  border-bottom-color: transparent;
 }
 
 .floorCompleted {
-  background: rgba(251, 191, 36, 0.1);
-  border-bottom-color: rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.floorCompleted .floorHeader {
+  border-left: 3px solid #fbbf24;
 }
 
 .floorCurrent {
-  background: rgba(59, 130, 246, 0.15);
-  border-bottom-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.floorCurrent .floorHeader {
+  border-left: 3px solid #3b82f6;
 }
 
 .floorLocked {
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
-.floorLabel {
+.floorHeader {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-width: 80px;
-  padding: 0.5rem;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.floorHeader:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 0.5rem;
+}
+
+.expandIcon {
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
 }
 
 .floorNumber {
-  font-size: 1.5rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .floorName {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  max-width: 70px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.floorProgress {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0.125rem 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+}
+
+.floorContent {
+  padding: 0.5rem 0.75rem 0.75rem;
 }
 
 .blocks {
@@ -164,10 +206,15 @@
   font-size: 0.6rem;
   color: rgba(255, 255, 255, 0.8);
   text-align: center;
-  max-width: 70px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .connectionLine {

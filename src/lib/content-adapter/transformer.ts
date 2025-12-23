@@ -145,6 +145,67 @@ export function transformToLearningStages(
   return stages;
 }
 
+function findStageForConcept(conceptId: string, stages: LearningStage[]): LearningStage | undefined {
+  for (const stage of stages) {
+    if (stage.concepts.includes(conceptId)) {
+      return stage;
+    }
+    for (const stageConceptId of stage.concepts) {
+      if (stageConceptId.includes(conceptId) || conceptId.includes(stageConceptId)) {
+        return stage;
+      }
+      const normalizedStage = stageConceptId.replace(/-/g, '').toLowerCase();
+      const normalizedConcept = conceptId.replace(/-/g, '').toLowerCase();
+      if (normalizedStage === normalizedConcept || 
+          normalizedStage.includes(normalizedConcept) || 
+          normalizedConcept.includes(normalizedStage)) {
+        return stage;
+      }
+    }
+  }
+  return undefined;
+}
+
+function distributeConceptsToStages(
+  concepts: ParsedConcept[],
+  stages: LearningStage[]
+): Map<string, string> {
+  const conceptToStage = new Map<string, string>();
+  const conceptsPerStage = Math.ceil(concepts.length / stages.length);
+  
+  for (const concept of concepts) {
+    const matchedStage = findStageForConcept(concept.id, stages);
+    if (matchedStage) {
+      conceptToStage.set(concept.id, matchedStage.id);
+    }
+  }
+  
+  const unmatchedConcepts = concepts.filter(c => !conceptToStage.has(c.id));
+  if (unmatchedConcepts.length > 0) {
+    const stageConceptCounts = new Map<string, number>();
+    stages.forEach(s => stageConceptCounts.set(s.id, 0));
+    conceptToStage.forEach((stageId) => {
+      stageConceptCounts.set(stageId, (stageConceptCounts.get(stageId) || 0) + 1);
+    });
+    
+    for (const concept of unmatchedConcepts) {
+      let targetStage = stages[0];
+      let minCount = Infinity;
+      for (const stage of stages) {
+        const count = stageConceptCounts.get(stage.id) || 0;
+        if (count < minCount && count < conceptsPerStage) {
+          minCount = count;
+          targetStage = stage;
+        }
+      }
+      conceptToStage.set(concept.id, targetStage.id);
+      stageConceptCounts.set(targetStage.id, (stageConceptCounts.get(targetStage.id) || 0) + 1);
+    }
+  }
+  
+  return conceptToStage;
+}
+
 export function transformToLearningConcepts(
   parsed: ParsedGeneratedContent,
   stages: LearningStage[]
@@ -152,10 +213,14 @@ export function transformToLearningConcepts(
   const concepts: LearningConcept[] = [];
   
   const lifecycleLabels = parsed.domainAnalysis.lifecycle;
+  const conceptToStage = distributeConceptsToStages(parsed.concepts, stages);
   
   for (const parsedConcept of parsed.concepts) {
-    const stage = stages.find(s => s.concepts.includes(parsedConcept.id)) || stages[0];
-    const stageConceptIndex = stage?.concepts.indexOf(parsedConcept.id) ?? 0;
+    const stageId = conceptToStage.get(parsedConcept.id) || stages[0]?.id;
+    const stage = stages.find(s => s.id === stageId) || stages[0];
+    const stageConceptIndex = Array.from(conceptToStage.entries())
+      .filter(([, sId]) => sId === stageId)
+      .findIndex(([cId]) => cId === parsedConcept.id);
     
     const howToUse = parsedConcept.configure.slice(0, 3);
     if (howToUse.length === 0 && parsedConcept.provision.execution) {
