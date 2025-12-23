@@ -1,74 +1,79 @@
 import type { SavedResult } from './types';
 
 export interface ImportResult {
-  success: boolean;
-  result?: SavedResult;
-  error?: string;
+    success: boolean;
+    result?: SavedResult;
+    error?: string;
 }
 
+/**
+ * Import a saved result from a JSON file
+ */
 export async function importFromFile(file: File): Promise<ImportResult> {
-  try {
-    if (!file.name.endsWith('.json')) {
-      return {
-        success: false,
-        error: 'Invalid file type. Please select a JSON file.',
-      };
-    }
+    return new Promise((resolve) => {
+        const reader = new FileReader();
 
-    const text = await file.text();
-    const data = JSON.parse(text);
+        reader.onload = (e) => {
+            try {
+                const content = e.target?.result as string;
+                const data = JSON.parse(content);
 
-    if (!validateSavedResult(data)) {
-      return {
-        success: false,
-        error: 'Invalid file format. This does not appear to be a valid saved result.',
-      };
-    }
+                // Validate required fields
+                if (!data.id || !data.subject || !data.fullDocument) {
+                    resolve({
+                        success: false,
+                        error: 'Invalid file format: missing required fields',
+                    });
+                    return;
+                }
 
-    return {
-      success: true,
-      result: data as SavedResult,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to read file',
-    };
-  }
+                const result: SavedResult = {
+                    id: data.id,
+                    subject: data.subject,
+                    generatedAt: data.generatedAt || new Date().toISOString(),
+                    fullDocument: data.fullDocument,
+                    pass1Data: data.pass1Data,
+                    validation: data.validation,
+                    savedLocally: true,
+                };
+
+                resolve({ success: true, result });
+            } catch {
+                resolve({
+                    success: false,
+                    error: 'Failed to parse file: invalid JSON',
+                });
+            }
+        };
+
+        reader.onerror = () => {
+            resolve({
+                success: false,
+                error: 'Failed to read file',
+            });
+        };
+
+        reader.readAsText(file);
+    });
 }
 
-function validateSavedResult(data: unknown): boolean {
-  if (!data || typeof data !== 'object') return false;
+/**
+ * Create a hidden file input for importing files
+ */
+export function createFileInput(onSelect: (file: File) => void): HTMLInputElement {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.style.display = 'none';
 
-  const result = data as Record<string, unknown>;
+    input.onchange = () => {
+        const file = input.files?.[0];
+        if (file) {
+            onSelect(file);
+        }
+        input.remove();
+    };
 
-  return (
-    typeof result.id === 'string' &&
-    typeof result.subject === 'string' &&
-    typeof result.generatedAt === 'string' &&
-    typeof result.fullDocument === 'string' &&
-    typeof result.pass1Data === 'object' &&
-    result.pass1Data !== null &&
-    typeof result.validation === 'object' &&
-    result.validation !== null
-  );
-}
-
-export function createFileInput(
-  onFileSelected: (file: File) => void
-): HTMLInputElement {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.style.display = 'none';
-  
-  input.addEventListener('change', (e) => {
-    const target = e.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (file) {
-      onFileSelected(file);
-    }
-  });
-
-  return input;
+    document.body.appendChild(input);
+    return input;
 }

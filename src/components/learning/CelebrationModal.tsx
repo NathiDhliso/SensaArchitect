@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { Share2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Share2, Check } from 'lucide-react';
 import { LEARNING_CONCEPTS } from '@/constants/learning-content';
 import type { CelebrationData } from '@/lib/types/learning';
 import styles from './CelebrationModal.module.css';
@@ -31,6 +31,36 @@ export default function CelebrationModal({ data, onContinue, onTakeBreak }: Cele
       .filter(Boolean)
       .slice(0, 6);
   }, [data.conceptsCompleted]);
+
+  const [shared, setShared] = useState(false);
+
+  const handleShare = async () => {
+    const shareText = `🎉 I just completed "${data.title}" on SensaPBL! ${data.conceptsCompleted?.length || 0} concepts mastered. #LearningJourney`;
+
+    // Try native share API first
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'SensaPBL Achievement',
+          text: shareText,
+        });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+        return;
+      } catch {
+        // User cancelled or share failed, fall through to clipboard
+      }
+    }
+
+    // Fallback to clipboard
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    } catch {
+      // Clipboard failed silently
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -100,9 +130,9 @@ export default function CelebrationModal({ data, onContinue, onTakeBreak }: Cele
           </button>
         </div>
 
-        <button className={styles.shareButton}>
-          <Share2 size={16} />
-          Share achievement
+        <button className={styles.shareButton} onClick={handleShare}>
+          {shared ? <Check size={16} /> : <Share2 size={16} />}
+          {shared ? 'Copied!' : 'Share achievement'}
         </button>
       </div>
     </div>
