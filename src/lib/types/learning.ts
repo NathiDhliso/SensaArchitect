@@ -29,6 +29,7 @@ export interface LearningConcept {
   visualElement: string;
   actionButtonText: string;
   lifecycle?: ConceptLifecycle;
+  logicalConnection?: string;
 }
 
 export interface LearningStage {
@@ -41,6 +42,7 @@ export interface LearningStage {
   concepts: string[];
   celebrationTitle: string;
   celebrationMessage: string;
+  narrativeBridge?: string;
 }
 
 export interface UserProgress {

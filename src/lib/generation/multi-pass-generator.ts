@@ -115,7 +115,7 @@ CRITICAL: Use the EXACT lifecycle phases provided above. Do NOT modify them.
 
   const pass2Content = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PASS 2 TASK: Execute ONLY Steps 2.5, 3.5, and 6 from the System Prompt
+PASS 2 TASK: Execute ONLY Step 3.5 (Decision Framework Trees) from the System Prompt
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 DO NOT re-run Step 1 (Live Verification). Use the verified data below.
@@ -126,10 +126,8 @@ ${JSON.stringify(pass1Data, null, 2)}
 EXACT CONCEPTS TO USE (DO NOT MODIFY):
 ${pass1Data.concepts.map((c, i) => `${i + 1}. ${c}`).join('\n')}
 
-TASKS FOR THIS PASS:
-1. STEP 2.5: Create Concept Dependency Graph showing how these ${pass1Data.concepts.length} concepts build upon each other
-2. STEP 3.5: Create 2-3 Decision Framework Trees for common "When do I use X vs Y?" questions
-3. STEP 6: Create Mental Map Summary Diagram showing all concepts as connected nodes
+TASK FOR THIS PASS:
+STEP 3.5: Create 2-3 Decision Framework Trees for the most common "When do I use X vs Y?" questions in this domain.
 
 LIFECYCLE TO USE:
 ${pass1Data.lifecycle.phase1} → ${pass1Data.lifecycle.phase2} → ${pass1Data.lifecycle.phase3}
@@ -138,10 +136,14 @@ ROLE SCOPE: ${pass1Data.roleScope}
 EXCLUDED ACTIONS: ${pass1Data.excludedActions.join(', ')}
 
 POSITIVE FRAMING REQUIRED:
-- Use "enables", "extends", "builds upon", "connects to"
-- NO "requires", "depends on", "cannot work without"
+- ✅ Use: "Choose X when you need [benefit]"
+- ✅ Use: "Option Y unlocks [capability]"
+- ✅ Use: "Select Z for [specific scenario]"
+- ✅ Use: "Best suited for", "Optimized for", "Designed for"
+- ❌ Avoid: "Don't use X if...", "X fails when...", "Won't work for..."
+- ❌ Avoid: "Common mistake is...", "Students wrongly...", "Avoid X because..."
 
-OUTPUT: Generate only the three structures listed above. No chart content yet.
+OUTPUT: Generate only the Decision Framework Trees. No chart content yet.
   `;
 
   const lifecycleScopePrompt = createLifecycleScopePrompt(dynamicLifecycle, subject);

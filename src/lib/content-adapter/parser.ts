@@ -5,6 +5,7 @@ import type {
   ParsedLearningPath,
   ParsedMentalAnchor,
   ParsedStage,
+  ParsedAcronym,
 } from './types';
 
 function slugify(text: string): string {
@@ -135,6 +136,8 @@ function parseConceptBlock(block: string, order: number, stageId: string): Parse
     examFocus.push(match[1].trim());
   }
   
+  const logicalConnectionMatch = block.match(/\*\*\[Logical Connection\]:\*\*\s*(.+?)(?=\n|$)/i);
+  
   const toolMatch = monitorSection.match(/Tool:\s*(.+?)(?=\n|Metrics:|$)/i);
   const metricsMatch = monitorSection.match(/Metrics:\s*(.+?)(?=\n|Threshold|$)/i);
   const thresholdMatch = monitorSection.match(/Threshold[s]?:\s*(.+?)$/is);
@@ -149,6 +152,7 @@ function parseConceptBlock(block: string, order: number, stageId: string): Parse
     name,
     order,
     stageId,
+    logicalConnection: logicalConnectionMatch?.[1]?.trim(),
     provision: {
       prerequisite: prereqMatch?.[1]?.trim() || '',
       selection: selectionItems,
@@ -204,8 +208,9 @@ function parseLearningPath(content: string): ParsedLearningPath {
     
     const stageContent = pathSection.slice(stageStart, stageEnd);
     
-    const conceptsMatch = stageContent.match(/\*\*Concepts:\*\*\s*(.+?)(?=\n\n|\*\*Capabilities)/is);
-    const capabilitiesMatch = stageContent.match(/\*\*Capabilities Gained:\*\*\s*([\s\S]+?)(?=###|$)/i);
+    const conceptsMatch = stageContent.match(/\*\*Concepts:\*\*\s*(.+?)(?=\n\n|\*\*Capabilities|\*\*Narrative)/is);
+    const capabilitiesMatch = stageContent.match(/\*\*Capabilities Gained:\*\*\s*([\s\S]+?)(?=\*\*Narrative|###|$)/i);
+    const narrativeBridgeMatch = stageContent.match(/\*\*Narrative Handshake:\*\*\s*([\s\S]+?)(?=###|$)/i);
     
     const conceptNames: string[] = [];
     if (conceptsMatch) {
@@ -220,16 +225,13 @@ function parseLearningPath(content: string): ParsedLearningPath {
       name: stageName,
       concepts: conceptNames,
       capabilitiesGained: capabilitiesMatch?.[1]?.trim() || '',
+      narrativeBridge: narrativeBridgeMatch?.[1]?.trim(),
     });
   }
   
   if (stages.length === 0) {
     stages.push(
-      { order: 1, name: 'Foundation', concepts: [], capabilitiesGained: '' },
-      { order: 2, name: 'Security', concepts: [], capabilitiesGained: '' },
-      { order: 3, name: 'Networking', concepts: [], capabilitiesGained: '' },
-      { order: 4, name: 'Compute & Storage', concepts: [], capabilitiesGained: '' },
-      { order: 5, name: 'Observability', concepts: [], capabilitiesGained: '' }
+      { order: 1, name: 'Foundation', concepts: [], capabilitiesGained: 'Core understanding established' }
     );
   }
   
@@ -254,17 +256,28 @@ function parseMentalAnchors(content: string): ParsedMentalAnchor[] {
     
     const anchorContent = anchorsSection.slice(anchorStart, anchorEnd);
     
-    const metaphorMatch = anchorContent.match(/Imagine\s+(.+?)(?=\.\s+[A-Z]|\*\*Why)/is);
-    const whyMatch = anchorContent.match(/\*\*Why It Helps:\*\*\s*([\s\S]+?)(?=###|$)/i);
+    const metaphorMatch = anchorContent.match(/(?:Imagine|Picture|Visualize)\s+(.+?)(?=\.\s+[A-Z]|\*\*Why|\*\*Memory)/is);
+    const whyMatch = anchorContent.match(/\*\*Why It Helps[^*]*:\*\*\s*([\s\S]+?)(?=###|\*\*Memory|$)/i);
+    
+    let acronym: ParsedAcronym | undefined;
+    const acronymMatch = anchorContent.match(/\*\*\[?([A-Z]{2,10})\]?:\*\*\s*([^-\n]+)\s*-\s*["']?([^"'\n]+)["']?/i);
+    if (acronymMatch) {
+      acronym = {
+        acronym: acronymMatch[1].trim(),
+        expansion: acronymMatch[2].trim(),
+        mnemonic: acronymMatch[3].trim(),
+      };
+    }
     
     const mappings: { concept: string; metaphorElement: string }[] = [];
-    const mappingMatches = anchorContent.matchAll(/([A-Za-z\s]+(?:Groups?|Access|Identity|Vault|Firewall|VNet|NSG|VM))\s+(?:is|are|acts? as|function as|serves? as)\s+(?:the\s+)?(?:\*\*)?([^*\n.]+)(?:\*\*)?/gi);
+    const mappingMatches = anchorContent.matchAll(/([A-Za-z][A-Za-z\s&-]{2,40})\s+(?:is|are|acts? as|functions? as|serves? as|represents?|like)\s+(?:the\s+)?(?:\*\*)?([^*\n.]{3,60})(?:\*\*)?/gi);
     
     for (const mapping of mappingMatches) {
-      mappings.push({
-        concept: mapping[1].trim(),
-        metaphorElement: mapping[2].trim(),
-      });
+      const concept = mapping[1].trim();
+      const element = mapping[2].trim();
+      if (concept.length > 2 && element.length > 2 && !concept.toLowerCase().startsWith('this')) {
+        mappings.push({ concept, metaphorElement: element });
+      }
     }
     
     anchors.push({
@@ -272,6 +285,7 @@ function parseMentalAnchors(content: string): ParsedMentalAnchor[] {
       metaphor: metaphorMatch?.[1]?.trim() || '',
       mappings,
       whyItHelps: whyMatch?.[1]?.trim() || '',
+      acronym,
     });
   }
   

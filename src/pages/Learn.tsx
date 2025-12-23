@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Compass, Home, Check } from 'lucide-react';
+import { Search, Compass, Home, Check, BookOpen } from 'lucide-react';
 import { JourneyMap, ConceptCard, Breadcrumbs, CelebrationModal } from '@/components/learning';
+import OnboardingQuiz from '@/components/learning/OnboardingQuiz';
 import { useLearningStore } from '@/store/learning-store';
+import { usePersonalizationStore } from '@/store/personalization-store';
 import styles from './Learn.module.css';
 
 export default function Learn() {
   const navigate = useNavigate();
   const [showExplore, setShowExplore] = useState(false);
+  const [showStoryBar, setShowStoryBar] = useState(true);
+  const { onboardingComplete } = usePersonalizationStore();
   const {
     progress,
     showCelebration,
@@ -27,6 +31,7 @@ export default function Learn() {
 
   const stages = getStages();
   const concepts = getConcepts();
+  const [showOnboarding, setShowOnboarding] = useState(!onboardingComplete);
 
   const currentStage = stages.find(s => s.id === progress.currentStageId);
   const currentConcept = concepts.find(c => c.id === progress.currentConceptId);
@@ -46,19 +51,6 @@ export default function Learn() {
     setCurrentConcept(conceptId);
   };
 
-  const handleStageClick = (stageId: string) => {
-    const stage = stages.find(s => s.id === stageId);
-    if (!stage) return;
-
-    const firstConcept = concepts
-      .filter(c => c.stageId === stageId)
-      .sort((a, b) => a.order - b.order)[0];
-
-    if (firstConcept) {
-      setCurrentConcept(firstConcept.id);
-    }
-  };
-
   const handleExploreConcept = (conceptId: string) => {
     const status = getConceptStatus(conceptId);
     if (status !== 'locked') {
@@ -75,6 +67,22 @@ export default function Learn() {
     dismissCelebration();
     navigate('/');
   };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+  };
+
+  const getCurrentStageNarrative = () => {
+    const currentStageIndex = stages.findIndex(s => s.id === progress.currentStageId);
+    if (currentStageIndex > 0) {
+      return stages[currentStageIndex].narrativeBridge;
+    }
+    return null;
+  };
+
+  if (showOnboarding) {
+    return <OnboardingQuiz onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <div className={styles.container}>
@@ -117,8 +125,27 @@ export default function Learn() {
       </header>
 
       <div className={styles.journeySection}>
-        <JourneyMap onStageClick={handleStageClick} />
+        <JourneyMap onConceptClick={handleNavigate} />
       </div>
+
+      {showStoryBar && getCurrentStageNarrative() && (
+        <div className={styles.storyBar}>
+          <button 
+            className={styles.storyBarClose}
+            onClick={() => setShowStoryBar(false)}
+            aria-label="Close story bar"
+          >
+            ×
+          </button>
+          <div className={styles.storyBarIcon}>
+            <BookOpen size={20} />
+          </div>
+          <div className={styles.storyBarContent}>
+            <h3 className={styles.storyBarTitle}>Your Learning Journey</h3>
+            <p className={styles.storyBarText}>{getCurrentStageNarrative()}</p>
+          </div>
+        </div>
+      )}
 
       <main className={styles.mainContent}>
         {currentStage && (

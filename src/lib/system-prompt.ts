@@ -42,6 +42,7 @@ Create a Single Code Block containing a structured outline. You must follow thes
 1. Use hierarchical bullet points with consistent indentation (2-4 spaces per level).
 2. Use clear visual hierarchy: # for main sections, ## for Core Concepts, - for Phase 1, • for Phase 2, ○ for Phase 3.
 3. Quality Standard: The format used for the first concept must be identical to the format used for the last concept. Maintain consistent detail level throughout.
+4. **NARRATIVE CONTINUITY:** For every Core Concept (except the first), include a brief "Logical Connection" sentence at the start explaining how this concept relates to or builds upon the immediately preceding concept. Format: **[Logical Connection]:** followed by the connection statement.
 
 **CONTENT DENSITY & POSITIVE FRAMING RULES:**
 
@@ -111,7 +112,13 @@ Create 3 specific "Visual Mental Models" that illuminate the hardest conceptual 
    • Make it vivid enough that a student can close their eyes and SEE it
    • Avoid domain-specific jargon in the metaphor itself (the metaphor should be universally understandable)
 
-3. **Why It Helps Section - POSITIVE FRAMING MANDATORY:**
+3. **Memory Acronym (if applicable):**
+   • For concepts with multiple components that require memorization, create a memorable ACRONYM
+   • Format: **[ACRONYM]:** [Full expansion] - [Brief memorable story or sentence using the letters]
+   • Example: **SMART Goals:** Specific, Measurable, Achievable, Relevant, Time-bound - "Sally Makes Apple Rhubarb Tarts"
+   • Only include when the concept genuinely benefits from rote memorization
+
+4. **Why It Helps Section - POSITIVE FRAMING MANDATORY:**
    • Start with capability-focused phrases:
      - ✅ "Clarifies the relationship between..."
      - ✅ "Shows how X enables Y..."
@@ -155,11 +162,18 @@ Provide ONE fully-worked scenario showing how the chart solves a realistic probl
 
 Define a suggested study sequence that organizes concepts into progressive stages. Frame entirely around capability expansion and skill building.
 
+**STRUCTURE FOR EACH STAGE:**
+1. **Stage Name & Order:** Clear numbering and descriptive title
+2. **Concepts Included:** List the specific concepts covered in this stage
+3. **Capabilities Gained:** What the learner can now do after completing this stage
+4. **Narrative Handshake:** (For stages 2+) A 2-3 sentence bridge explaining how the skills/knowledge from the previous stage unlock the potential of this stage. This creates a story of progressive mastery.
+
 **POSITIVE FRAMING GUIDELINES:**
 - ✅ Frame each stage around capabilities gained: "After Stage 1, you can..."
 - ✅ Use expansion language: "This concept extends what you learned..." / "Builds upon..." / "Unlocks..."
 - ✅ Show progressive complexity: "Now that you understand X, Y becomes accessible..."
 - ✅ Use "Enables", "Unlocks", "Provides", "Extends", "Bridges", "Synthesizes"
+- ✅ **Narrative Handshake Example:** "With identity foundations in place, you can now secure the pathways between resources. The access controls from Stage 1 provide the trust framework needed to safely connect systems."
 - ❌ Avoid: "You can't learn X without Y", "Missing this causes problems", "Prerequisites you must have"
 - ❌ Avoid: "Students who skip this fail...", "Required before you can...", "Won't work unless..."
 

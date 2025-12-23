@@ -3,6 +3,7 @@ export interface ParsedConcept {
   name: string;
   order: number;
   stageId: string;
+  logicalConnection?: string;
   provision: {
     prerequisite: string;
     selection: string[];
@@ -47,7 +48,14 @@ export interface ParsedLearningPath {
     name: string;
     concepts: string[];
     capabilitiesGained: string;
+    narrativeBridge?: string;
   }[];
+}
+
+export interface ParsedAcronym {
+  acronym: string;
+  expansion: string;
+  mnemonic: string;
 }
 
 export interface ParsedMentalAnchor {
@@ -55,6 +63,7 @@ export interface ParsedMentalAnchor {
   metaphor: string;
   mappings: { concept: string; metaphorElement: string }[];
   whyItHelps: string;
+  acronym?: ParsedAcronym;
 }
 
 export interface ParsedGeneratedContent {

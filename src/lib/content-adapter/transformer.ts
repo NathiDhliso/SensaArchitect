@@ -1,152 +1,59 @@
-import type { ParsedGeneratedContent, ParsedConcept } from './types';
+import type { ParsedGeneratedContent, ParsedConcept, ParsedMentalAnchor } from './types';
 import type { LearningStage, LearningConcept, ConceptLifecycle } from '@/lib/types/learning';
 
-const STAGE_METAPHORS: Record<number, { metaphor: string; description: string; icon: string }> = {
-  1: {
-    metaphor: 'Building the Foundation',
-    description: 'Every secure environment starts with identity. We\'ll establish who can access what.',
-    icon: '🏢',
-  },
-  2: {
-    metaphor: 'Security Checkpoint',
-    description: 'Now that people can enter, let\'s add smart security systems to protect your resources.',
-    icon: '🔐',
-  },
-  3: {
-    metaphor: 'City Infrastructure',
-    description: 'Time to build the roads and traffic systems that connect everything together.',
-    icon: '🌐',
-  },
-  4: {
-    metaphor: 'Factory Production',
-    description: 'With infrastructure ready, let\'s add the workstations and storage that power your applications.',
-    icon: '⚙️',
-  },
-  5: {
-    metaphor: 'Control Room',
-    description: 'Finally, let\'s add the monitoring systems to watch over everything you\'ve built.',
-    icon: '📊',
-  },
-};
+const DEFAULT_ICONS = ['📌', '🔷', '⭐', '🎯', '💡', '🔧', '📊', '🌟', '🎓', '🔬'];
+const DEFAULT_STAGE_ICONS = ['🏁', '🚀', '⚡', '🎯', '🏆', '💎', '🌟'];
 
-const CONCEPT_ICONS: Record<string, string> = {
-  'identity': '🚪',
-  'active directory': '🚪',
-  'entra': '🚪',
-  'users': '👥',
-  'groups': '👥',
-  'rbac': '🔑',
-  'role': '🔑',
-  'access control': '🔑',
-  'policy': '📋',
-  'resource group': '📁',
-  'arm': '📝',
-  'template': '📝',
-  'management group': '🏛️',
-  'subscription': '💳',
-  'virtual network': '🏘️',
-  'vnet': '🏘️',
-  'subnet': '🏠',
-  'nsg': '🚦',
-  'security group': '🚦',
-  'firewall': '🏰',
-  'vpn': '🔒',
-  'expressroute': '🛤️',
-  'load balancer': '⚖️',
-  'application gateway': '🚏',
-  'virtual machine': '💻',
-  'vm': '💻',
-  'availability': '🛡️',
-  'scale set': '📈',
-  'storage': '📦',
-  'blob': '🗄️',
-  'files': '📂',
-  'backup': '💾',
-  'recovery': '🔄',
-  'monitor': '📺',
-  'log analytics': '🔎',
-  'insights': '🔬',
-  'alerts': '🚨',
-  'container': '📦',
-  'app service': '🚀',
-  'key vault': '🔒',
-  'managed identity': '🤖',
-  'conditional access': '🔍',
-  'pim': '⏰',
-  'privileged': '⏰',
-};
-
-function getConceptIcon(conceptName: string): string {
-  const lowerName = conceptName.toLowerCase();
+function extractIconFromMetaphor(metaphor: string): string {
+  const iconMap: Record<string, string> = {
+    'door': '🚪', 'gate': '🚪', 'entrance': '🚪',
+    'building': '🏢', 'foundation': '🏗️', 'structure': '🏛️',
+    'security': '🔐', 'lock': '🔒', 'key': '🔑',
+    'network': '🌐', 'connection': '🔗', 'link': '🔗',
+    'road': '🛣️', 'highway': '🛤️', 'path': '🛤️',
+    'factory': '🏭', 'production': '⚙️', 'machine': '⚙️',
+    'monitor': '📺', 'control': '🎛️', 'dashboard': '📊',
+    'storage': '📦', 'warehouse': '🏪', 'container': '📦',
+    'vehicle': '🚗', 'car': '🚗', 'truck': '🚚',
+    'tool': '🔧', 'wrench': '🔧', 'hammer': '🔨',
+    'heart': '❤️', 'blood': '🩸', 'organ': '🫀',
+    'brain': '🧠', 'nerve': '🧬', 'cell': '🦠',
+    'water': '💧', 'river': '🌊', 'flow': '🌊',
+    'tree': '🌳', 'plant': '🌱', 'root': '🌿',
+    'book': '📚', 'document': '📄', 'file': '📁',
+  };
   
-  for (const [keyword, icon] of Object.entries(CONCEPT_ICONS)) {
-    if (lowerName.includes(keyword)) {
+  const lowerMetaphor = metaphor.toLowerCase();
+  for (const [keyword, icon] of Object.entries(iconMap)) {
+    if (lowerMetaphor.includes(keyword)) {
       return icon;
     }
   }
   
-  return '📌';
+  return DEFAULT_ICONS[0];
 }
 
-function generateMetaphor(conceptName: string): string {
+function findMetaphorForConcept(conceptName: string, mentalAnchors: ParsedMentalAnchor[]): string {
   const lowerName = conceptName.toLowerCase();
   
-  const metaphors: Record<string, string> = {
-    'active directory': 'The Front Door',
-    'entra': 'The Front Door',
-    'users': 'Employee Badges',
-    'groups': 'Department Teams',
-    'rbac': 'The Key System',
-    'role': 'Access Keys',
-    'policy': 'Building Codes',
-    'resource group': 'Project Folders',
-    'arm template': 'Blueprint Documents',
-    'management group': 'Corporate Hierarchy',
-    'subscription': 'Department Budgets',
-    'virtual network': 'Neighborhood Districts',
-    'vnet': 'Neighborhood Districts',
-    'subnet': 'City Blocks',
-    'nsg': 'Traffic Lights',
-    'security group': 'Traffic Lights',
-    'firewall': 'Central Control Tower',
-    'vpn': 'Secure Tunnel',
-    'expressroute': 'Private Highway',
-    'load balancer': 'Traffic Distributor',
-    'application gateway': 'Smart Postal Service',
-    'virtual machine': 'Workstations',
-    'vm': 'Workstations',
-    'availability set': 'Backup Stations',
-    'availability zone': 'Separate Buildings',
-    'scale set': 'Modular Production Lines',
-    'storage account': 'Warehouse System',
-    'blob': 'Raw Materials Bins',
-    'files': 'Shared Tool Cabinets',
-    'backup': 'Nightly Snapshots',
-    'recovery': 'Emergency Site',
-    'monitor': 'Central Monitoring Station',
-    'log analytics': 'Investigation Center',
-    'insights': 'Quality Lab',
-    'alerts': 'Alarm System',
-    'container': 'Shipping Containers',
-    'app service': 'Managed Assembly Line',
-    'key vault': 'Safe Deposit Boxes',
-    'managed identity': 'Robot Employees',
-    'conditional access': 'Smart Security Scanner',
-    'pim': 'Time-Locked Elevator',
-    'privileged': 'Executive Access',
-  };
-  
-  for (const [keyword, metaphor] of Object.entries(metaphors)) {
-    if (lowerName.includes(keyword)) {
-      return metaphor;
+  for (const anchor of mentalAnchors) {
+    for (const mapping of anchor.mappings) {
+      if (mapping.concept.toLowerCase().includes(lowerName) || 
+          lowerName.includes(mapping.concept.toLowerCase())) {
+        return mapping.metaphorElement;
+      }
     }
   }
   
-  return 'Essential Component';
+  return conceptName;
 }
 
-function generateHookSentence(concept: ParsedConcept): string {
-  const metaphor = generateMetaphor(concept.name);
+function getConceptIcon(conceptName: string, mentalAnchors: ParsedMentalAnchor[]): string {
+  const metaphor = findMetaphorForConcept(conceptName, mentalAnchors);
+  return extractIconFromMetaphor(metaphor);
+}
+
+function generateHookSentence(concept: ParsedConcept, metaphor: string): string {
   
   if (concept.provision.prerequisite) {
     return `${metaphor} - ${concept.name} provides the foundation for secure operations.`;
@@ -181,12 +88,11 @@ function generateWhyYouNeed(concept: ParsedConcept): string {
     return concept.designBoundaries[0];
   }
   
-  return `${concept.name} is essential for managing your Azure environment effectively.`;
+  return `${concept.name} is essential for mastering this subject effectively.`;
 }
 
-function generateRealWorldExample(concept: ParsedConcept): string {
-  const metaphor = generateMetaphor(concept.name);
-  return `Just like a ${metaphor.toLowerCase()} in a real building, ${concept.name} provides structure and control to your cloud environment.`;
+function generateRealWorldExample(concept: ParsedConcept, metaphor: string): string {
+  return `Just like ${metaphor.toLowerCase()}, ${concept.name} provides essential functionality in this domain.`;
 }
 
 function slugify(text: string): string {
@@ -204,20 +110,22 @@ export function transformToLearningStages(
   if (parsed.learningPath.stages.length > 0) {
     for (const stage of parsed.learningPath.stages) {
       const stageId = `stage-${stage.order}-${slugify(stage.name)}`;
-      const stageMetadata = STAGE_METAPHORS[stage.order] || STAGE_METAPHORS[1];
-      
       const conceptIds = stage.concepts.map(c => slugify(c));
+      
+      const stageIcon = DEFAULT_STAGE_ICONS[stage.order - 1] || DEFAULT_STAGE_ICONS[0];
+      const metaphorDesc = stage.capabilitiesGained || `Master the ${stage.name.toLowerCase()} concepts`;
       
       stages.push({
         id: stageId,
         order: stage.order,
         name: stage.name,
-        metaphor: stageMetadata.metaphor,
-        metaphorDescription: stageMetadata.description,
-        icon: stageMetadata.icon,
+        metaphor: stage.name,
+        metaphorDescription: metaphorDesc,
+        icon: stageIcon,
         concepts: conceptIds,
         celebrationTitle: `${stage.name} Complete!`,
         celebrationMessage: stage.capabilitiesGained || `You've mastered the ${stage.name.toLowerCase()} concepts!`,
+        narrativeBridge: stage.narrativeBridge,
       });
     }
   } else {
@@ -225,9 +133,9 @@ export function transformToLearningStages(
       id: 'stage-1-foundation',
       order: 1,
       name: 'Foundation',
-      metaphor: 'Building the Foundation',
-      metaphorDescription: 'Establish the core identity and organization structure.',
-      icon: '🏢',
+      metaphor: 'Foundation',
+      metaphorDescription: 'Establish the core concepts.',
+      icon: DEFAULT_STAGE_ICONS[0],
       concepts: parsed.concepts.slice(0, 8).map(c => c.id),
       celebrationTitle: 'Foundation Complete!',
       celebrationMessage: 'You\'ve mastered the foundational concepts!',
@@ -297,22 +205,26 @@ export function transformToLearningConcepts(
       },
     };
     
+    const metaphor = findMetaphorForConcept(parsedConcept.name, parsed.mentalAnchors);
+    const icon = getConceptIcon(parsedConcept.name, parsed.mentalAnchors);
+    
     concepts.push({
       id: parsedConcept.id,
       stageId: stage?.id || 'stage-1-foundation',
       order: stageConceptIndex + 1,
       name: parsedConcept.name,
-      icon: getConceptIcon(parsedConcept.name),
-      metaphor: generateMetaphor(parsedConcept.name),
-      hookSentence: generateHookSentence(parsedConcept),
+      icon,
+      metaphor,
+      hookSentence: generateHookSentence(parsedConcept, metaphor),
       whyYouNeed: generateWhyYouNeed(parsedConcept),
-      realWorldExample: generateRealWorldExample(parsedConcept),
-      howToUse: howToUse.length > 0 ? howToUse : ['Configure in Azure Portal', 'Set up access controls', 'Monitor and maintain'],
-      technicalDetails: technicalDetails || `${parsedConcept.name} is a core Azure service for administrators.`,
+      realWorldExample: generateRealWorldExample(parsedConcept, metaphor),
+      howToUse: howToUse.length > 0 ? howToUse : ['Review the concept details', 'Understand the lifecycle', 'Practice application'],
+      technicalDetails: technicalDetails || `${parsedConcept.name} is a core concept in this domain.`,
       prerequisites: extractPrerequisites(parsedConcept, parsed.concepts),
       visualElement: slugify(parsedConcept.name),
-      actionButtonText: `Set up ${parsedConcept.name}`,
+      actionButtonText: `Master ${parsedConcept.name}`,
       lifecycle,
+      logicalConnection: parsedConcept.logicalConnection,
     });
   }
   

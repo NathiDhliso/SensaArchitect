@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { UserProgress, CelebrationData, LearningStage, LearningConcept } from '@/lib/types/learning';
-import { LEARNING_STAGES as DEFAULT_STAGES, LEARNING_CONCEPTS as DEFAULT_CONCEPTS } from '@/constants/learning-content';
 
 type ContentMetadata = {
   domain: string;
@@ -64,7 +63,7 @@ const getInitialProgress = (stages: LearningStage[], concepts: LearningConcept[]
 export const useLearningStore = create<LearningState & LearningActions>()(
   persist(
     (set, get) => ({
-      progress: getInitialProgress(DEFAULT_STAGES, DEFAULT_CONCEPTS),
+      progress: getInitialProgress([], []),
       showCelebration: false,
       celebrationData: null,
       isExploreMode: false,
@@ -72,12 +71,12 @@ export const useLearningStore = create<LearningState & LearningActions>()(
 
       getStages: () => {
         const state = get();
-        return state.customContent?.stages || DEFAULT_STAGES;
+        return state.customContent?.stages || [];
       },
 
       getConcepts: () => {
         const state = get();
-        return state.customContent?.concepts || DEFAULT_CONCEPTS;
+        return state.customContent?.concepts || [];
       },
 
       hasCustomContent: () => {
@@ -95,7 +94,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
       },
 
       clearCustomContent: () => {
-        const newProgress = getInitialProgress(DEFAULT_STAGES, DEFAULT_CONCEPTS);
+        const newProgress = getInitialProgress([], []);
         set({
           customContent: null,
           progress: newProgress,
