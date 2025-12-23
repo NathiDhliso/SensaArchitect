@@ -6,12 +6,12 @@ import type { PalaceRoute } from '@/lib/types/palace';
  */
 
 const PLACEMENT_SLOTS = [
-    { id: 'top-left', location: 'Entrance (Top Left)', visualAnchor: 'main doors', position: 'top' as const },
-    { id: 'top-right', location: 'Roof Feature (Top Right)', visualAnchor: 'antenna/sign', position: 'top' as const },
-    { id: 'center-left', location: 'Left Wing (Center)', visualAnchor: 'side entrance', position: 'center' as const },
-    { id: 'center-right', location: 'Right Wing (Center)', visualAnchor: 'loading area', position: 'center' as const },
-    { id: 'bottom-left', location: 'Ground Left', visualAnchor: 'parking/garden', position: 'bottom' as const },
-    { id: 'bottom-right', location: 'Ground Right', visualAnchor: 'pathway', position: 'bottom' as const },
+    { id: 'top-left', location: 'Entrance (Top Left)', visualAnchor: 'main doors', position: 'top' as const, headingOffset: -40, pitch: 15 },
+    { id: 'top-right', location: 'Roof Feature (Top Right)', visualAnchor: 'antenna/sign', position: 'top' as const, headingOffset: 40, pitch: 25 },
+    { id: 'center-left', location: 'Left Wing (Center)', visualAnchor: 'side entrance', position: 'center' as const, headingOffset: -60, pitch: 0 },
+    { id: 'center-right', location: 'Right Wing (Center)', visualAnchor: 'loading area', position: 'center' as const, headingOffset: 60, pitch: 0 },
+    { id: 'bottom-left', location: 'Ground Left', visualAnchor: 'parking/garden', position: 'bottom' as const, headingOffset: -30, pitch: -15 },
+    { id: 'bottom-right', location: 'Ground Right', visualAnchor: 'pathway', position: 'bottom' as const, headingOffset: 30, pitch: -15 },
 ];
 
 export const PALACE_ROUTES: PalaceRoute[] = [

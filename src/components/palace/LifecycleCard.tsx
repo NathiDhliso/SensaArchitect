@@ -20,7 +20,7 @@ export default function LifecycleCard({ concept, slot }: LifecycleCardProps) {
     };
 
     return (
-        <div className={styles.card}>
+        <div id={`concept-${concept.conceptId}`} className={styles.card}>
             <button
                 className={styles.cardHeader}
                 onClick={() => setExpanded(!expanded)}

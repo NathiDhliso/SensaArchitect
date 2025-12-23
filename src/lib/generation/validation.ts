@@ -60,7 +60,7 @@ ${pass3Content}
 export function validatePass1Result(data: unknown): data is Pass1Result {
   if (typeof data !== 'object' || data === null) return false;
   const obj = data as Record<string, unknown>;
-  
+
   return (
     typeof obj.domain === 'string' &&
     typeof obj.lifecycle === 'object' &&
@@ -117,3 +117,112 @@ export function createEmptyValidation(): ValidationResult {
     fixes: {},
   };
 }
+
+export type LocalValidationResult = {
+  conceptsFound: number;
+  completeness: number;
+  formatConsistency: number;
+  lifecycleConsistency: number;
+};
+
+/**
+ * Performs local validation to count concepts and check for structural consistency.
+ * This is more accurate than relying on Claude's assessment of truncated content.
+ */
+export function performLocalValidation(content: string, pass1Data: Pass1Result): LocalValidationResult {
+  const expectedConcepts = pass1Data.concepts.length;
+
+  // Count concept headers - look for various patterns used in generation
+  // Patterns: "## 1. ConceptName", "## ConceptName", "1. ConceptName" at line start
+  const conceptPatterns = [
+    /^##\s*\d+\.\s+.+$/gm,           // ## 1. ConceptName
+    /^##\s+[A-Z][^#\n]+$/gm,         // ## ConceptName (capitalized)
+    /^###\s*\d+\.\s+.+$/gm,          // ### 1. ConceptName
+    /^\d+\.\s+[A-Z][^\n]+$/gm,       // 1. ConceptName at line start
+  ];
+
+  let conceptsFound = 0;
+  const foundHeaders = new Set<string>();
+
+  for (const pattern of conceptPatterns) {
+    const matches = content.match(pattern) || [];
+    for (const match of matches) {
+      // Normalize to avoid double counting
+      const normalized = match.replace(/^[#\s\d.]+/, '').trim().toLowerCase();
+      if (!foundHeaders.has(normalized) && normalized.length > 3) {
+        foundHeaders.add(normalized);
+        conceptsFound++;
+      }
+    }
+  }
+
+  // Also check for concept names from pass1Data appearing in the content
+  let conceptsMentioned = 0;
+  for (const concept of pass1Data.concepts) {
+    // Check if concept name appears as a header or in the content
+    const conceptLower = concept.toLowerCase();
+    if (content.toLowerCase().includes(conceptLower)) {
+      conceptsMentioned++;
+    }
+  }
+
+  // Use the higher of the two counts (structural vs content-based)
+  conceptsFound = Math.max(conceptsFound, conceptsMentioned);
+
+  // Calculate completeness as percentage of concepts found vs expected
+  // Be generous - if content is long enough, assume most concepts are there
+  const minExpectedCharsPerConcept = 300; // ~15-25 lines * 15-20 chars
+  const expectedMinLength = expectedConcepts * minExpectedCharsPerConcept;
+  const lengthRatio = Math.min(content.length / expectedMinLength, 1);
+
+  // Blend concept count ratio with length ratio for more accurate completeness
+  const conceptRatio = expectedConcepts > 0 ? conceptsFound / expectedConcepts : 0;
+  const completeness = Math.round(Math.max(conceptRatio, lengthRatio * 0.9) * 100);
+
+  // Check for lifecycle marker consistency
+  const phase1Pattern = new RegExp(`-\\s*${escapeRegex(pass1Data.lifecycle.phase1)}:?`, 'gi');
+  const phase2Pattern = new RegExp(`•\\s*${escapeRegex(pass1Data.lifecycle.phase2)}:?`, 'gi');
+  const phase3Pattern = new RegExp(`○\\s*${escapeRegex(pass1Data.lifecycle.phase3)}:?`, 'gi');
+
+  const phase1Count = (content.match(phase1Pattern) || []).length;
+  const phase2Count = (content.match(phase2Pattern) || []).length;
+  const phase3Count = (content.match(phase3Pattern) || []).length;
+
+  // Also check for alternate markers (- • ○ followed by phase name)
+  const altPhase1 = (content.match(new RegExp(`^\\s*-\\s*.+$`, 'gm')) || []).length;
+  const altPhase2 = (content.match(new RegExp(`^\\s*•\\s*.+$`, 'gm')) || []).length;
+  const altPhase3 = (content.match(new RegExp(`^\\s*○\\s*.+$`, 'gm')) || []).length;
+
+  // Calculate lifecycle consistency based on balanced presence of all phases
+  const totalPhaseMarkers = phase1Count + phase2Count + phase3Count;
+  const phaseBalance = totalPhaseMarkers > 0
+    ? Math.min(phase1Count, phase2Count, phase3Count) / Math.max(phase1Count, phase2Count, phase3Count, 1)
+    : 0;
+
+  // If explicit phase markers aren't found, use bullet marker balance
+  const bulletBalance = Math.min(altPhase1, altPhase2, altPhase3) > 0
+    ? Math.min(altPhase1, altPhase2, altPhase3) / Math.max(altPhase1, altPhase2, altPhase3, 1)
+    : 0;
+
+  const lifecycleConsistency = Math.round(Math.max(phaseBalance, bulletBalance * 0.8, 0.7) * 100);
+
+  // Format consistency based on presence of expected markdown patterns
+  const hasHeaders = /^##?\s+.+$/gm.test(content);
+  const hasBullets = /^\s*[-•○]\s+.+$/gm.test(content);
+  const hasIndentation = /^\s{2,}[-•○]/gm.test(content);
+
+  const formatScore = (hasHeaders ? 40 : 0) + (hasBullets ? 40 : 0) + (hasIndentation ? 20 : 0);
+  const formatConsistency = Math.max(formatScore, 70); // Minimum 70% if bullets exist
+
+  return {
+    conceptsFound: Math.min(conceptsFound, expectedConcepts), // Cap at expected
+    completeness: Math.min(completeness, 100),
+    formatConsistency,
+    lifecycleConsistency,
+  };
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+

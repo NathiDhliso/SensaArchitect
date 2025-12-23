@@ -29,9 +29,11 @@ export interface RouteBuilding {
 
 export interface PlacementSlot {
     id: string;
-    location: string;      // "Loading Dock LEFT"
-    visualAnchor: string;  // "shipping containers"
+    location: string;
+    visualAnchor: string;
     position: 'top' | 'center' | 'bottom';
+    headingOffset?: number;
+    pitch?: number;
 }
 
 export interface PalaceBuilding {

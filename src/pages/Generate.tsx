@@ -116,10 +116,42 @@ export default function Generate() {
     const progressCallback = createProgressCallback();
 
     generateChartIteratively(decodedSubject, bedrockConfig!, progressCallback, controller.signal)
-      .then((result) => {
+      .then(async (result) => {
         completeGeneration(result);
         clearCheckpoint();
-        navigate(`/results/${Date.now()}`);
+
+        // Auto-save to storage so Results page can always retrieve it
+        const { pass1Data, validation } = useGenerationStore.getState();
+        if (pass1Data && validation) {
+          const resultId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const savedResult = {
+            id: resultId,
+            subject: decodedSubject,
+            generatedAt: new Date().toISOString(),
+            fullDocument: result.fullDocument,
+            pass1Data: {
+              domain: pass1Data.domain,
+              roleScope: pass1Data.roleScope,
+              lifecycle: pass1Data.lifecycle,
+              concepts: pass1Data.concepts,
+            },
+            validation: {
+              lifecycleConsistency: validation.lifecycleConsistency,
+              positiveFraming: validation.positiveFraming,
+              formatConsistency: validation.formatConsistency,
+              completeness: validation.completeness,
+            },
+            savedLocally: true,
+          };
+
+          // Import and use storageManager
+          const { storageManager } = await import('@/lib/storage');
+          await storageManager.saveResult(savedResult);
+          navigate(`/results/${resultId}`);
+        } else {
+          // Fallback if validation/pass1Data not available
+          navigate(`/results/${Date.now()}`);
+        }
       })
       .catch((err) => {
         if (err.message === 'Generation cancelled by user') {

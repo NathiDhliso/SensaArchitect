@@ -8,7 +8,7 @@ import type {
   ParsedAcronym,
 } from './types';
 
-export type ParseResult = 
+export type ParseResult =
   | { success: true; data: ParsedGeneratedContent }
   | { success: false; error: string };
 
@@ -22,27 +22,27 @@ function slugify(text: string): string {
 function extractSection(content: string, startMarker: string, endMarker?: string): string {
   const startIndex = content.indexOf(startMarker);
   if (startIndex === -1) return '';
-  
+
   const startPos = startIndex + startMarker.length;
-  
+
   if (endMarker) {
     const endIndex = content.indexOf(endMarker, startPos);
     if (endIndex === -1) return content.slice(startPos).trim();
     return content.slice(startPos, endIndex).trim();
   }
-  
+
   return content.slice(startPos).trim();
 }
 
 function parseDomainAnalysis(content: string): ParsedDomainAnalysis {
   const domainSection = extractSection(content, 'DOMAIN ANALYSIS', 'DECISION FRAMEWORK');
-  
+
   const domainMatch = domainSection.match(/Domain:\s*(.+)/i);
   const roleMatch = domainSection.match(/Professional Role:\s*(.+)/i);
   const lifecycleMatch = domainSection.match(/Lifecycle:\s*(\w+)\s*→\s*(\w+)\s*→\s*(\w+)/i);
   const sourceMatch = domainSection.match(/Source Verification:\s*(.+)/i);
   const conceptCountMatch = domainSection.match(/Core Concepts Identified:\s*(\d+)/i);
-  
+
   const recentUpdates: string[] = [];
   const updatesMatch = domainSection.match(/Recent Updates:([\s\S]*?)(?=Numerical Limits:|Core Concepts|$)/i);
   if (updatesMatch) {
@@ -51,7 +51,7 @@ function parseDomainAnalysis(content: string): ParsedDomainAnalysis {
       updates.forEach(u => recentUpdates.push(u.replace(/•\s*/, '').trim()));
     }
   }
-  
+
   const numericalLimits: string[] = [];
   const limitsMatch = domainSection.match(/Numerical Limits:([\s\S]*?)(?=Core Concepts|$)/i);
   if (limitsMatch) {
@@ -60,7 +60,7 @@ function parseDomainAnalysis(content: string): ParsedDomainAnalysis {
       limits.forEach(l => numericalLimits.push(l.replace(/•\s*/, '').trim()));
     }
   }
-  
+
   const conceptNames: string[] = [];
   const conceptsListMatch = domainSection.match(/Core Concepts Identified:\s*\d+[\s\S]*?((?:\d+\.\s+.+\n?)+)/i);
   if (conceptsListMatch) {
@@ -72,7 +72,7 @@ function parseDomainAnalysis(content: string): ParsedDomainAnalysis {
       });
     }
   }
-  
+
   return {
     domain: domainMatch?.[1]?.trim() || 'Unknown',
     professionalRole: roleMatch?.[1]?.trim() || 'Unknown',
@@ -90,21 +90,66 @@ function parseDomainAnalysis(content: string): ParsedDomainAnalysis {
 }
 
 
-function parseConceptBlock(block: string, order: number, stageId: string): ParsedConcept | null {
+interface LifecyclePhases {
+  phase1: string;
+  phase2: string;
+  phase3: string;
+}
+
+function parseConceptBlock(block: string, order: number, stageId: string, lifecycle: LifecyclePhases): ParsedConcept | null {
   const nameMatch = block.match(/^##\s*\d+\.\s*(.+)/m);
   if (!nameMatch) return null;
-  
+
   const name = nameMatch[1].trim();
   const id = slugify(name);
-  
-  const provisionSection = extractSection(block, '- PROVISION:', '• CONFIGURE:');
-  const configureSection = extractSection(block, '• CONFIGURE:', '○ MONITOR:');
-  const monitorSection = extractSection(block, '○ MONITOR:', '##');
-  
+
+  // Use dynamic lifecycle phases from the parsed domain analysis
+  // Support multiple marker formats: "- PHASE:", "PHASE:", "- PHASE", etc.
+  const phase1Pattern = new RegExp(`[-•]\\s*${lifecycle.phase1}:?`, 'i');
+  const phase2Pattern = new RegExp(`[•]\\s*${lifecycle.phase2}:?`, 'i');
+  const phase3Pattern = new RegExp(`[○]\\s*${lifecycle.phase3}:?`, 'i');
+
+  // Find the start positions of each phase
+  const phase1Match = block.match(phase1Pattern);
+  const phase2Match = block.match(phase2Pattern);
+  const phase3Match = block.match(phase3Pattern);
+
+  // Extract sections dynamically based on detected phase markers
+  let provisionSection = '';
+  let configureSection = '';
+  let monitorSection = '';
+
+  if (phase1Match && phase2Match) {
+    provisionSection = extractSection(block, phase1Match[0], phase2Match[0]);
+  } else if (phase1Match) {
+    // Fallback: try common markers
+    provisionSection = extractSection(block, phase1Match[0], '•') ||
+      extractSection(block, phase1Match[0], '○');
+  }
+
+  if (phase2Match && phase3Match) {
+    configureSection = extractSection(block, phase2Match[0], phase3Match[0]);
+  } else if (phase2Match) {
+    configureSection = extractSection(block, phase2Match[0], '○') ||
+      extractSection(block, phase2Match[0], '##');
+  }
+
+  if (phase3Match) {
+    monitorSection = extractSection(block, phase3Match[0], '##') ||
+      extractSection(block, phase3Match[0], '```');
+  }
+
+  // Fallback: if dynamic extraction failed, try the old hardcoded markers for backward compatibility
+  if (!provisionSection && !configureSection && !monitorSection) {
+    provisionSection = extractSection(block, '- PROVISION:', '• CONFIGURE:');
+    configureSection = extractSection(block, '• CONFIGURE:', '○ MONITOR:');
+    monitorSection = extractSection(block, '○ MONITOR:', '##');
+  }
+
   const prereqMatch = provisionSection.match(/Prerequisite:\s*(.+?)(?=Selection:|Execution:|$)/is);
   const selectionMatch = provisionSection.match(/Selection:([\s\S]*?)(?=Execution:|$)/i);
   const executionMatch = provisionSection.match(/Execution:\s*(.+?)$/is);
-  
+
   const selectionItems: string[] = [];
   if (selectionMatch) {
     const items = selectionMatch[1].match(/[•*]\s*(.+)/g);
@@ -112,7 +157,7 @@ function parseConceptBlock(block: string, order: number, stageId: string): Parse
       items.forEach(item => selectionItems.push(item.replace(/^[•*]\s*/, '').trim()));
     }
   }
-  
+
   const configureItems: string[] = [];
   const configLines = configureSection.match(/[•*]\s*\*\*(.+?)\*\*:?\s*(.+?)(?=\n|$)/g);
   if (configLines) {
@@ -121,36 +166,36 @@ function parseConceptBlock(block: string, order: number, stageId: string): Parse
       configureItems.push(cleaned);
     });
   }
-  
+
   const criticalDistinctions: string[] = [];
   const criticalMatches = block.matchAll(/\*\*\[Critical Distinction\]:\*\*\s*(.+?)(?=\n|$)/gi);
   for (const match of criticalMatches) {
     criticalDistinctions.push(match[1].trim());
   }
-  
+
   const designBoundaries: string[] = [];
   const boundaryMatches = block.matchAll(/\*\*\[Design Boundary\]:\*\*\s*(.+?)(?=\n|$)/gi);
   for (const match of boundaryMatches) {
     designBoundaries.push(match[1].trim());
   }
-  
+
   const examFocus: string[] = [];
   const examMatches = block.matchAll(/\*\*\[Exam Focus\]:\*\*\s*(.+?)(?=\n|$)/gi);
   for (const match of examMatches) {
     examFocus.push(match[1].trim());
   }
-  
+
   const logicalConnectionMatch = block.match(/\*\*\[Logical Connection\]:\*\*\s*(.+?)(?=\n|$)/i);
-  
+
   const toolMatch = monitorSection.match(/Tool:\s*(.+?)(?=\n|Metrics:|$)/i);
   const metricsMatch = monitorSection.match(/Metrics:\s*(.+?)(?=\n|Threshold|$)/i);
   const thresholdMatch = monitorSection.match(/Threshold[s]?:\s*(.+?)$/is);
-  
+
   const metrics: string[] = [];
   if (metricsMatch) {
     metricsMatch[1].split(',').forEach(m => metrics.push(m.trim()));
   }
-  
+
   return {
     id,
     name,
@@ -174,48 +219,48 @@ function parseConceptBlock(block: string, order: number, stageId: string): Parse
   };
 }
 
-function parseConcepts(content: string): ParsedConcept[] {
+function parseConcepts(content: string, lifecycle: LifecyclePhases): ParsedConcept[] {
   const chartSection = extractSection(content, 'MASTER HIERARCHICAL CHART', 'VISUAL MENTAL ANCHORS');
-  
+
   const conceptBlocks = chartSection.split(/(?=^##\s*\d+\.)/m).filter(b => b.trim());
-  
+
   const concepts: ParsedConcept[] = [];
   let order = 1;
-  
+
   for (const block of conceptBlocks) {
-    const concept = parseConceptBlock(block, order, 'stage-1');
+    const concept = parseConceptBlock(block, order, 'stage-1', lifecycle);
     if (concept) {
       concepts.push(concept);
       order++;
     }
   }
-  
+
   return concepts;
 }
 
 function parseLearningPath(content: string): ParsedLearningPath {
   const pathSection = extractSection(content, 'LEARNING PATH SEQUENCE', '');
-  
+
   const stages: ParsedLearningPath['stages'] = [];
-  
+
   const stageMatches = pathSection.matchAll(/###\s*Stage\s*(\d+):\s*(.+?)(?=\n)/gi);
-  
+
   for (const match of stageMatches) {
     const stageOrder = parseInt(match[1], 10);
     const stageName = match[2].trim();
-    
+
     const stageStart = pathSection.indexOf(match[0]);
     const nextStageMatch = pathSection.slice(stageStart + match[0].length).match(/###\s*Stage\s*\d+/);
-    const stageEnd = nextStageMatch 
+    const stageEnd = nextStageMatch
       ? stageStart + match[0].length + pathSection.slice(stageStart + match[0].length).indexOf(nextStageMatch[0])
       : pathSection.length;
-    
+
     const stageContent = pathSection.slice(stageStart, stageEnd);
-    
+
     const conceptsMatch = stageContent.match(/\*\*Concepts:\*\*\s*(.+?)(?=\n\n|\*\*Capabilities|\*\*Narrative)/is);
     const capabilitiesMatch = stageContent.match(/\*\*Capabilities Gained:\*\*\s*([\s\S]+?)(?=\*\*Narrative|###|$)/i);
     const narrativeBridgeMatch = stageContent.match(/\*\*Narrative Handshake:\*\*\s*([\s\S]+?)(?=###|$)/i);
-    
+
     const conceptNames: string[] = [];
     if (conceptsMatch) {
       conceptsMatch[1].split(',').forEach(c => {
@@ -223,7 +268,7 @@ function parseLearningPath(content: string): ParsedLearningPath {
         if (name) conceptNames.push(name);
       });
     }
-    
+
     stages.push({
       order: stageOrder,
       name: stageName,
@@ -232,37 +277,37 @@ function parseLearningPath(content: string): ParsedLearningPath {
       narrativeBridge: narrativeBridgeMatch?.[1]?.trim(),
     });
   }
-  
+
   if (stages.length === 0) {
     stages.push(
       { order: 1, name: 'Foundation', concepts: [], capabilitiesGained: 'Core understanding established' }
     );
   }
-  
+
   return { stages };
 }
 
 function parseMentalAnchors(content: string): ParsedMentalAnchor[] {
   const anchorsSection = extractSection(content, 'VISUAL MENTAL ANCHORS', 'WORKED EXAMPLE');
-  
+
   const anchors: ParsedMentalAnchor[] = [];
-  
+
   const anchorMatches = anchorsSection.matchAll(/###\s*Anchor\s*\d+:\s*(.+?)(?=\n)/gi);
-  
+
   for (const match of anchorMatches) {
     const anchorName = match[1].trim();
-    
+
     const anchorStart = anchorsSection.indexOf(match[0]);
     const nextAnchorMatch = anchorsSection.slice(anchorStart + match[0].length).match(/###\s*Anchor\s*\d+/);
     const anchorEnd = nextAnchorMatch
       ? anchorStart + match[0].length + anchorsSection.slice(anchorStart + match[0].length).indexOf(nextAnchorMatch[0])
       : anchorsSection.length;
-    
+
     const anchorContent = anchorsSection.slice(anchorStart, anchorEnd);
-    
+
     const metaphorMatch = anchorContent.match(/(?:Imagine|Picture|Visualize)\s+(.+?)(?=\.\s+[A-Z]|\*\*Why|\*\*Memory)/is);
     const whyMatch = anchorContent.match(/\*\*Why It Helps[^*]*:\*\*\s*([\s\S]+?)(?=###|\*\*Memory|$)/i);
-    
+
     let acronym: ParsedAcronym | undefined;
     const acronymMatch = anchorContent.match(/\*\*\[?([A-Z]{2,10})\]?:\*\*\s*([^-\n]+)\s*-\s*["']?([^"'\n]+)["']?/i);
     if (acronymMatch) {
@@ -272,10 +317,10 @@ function parseMentalAnchors(content: string): ParsedMentalAnchor[] {
         mnemonic: acronymMatch[3].trim(),
       };
     }
-    
+
     const mappings: { concept: string; metaphorElement: string }[] = [];
     const mappingMatches = anchorContent.matchAll(/([A-Za-z][A-Za-z\s&-]{2,40})\s+(?:is|are|acts? as|functions? as|serves? as|represents?|like)\s+(?:the\s+)?(?:\*\*)?([^*\n.]{3,60})(?:\*\*)?/gi);
-    
+
     for (const mapping of mappingMatches) {
       const concept = mapping[1].trim();
       const element = mapping[2].trim();
@@ -283,7 +328,7 @@ function parseMentalAnchors(content: string): ParsedMentalAnchor[] {
         mappings.push({ concept, metaphorElement: element });
       }
     }
-    
+
     anchors.push({
       name: anchorName,
       metaphor: metaphorMatch?.[1]?.trim() || '',
@@ -292,7 +337,7 @@ function parseMentalAnchors(content: string): ParsedMentalAnchor[] {
       acronym,
     });
   }
-  
+
   return anchors;
 }
 
@@ -305,33 +350,33 @@ export function parseGeneratedContent(rawContent: string): ParseResult {
       };
     }
     const domainAnalysis = parseDomainAnalysis(rawContent);
-    
+
     if (!domainAnalysis.domain || domainAnalysis.domain.trim().length === 0) {
       return {
         success: false,
         error: 'Domain analysis incomplete - regeneration recommended',
       };
     }
-    
+
     if (!domainAnalysis.lifecycle.phase1) {
       return {
         success: false,
         error: 'Lifecycle information missing - regeneration recommended',
       };
     }
-    
-    const concepts = parseConcepts(rawContent);
-    
+
+    const concepts = parseConcepts(rawContent, domainAnalysis.lifecycle);
+
     if (concepts.length === 0) {
       return {
         success: false,
         error: 'No concepts detected - check content format or regenerate',
       };
     }
-    
+
     const learningPath = parseLearningPath(rawContent);
     const mentalAnchors = parseMentalAnchors(rawContent);
-    
+
     return {
       success: true,
       data: {

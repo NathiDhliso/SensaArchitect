@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen, Save, FolderDown, Map, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 import { useLearningStore } from '@/store/learning-store';
 import { usePalaceStore } from '@/store/palace-store';
@@ -14,29 +14,54 @@ import styles from './Results.module.css';
 
 export default function Results() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [copied, setCopied] = useState(false);
   const [loadingLearn, setLoadingLearn] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showRouteBuilder, setShowRouteBuilder] = useState(false);
+  const [loadedResult, setLoadedResult] = useState<SavedResult | null>(null);
+  const [isLoadingResult, setIsLoadingResult] = useState(false);
   const { fullDocument, validation, pass1Data, currentSubject } = useGenerationStore();
+
+  // Load from storage if in-memory state is not available
+  useEffect(() => {
+    if (!fullDocument && id) {
+      setIsLoadingResult(true);
+      storageManager.loadResult(id).then(result => {
+        if (result) {
+          setLoadedResult(result);
+        }
+        setIsLoadingResult(false);
+      });
+    }
+  }, [fullDocument, id]);
+
+  // Use in-memory state or fallback to loaded result
+  const displayDocument = fullDocument || loadedResult?.fullDocument || null;
+  const displayValidation = validation || loadedResult?.validation || null;
+  const displayPass1Data = pass1Data || (loadedResult?.pass1Data ? {
+    ...loadedResult.pass1Data,
+    lifecycle: loadedResult.pass1Data.lifecycle
+  } : null);
+  const displaySubject = currentSubject || loadedResult?.subject || null;
   const { loadCustomContent } = useLearningStore();
 
   const handleCopy = async () => {
-    if (fullDocument) {
-      await navigator.clipboard.writeText(fullDocument);
+    if (displayDocument) {
+      await navigator.clipboard.writeText(displayDocument);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   const handleDownload = () => {
-    if (fullDocument && currentSubject) {
-      const blob = new Blob([fullDocument], { type: 'text/plain' });
+    if (displayDocument && displaySubject) {
+      const blob = new Blob([displayDocument], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${currentSubject.replace(/[^a-z0-9]/gi, '_')}_master_chart.txt`;
+      a.download = `${displaySubject.replace(/[^a-z0-9]/gi, '_')}_master_chart.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -45,11 +70,11 @@ export default function Results() {
   };
 
   const handleStartLearning = () => {
-    if (!fullDocument) return;
+    if (!displayDocument) return;
 
     setLoadingLearn(true);
     try {
-      const parseResult = parseGeneratedContent(fullDocument);
+      const parseResult = parseGeneratedContent(displayDocument);
       if (!parseResult.success) {
         console.error('Failed to parse content:', parseResult.error);
         alert(`Failed to load content: ${parseResult.error}`);
@@ -66,26 +91,26 @@ export default function Results() {
   };
 
   const handleSaveResult = async () => {
-    if (!fullDocument || !currentSubject || !pass1Data || !validation) return;
+    if (!displayDocument || !displaySubject || !displayPass1Data || !displayValidation) return;
 
     setSaving(true);
     try {
       const savedResult: SavedResult = {
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        subject: currentSubject,
-        generatedAt: new Date().toISOString(),
-        fullDocument,
+        id: loadedResult?.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        subject: displaySubject,
+        generatedAt: loadedResult?.generatedAt || new Date().toISOString(),
+        fullDocument: displayDocument,
         pass1Data: {
-          domain: pass1Data.domain,
-          roleScope: pass1Data.roleScope,
-          lifecycle: pass1Data.lifecycle,
-          concepts: pass1Data.concepts,
+          domain: displayPass1Data.domain,
+          roleScope: displayPass1Data.roleScope,
+          lifecycle: displayPass1Data.lifecycle,
+          concepts: displayPass1Data.concepts,
         },
         validation: {
-          lifecycleConsistency: validation.lifecycleConsistency,
-          positiveFraming: validation.positiveFraming,
-          formatConsistency: validation.formatConsistency,
-          completeness: validation.completeness,
+          lifecycleConsistency: displayValidation.lifecycleConsistency,
+          positiveFraming: displayValidation.positiveFraming,
+          formatConsistency: displayValidation.formatConsistency,
+          completeness: displayValidation.completeness,
         },
         savedLocally: true,
       };
@@ -110,49 +135,36 @@ export default function Results() {
   const { createPalace, createCustomPalace } = usePalaceStore();
 
   const handleCreatePalace = () => {
-    if (!fullDocument || !pass1Data) return;
+    if (!displayDocument || !displayPass1Data) return;
 
-    // Parse content to get stages
-    const parseResult = parseGeneratedContent(fullDocument);
+    const parseResult = parseGeneratedContent(displayDocument);
     if (!parseResult.success) {
       console.error('Failed to parse content for palace:', parseResult.error);
       return;
     }
 
     const { learningPath, concepts } = parseResult.data;
-    console.log('Palace creation - Parsed concepts:', concepts.length, concepts.map(c => c.name));
-    console.log('Palace creation - Learning path stages:', learningPath.stages);
 
-    // If no concepts parsed, abort
     if (concepts.length === 0) {
       console.error('No concepts found in parsed content');
       return;
     }
 
-    // Calculate how many concepts per stage (distribute evenly across buildings)
-    const conceptsPerStage = Math.max(1, Math.ceil(concepts.length / Math.max(learningPath.stages.length, 1)));
+    const numBuildings = Math.min(7, Math.max(learningPath.stages.length, 1));
+    const conceptsPerBuilding = Math.ceil(concepts.length / numBuildings);
 
-    // Convert parsed stages to palace format
-    const stages = learningPath.stages.map((stage, stageIndex) => {
-      // Find concepts that belong to this stage (matching by name, as learningPath uses names)
-      const stageConcepts = concepts.filter(c =>
-        stage.concepts.some(stageConcept =>
-          stageConcept.toLowerCase().includes(c.name.toLowerCase()) ||
-          c.name.toLowerCase().includes(stageConcept.toLowerCase())
-        )
-      );
+    const stages = Array.from({ length: numBuildings }, (_, idx) => {
+      const stageName = learningPath.stages[idx]?.name || `Stage ${idx + 1}`;
+      const stageOrder = learningPath.stages[idx]?.order || idx + 1;
 
-      // If no match found, distribute concepts evenly using 0-based stageIndex
-      const conceptsToUse = stageConcepts.length > 0
-        ? stageConcepts
-        : concepts.slice(stageIndex * conceptsPerStage, (stageIndex + 1) * conceptsPerStage);
-
-      console.log(`Stage ${stageIndex} "${stage.name}": ${conceptsToUse.length} concepts assigned`);
+      const startIdx = idx * conceptsPerBuilding;
+      const endIdx = Math.min(startIdx + conceptsPerBuilding, concepts.length);
+      const buildingConcepts = concepts.slice(startIdx, endIdx);
 
       return {
-        id: `stage-${stage.order}`,
-        name: stage.name,
-        concepts: conceptsToUse.map(concept => ({
+        id: `stage-${stageOrder}`,
+        name: stageName,
+        concepts: buildingConcepts.map(concept => ({
           id: concept.id,
           name: concept.name,
           lifecycle: {
@@ -172,38 +184,33 @@ export default function Results() {
       };
     });
 
-    // Create palace with first route
-    createPalace(currentSubject || 'study', 'tech-campus', stages);
+    createPalace(displaySubject || 'study', 'tech-campus', stages);
     navigate('/palace');
   };
 
-  // Parse stages for palace creation - extract as helper
   const getPalaceStages = () => {
-    if (!fullDocument || !pass1Data) return null;
-    const parseResult = parseGeneratedContent(fullDocument);
+    if (!displayDocument || !displayPass1Data) return null;
+    const parseResult = parseGeneratedContent(displayDocument);
     if (!parseResult.success) return null;
 
     const { learningPath, concepts } = parseResult.data;
     if (concepts.length === 0) return null;
 
-    const conceptsPerStage = Math.max(1, Math.ceil(concepts.length / Math.max(learningPath.stages.length, 1)));
+    const numBuildings = Math.min(7, Math.max(learningPath.stages.length, 1));
+    const conceptsPerBuilding = Math.ceil(concepts.length / numBuildings);
 
-    return learningPath.stages.map((stage, stageIndex) => {
-      const stageConcepts = concepts.filter(c =>
-        stage.concepts.some(stageConcept =>
-          stageConcept.toLowerCase().includes(c.name.toLowerCase()) ||
-          c.name.toLowerCase().includes(stageConcept.toLowerCase())
-        )
-      );
-      // Use 0-based stageIndex for even distribution
-      const conceptsToUse = stageConcepts.length > 0
-        ? stageConcepts
-        : concepts.slice(stageIndex * conceptsPerStage, (stageIndex + 1) * conceptsPerStage);
+    return Array.from({ length: numBuildings }, (_, idx) => {
+      const stageName = learningPath.stages[idx]?.name || `Stage ${idx + 1}`;
+      const stageOrder = learningPath.stages[idx]?.order || idx + 1;
+
+      const startIdx = idx * conceptsPerBuilding;
+      const endIdx = Math.min(startIdx + conceptsPerBuilding, concepts.length);
+      const buildingConcepts = concepts.slice(startIdx, endIdx);
 
       return {
-        id: `stage-${stage.order}`,
-        name: stage.name,
-        concepts: conceptsToUse.map(concept => ({
+        id: `stage-${stageOrder}`,
+        name: stageName,
+        concepts: buildingConcepts.map(concept => ({
           id: concept.id,
           name: concept.name,
           lifecycle: {
@@ -228,12 +235,26 @@ export default function Results() {
     const stages = getPalaceStages();
     if (!stages) return;
 
-    createCustomPalace(currentSubject || 'study', routeName, buildings, stages);
+    createCustomPalace(displaySubject || 'study', routeName, buildings, stages);
     setShowRouteBuilder(false);
     navigate('/palace');
   };
 
-  if (!fullDocument) {
+  // Show loading state when fetching from storage
+  if (isLoadingResult) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.wrapper}>
+          <div className={styles.emptyState}>
+            <div className="loading-spinner" />
+            <p>Loading saved result...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!displayDocument) {
     return (
       <div className={styles.container}>
         <div className={styles.wrapper}>
@@ -258,7 +279,7 @@ export default function Results() {
         </button>
         <div className={styles.headerContent}>
           <h1 className={styles.title}>Generation Complete</h1>
-          <span className={styles.subtitle}>{currentSubject}</span>
+          <span className={styles.subtitle}>{displaySubject}</span>
         </div>
       </header>
 
@@ -331,52 +352,52 @@ export default function Results() {
           )}
 
           {/* Quality Metrics */}
-          {validation && (
+          {displayValidation && (
             <div className={styles.metricsSection}>
               <h2 className={styles.sectionTitle}>Quality Metrics</h2>
               <div className={styles.metricsGrid}>
-                <div className={`${styles.metricItem} ${getMetricStatus(validation.lifecycleConsistency, QUALITY_THRESHOLDS.lifecycleConsistency) === 'good' ? styles.metricGood : styles.metricWarning}`}>
+                <div className={`${styles.metricItem} ${getMetricStatus(displayValidation.lifecycleConsistency, QUALITY_THRESHOLDS.lifecycleConsistency) === 'good' ? styles.metricGood : styles.metricWarning}`}>
                   <span className={styles.metricLabel}>Lifecycle</span>
-                  <span className={styles.metricValue}>{validation.lifecycleConsistency}%</span>
+                  <span className={styles.metricValue}>{displayValidation.lifecycleConsistency}%</span>
                 </div>
-                <div className={`${styles.metricItem} ${getMetricStatus(validation.positiveFraming, QUALITY_THRESHOLDS.positiveFraming) === 'good' ? styles.metricGood : styles.metricWarning}`}>
+                <div className={`${styles.metricItem} ${getMetricStatus(displayValidation.positiveFraming, QUALITY_THRESHOLDS.positiveFraming) === 'good' ? styles.metricGood : styles.metricWarning}`}>
                   <span className={styles.metricLabel}>Framing</span>
-                  <span className={styles.metricValue}>{validation.positiveFraming}%</span>
+                  <span className={styles.metricValue}>{displayValidation.positiveFraming}%</span>
                 </div>
-                <div className={`${styles.metricItem} ${getMetricStatus(validation.formatConsistency, QUALITY_THRESHOLDS.formatConsistency) === 'good' ? styles.metricGood : styles.metricWarning}`}>
+                <div className={`${styles.metricItem} ${getMetricStatus(displayValidation.formatConsistency, QUALITY_THRESHOLDS.formatConsistency) === 'good' ? styles.metricGood : styles.metricWarning}`}>
                   <span className={styles.metricLabel}>Format</span>
-                  <span className={styles.metricValue}>{validation.formatConsistency}%</span>
+                  <span className={styles.metricValue}>{displayValidation.formatConsistency}%</span>
                 </div>
-                <div className={`${styles.metricItem} ${getMetricStatus(validation.completeness, QUALITY_THRESHOLDS.completeness) === 'good' ? styles.metricGood : styles.metricWarning}`}>
+                <div className={`${styles.metricItem} ${getMetricStatus(displayValidation.completeness, QUALITY_THRESHOLDS.completeness) === 'good' ? styles.metricGood : styles.metricWarning}`}>
                   <span className={styles.metricLabel}>Complete</span>
-                  <span className={styles.metricValue}>{validation.completeness}%</span>
+                  <span className={styles.metricValue}>{displayValidation.completeness}%</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Domain Analysis */}
-          {pass1Data && (
+          {displayPass1Data && (
             <div className={styles.detailsSection}>
               <h2 className={styles.sectionTitle}>Domain Analysis</h2>
               <div className={styles.detailsList}>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Domain</span>
-                  <span className={styles.detailValue}>{pass1Data.domain}</span>
+                  <span className={styles.detailValue}>{displayPass1Data.domain}</span>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Role</span>
-                  <span className={styles.detailValue}>{pass1Data.roleScope}</span>
+                  <span className={styles.detailValue}>{displayPass1Data.roleScope}</span>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Lifecycle</span>
                   <span className={styles.detailValue}>
-                    {pass1Data.lifecycle.phase1} → {pass1Data.lifecycle.phase2} → {pass1Data.lifecycle.phase3}
+                    {displayPass1Data.lifecycle.phase1} → {displayPass1Data.lifecycle.phase2} → {displayPass1Data.lifecycle.phase3}
                   </span>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Concepts</span>
-                  <span className={styles.detailValue}>{pass1Data.concepts.length} core</span>
+                  <span className={styles.detailValue}>{displayPass1Data.concepts.length} core</span>
                 </div>
               </div>
             </div>
@@ -387,7 +408,7 @@ export default function Results() {
         <main className={styles.contentPanel}>
           <div className={styles.contentCard}>
             <h2 className={styles.sectionTitle}>Generated Content</h2>
-            <pre className={styles.contentPre}>{fullDocument}</pre>
+            <pre className={styles.contentPre}>{displayDocument}</pre>
           </div>
         </main>
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Download, BookOpen, Cloud, HardDrive, Upload, Search } from 'lucide-react';
+import { ArrowLeft, Trash2, Download, BookOpen, Cloud, HardDrive, Upload, Search, Eye } from 'lucide-react';
 import { storageManager, importFromFile } from '@/lib/storage';
 import { localFileStorage } from '@/lib/storage';
 import type { SavedResult } from '@/lib/storage';
@@ -301,6 +301,14 @@ export default function SavedResults() {
                 </div>
 
                 <div className={styles.cardActions}>
+                  <button
+                    onClick={() => navigate(`/results/${result.id}`)}
+                    className={styles.viewButton}
+                    title="View full result"
+                  >
+                    <Eye size={16} />
+                    View
+                  </button>
                   <button
                     onClick={() => handleStartLearning(result)}
                     className={styles.learnButton}

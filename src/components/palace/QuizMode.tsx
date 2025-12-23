@@ -31,8 +31,13 @@ export default function QuizMode({ onClose }: QuizModeProps) {
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [showFeedback, setShowFeedback] = useState(false);
 
-    const questions = useMemo(() => {
+    const allConcepts = useMemo(() => {
         if (!currentPalace) return [];
+        return currentPalace.buildings.flatMap(b => b.concepts);
+    }, [currentPalace]);
+
+    const questions = useMemo(() => {
+        if (!currentPalace || allConcepts.length < 2) return [];
 
         const allQuestions: QuizQuestion[] = [];
 
@@ -41,14 +46,11 @@ export default function QuizMode({ onClose }: QuizModeProps) {
                 const scenarioTemplate = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
                 const scenario = scenarioTemplate.replace('{concept}', concept.conceptName);
 
-                // Get 3 other random concepts as distractors
-                const otherConcepts = currentPalace.buildings
-                    .flatMap(b => b.concepts)
-                    .filter(c => c.conceptId !== concept.conceptId);
-
+                const otherConcepts = allConcepts.filter(c => c.conceptId !== concept.conceptId);
+                const numDistractors = Math.min(3, otherConcepts.length);
                 const distractors = otherConcepts
                     .sort(() => Math.random() - 0.5)
-                    .slice(0, 3);
+                    .slice(0, numDistractors);
 
                 const options = [concept, ...distractors].sort(() => Math.random() - 0.5);
 
@@ -64,15 +66,19 @@ export default function QuizMode({ onClose }: QuizModeProps) {
             });
         });
 
-        // Shuffle and take 10 questions
         return allQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
-    }, [currentPalace]);
+    }, [currentPalace, allConcepts]);
 
     if (!currentPalace || questions.length === 0) {
+        const message = !currentPalace 
+            ? 'No Memory Palace active. Create one from the Results page.'
+            : allConcepts.length === 0
+                ? 'No concepts in your palace. Recreate it from the Results page.'
+                : 'Need at least 2 concepts for quiz. Add more content first.';
         return (
             <div className={styles.quizOverlay}>
                 <div className={styles.quizCard}>
-                    <p>No questions available. Create a Memory Palace first.</p>
+                    <p>{message}</p>
                     <button onClick={onClose} className={styles.nextButton}>Close</button>
                 </div>
             </div>

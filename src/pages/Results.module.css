@@ -220,7 +220,7 @@
   word-wrap: break-word;
   max-height: 600px;
   overflow-y: auto;
-  color: var(--color-text-medium);
+  color: var(--color-text-dark);
 }
 
 .learnButton {

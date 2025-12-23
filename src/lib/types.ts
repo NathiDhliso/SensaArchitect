@@ -59,7 +59,7 @@ export type ValidationResult = {
   positiveFraming: number;
   formatConsistency: number;
   completeness: number;
-  issues: Array<{
+  issues: Array<string | {
     section: string;
     problem: string;
     severity: 'critical' | 'minor';
@@ -68,6 +68,7 @@ export type ValidationResult = {
   violations: {
     outOfScope: string[];
     negativeFraming: string[];
+    genericContent?: string[];
   };
   fixes: Record<string, string>;
 };
