@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { JourneyMap, ConceptCard, CelebrationModal } from '@/components/learning';
@@ -30,8 +30,16 @@ export default function Learn() {
   const currentConcept = concepts.find(c => c.id === progress.currentConceptId);
   const hasContent = stages.length > 0 && concepts.length > 0;
 
+  const [showWelcomeToast, setShowWelcomeToast] = useState(false);
+
   useEffect(() => {
     startSession();
+    
+    if (currentConcept && progress.completedConcepts.length > 0) {
+      setShowWelcomeToast(true);
+      setTimeout(() => setShowWelcomeToast(false), 5000);
+    }
+    
     return () => endSession();
   }, [startSession, endSession]);
 
@@ -105,6 +113,18 @@ export default function Learn() {
           )}
         </main>
       </div>
+
+      {showWelcomeToast && currentConcept && (
+        <div className={styles.welcomeToast}>
+          <div className={styles.toastContent}>
+            <span className={styles.toastIcon}>👋</span>
+            <div>
+              <strong>Welcome back!</strong>
+              <p>Continue with: {currentConcept.name}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCelebration && celebrationData && (
         <CelebrationModal

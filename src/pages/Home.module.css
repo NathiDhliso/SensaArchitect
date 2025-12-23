@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
+  background: var(--gradient-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,24 +32,24 @@
 .icon {
   width: 3rem;
   height: 3rem;
-  color: #2563eb;
+  color: var(--color-primary-amethyst);
 }
 
 .title {
   font-size: 3rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-text-dark);
 }
 
 .subtitle {
   font-size: 1.25rem;
-  color: #475569;
+  color: var(--color-text-medium);
 }
 
 .card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-xl);
   padding: 2rem;
   display: flex;
   flex-direction: column;
@@ -65,7 +65,7 @@
 .label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #334155;
+  color: var(--color-text-dark);
 }
 
 .inputWrapper {
@@ -79,27 +79,29 @@
   transform: translateY(-50%);
   width: 1.25rem;
   height: 1.25rem;
-  color: #94a3b8;
+  color: var(--color-text-muted);
 }
 
 .input {
   width: 100%;
   padding: 1rem 1rem 1rem 3rem;
   border-radius: 0.75rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--color-border);
   font-size: 1.125rem;
   transition: border-color 0.2s;
+  background: var(--color-surface);
+  color: var(--color-text-dark);
 }
 
 .input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary-amethyst);
 }
 
 .generateButton {
   width: 100%;
   padding: 1rem;
-  background: #2563eb;
+  background: var(--color-primary-amethyst);
   color: white;
   font-weight: 600;
   font-size: 1.125rem;
@@ -110,11 +112,11 @@
 }
 
 .generateButton:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-accent-hover);
 }
 
 .generateButton:disabled {
-  background: #cbd5e1;
+  background: var(--color-border-emphasis);
   cursor: not-allowed;
 }
 
@@ -123,11 +125,11 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: #dbeafe;
-  border: 1px solid #60a5fa;
+  background: var(--color-info-bg);
+  border: 1px solid var(--color-info-border);
   border-radius: 0.5rem;
   font-size: 0.875rem;
-  color: #1e40af;
+  color: var(--color-info-text);
 }
 
 .infoIcon {
@@ -139,7 +141,7 @@
 .settingsLink {
   background: none;
   border: none;
-  color: #1d4ed8;
+  color: var(--color-primary-amethyst);
   text-decoration: underline;
   cursor: pointer;
   padding: 0;
@@ -148,12 +150,12 @@
 
 .recentSection {
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border);
 }
 
 .helpText {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--color-text-light);
   margin-bottom: 0.75rem;
 }
 
@@ -166,22 +168,22 @@
 
 .recentLabel {
   font-size: 0.875rem;
-  color: #475569;
+  color: var(--color-text-medium);
 }
 
 .recentTag {
   font-size: 0.875rem;
   padding: 0.25rem 0.75rem;
-  background: #f1f5f9;
+  background: var(--color-bg-neutral-alt);
   border: none;
   border-radius: 9999px;
-  color: #334155;
+  color: var(--color-text-dark);
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .recentTag:hover {
-  background: #e2e8f0;
+  background: var(--color-border);
 }
 
 .actionButtons {
@@ -198,19 +200,19 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: var(--gradient-accent);
   color: white;
   border: none;
   border-radius: 0.5rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  box-shadow: var(--shadow-glow-primary);
 }
 
 .learnButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  box-shadow: var(--shadow-glow-primary-hover);
 }
 
 .savedButton {
@@ -220,14 +222,14 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: var(--gradient-sage);
   color: white;
   border: none;
   border-radius: 0.5rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  box-shadow: var(--shadow-glow-sage);
 }
 
 .savedButton:hover {
@@ -238,9 +240,9 @@
 .settingsButton {
   flex: 1;
   padding: 0.75rem 1.5rem;
-  background: white;
-  color: #334155;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface);
+  color: var(--color-text-dark);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   font-weight: 500;
   cursor: pointer;
@@ -248,6 +250,6 @@
 }
 
 .settingsButton:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--color-surface-subtle);
+  border-color: var(--color-border-emphasis);
 }

@@ -45,8 +45,14 @@ export default function Results() {
     
     setLoadingLearn(true);
     try {
-      const parsed = parseGeneratedContent(fullDocument);
-      const transformed = transformGeneratedContent(parsed);
+      const parseResult = parseGeneratedContent(fullDocument);
+      if (!parseResult.success) {
+        console.error('Failed to parse content:', parseResult.error);
+        alert(`Failed to load content: ${parseResult.error}`);
+        setLoadingLearn(false);
+        return;
+      }
+      const transformed = transformGeneratedContent(parseResult.data);
       loadCustomContent(transformed);
       navigate('/learn');
     } catch (error) {

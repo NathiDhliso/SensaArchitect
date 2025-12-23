@@ -8,6 +8,10 @@ import type {
   ParsedAcronym,
 } from './types';
 
+export type ParseResult = 
+  | { success: true; data: ParsedGeneratedContent }
+  | { success: false; error: string };
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -292,19 +296,58 @@ function parseMentalAnchors(content: string): ParsedMentalAnchor[] {
   return anchors;
 }
 
-export function parseGeneratedContent(rawContent: string): ParsedGeneratedContent {
-  const domainAnalysis = parseDomainAnalysis(rawContent);
-  const concepts = parseConcepts(rawContent);
-  const learningPath = parseLearningPath(rawContent);
-  const mentalAnchors = parseMentalAnchors(rawContent);
-  
-  return {
-    domainAnalysis,
-    concepts,
-    learningPath,
-    mentalAnchors,
-    rawContent,
-  };
+export function parseGeneratedContent(rawContent: string): ParseResult {
+  try {
+    if (!rawContent || rawContent.trim().length === 0) {
+      return {
+        success: false,
+        error: 'Empty content received - please regenerate',
+      };
+    }
+    const domainAnalysis = parseDomainAnalysis(rawContent);
+    
+    if (!domainAnalysis.domain || domainAnalysis.domain.trim().length === 0) {
+      return {
+        success: false,
+        error: 'Domain analysis incomplete - regeneration recommended',
+      };
+    }
+    
+    if (!domainAnalysis.lifecycle.phase1) {
+      return {
+        success: false,
+        error: 'Lifecycle information missing - regeneration recommended',
+      };
+    }
+    
+    const concepts = parseConcepts(rawContent);
+    
+    if (concepts.length === 0) {
+      return {
+        success: false,
+        error: 'No concepts detected - check content format or regenerate',
+      };
+    }
+    
+    const learningPath = parseLearningPath(rawContent);
+    const mentalAnchors = parseMentalAnchors(rawContent);
+    
+    return {
+      success: true,
+      data: {
+        domainAnalysis,
+        concepts,
+        learningPath,
+        mentalAnchors,
+        rawContent,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Parsing failed - please regenerate',
+    };
+  }
 }
 
 export function extractStagesFromLearningPath(learningPath: ParsedLearningPath): ParsedStage[] {

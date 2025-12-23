@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
+/* ============================================
+   SensaPBL Color Palette - Single Source of Truth
+   "Twilight Learning" Theme
+   ============================================ */
+
 :root {
+  /* Typography */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -8,7 +14,169 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ========== PRIMARY COLORS ========== */
+  --color-primary-amethyst: #6B46C1;
+  --color-primary-coral: #F97316;
+  --color-primary-plum: #7C2D92;
+
+  /* ========== SECONDARY COLORS ========== */
+  --color-secondary-amber: #F59E0B;
+  --color-secondary-rose: #EC4899;
+  --color-secondary-sage: #10B981;
+
+  /* ========== NEUTRAL TEXT COLORS ========== */
+  --color-text-dark: #1f2937;
+  --color-text-medium: #4b5563;
+  --color-text-light: #6b7280;
+  --color-text-muted: #94a3b8;
+
+  /* ========== LIGHT MODE BACKGROUNDS ========== */
+  --color-bg-primary: #FAF5FF;
+  --color-bg-secondary: #FFF7ED;
+  --color-bg-tertiary: #FDF2F8;
+  --color-bg-neutral: #f8fafc;
+  --color-bg-neutral-alt: #f1f5f9;
+
+  /* ========== SURFACE & CARD COLORS ========== */
+  --color-surface: white;
+  --color-surface-elevated: white;
+  --color-surface-subtle: #f8fafc;
+
+  /* ========== BORDER COLORS ========== */
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  --color-border-emphasis: #cbd5e1;
+
+  /* ========== ACCENT COLORS (Light Mode) ========== */
+  --color-accent: #6B46C1;
+  --color-accent-hover: #553c9a;
+  --color-accent-light: #8b5cf6;
+  --color-accent-alt: #F97316;
+  --color-accent-alt-hover: #ea580c;
+
+  /* ========== SEMANTIC COLORS ========== */
+  --color-success: #22c55e;
+  --color-success-bg: #f0fdf4;
+  --color-success-border: #bbf7d0;
+  --color-success-text: #166534;
+
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-warning-text: #92400e;
+
+  --color-error: #dc2626;
+  --color-error-bg: #fef2f2;
+  --color-error-border: #fecaca;
+  --color-error-text: #991b1b;
+
+  --color-info: #3b82f6;
+  --color-info-bg: #dbeafe;
+  --color-info-border: #60a5fa;
+  --color-info-text: #1e40af;
+
+  /* ========== GRADIENT DEFINITIONS ========== */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary-amethyst) 0%, var(--color-primary-plum) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--color-accent-light) 0%, var(--color-primary-amethyst) 100%);
+  --gradient-coral: linear-gradient(135deg, var(--color-primary-coral) 0%, #ea580c 100%);
+  --gradient-sage: linear-gradient(135deg, var(--color-secondary-sage) 0%, #059669 100%);
+  --gradient-surface: linear-gradient(to bottom right, var(--color-bg-neutral), var(--color-bg-neutral-alt));
+  --gradient-paper: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 50%, var(--color-bg-tertiary) 100%);
+
+  /* ========== SHADOW DEFINITIONS ========== */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-glow-primary: 0 4px 15px rgba(107, 70, 193, 0.3);
+  --shadow-glow-primary-hover: 0 6px 20px rgba(107, 70, 193, 0.4);
+  --shadow-glow-sage: 0 4px 15px rgba(16, 185, 129, 0.3);
+
+  /* ========== CRUMPLED PAPER EFFECT ========== */
+  --shadow-crumpled:
+    inset 20px 30px 40px rgba(0, 0, 0, 0.02),
+    inset -20px -30px 40px rgba(0, 0, 0, 0.02),
+    inset 40px -20px 50px rgba(0, 0, 0, 0.015),
+    inset -40px 20px 50px rgba(0, 0, 0, 0.015);
 }
+
+/* ============================================
+   DARK MODE - Twilight Learning Theme
+   ============================================ */
+.dark,
+[data-theme="dark"] {
+  /* Dark Mode Backgrounds */
+  --color-bg-primary: #1a0b2e;
+  --color-bg-secondary: #2d1b4e;
+  --color-bg-tertiary: #3d2963;
+  --color-bg-neutral: #1a0b2e;
+  --color-bg-neutral-alt: #2d1b4e;
+
+  /* Dark Mode Text */
+  --color-text-dark: #f3e8ff;
+  --color-text-medium: #d4b5f7;
+  --color-text-light: #c4b5d0;
+  --color-text-muted: #a78bbd;
+
+  /* Dark Mode Surfaces */
+  --color-surface: #2d1b4e;
+  --color-surface-elevated: #3d2963;
+  --color-surface-subtle: #251640;
+
+  /* Dark Mode Borders */
+  --color-border: #4a3470;
+  --color-border-light: #3d2963;
+  --color-border-emphasis: #6b46c1;
+
+  /* Dark Mode Accents (Brightened) */
+  --color-accent: #8b5cf6;
+  --color-accent-hover: #a78bfa;
+  --color-accent-light: #a78bfa;
+  --color-accent-alt: #fb923c;
+  --color-accent-alt-hover: #fdba74;
+
+  /* Updated gradients for dark mode */
+  --gradient-surface: linear-gradient(to bottom right, var(--color-bg-primary), var(--color-bg-secondary));
+  --gradient-paper: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 50%, var(--color-bg-tertiary) 100%);
+}
+
+/* Also support prefers-color-scheme for automatic dark mode */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg-primary: #1a0b2e;
+    --color-bg-secondary: #2d1b4e;
+    --color-bg-tertiary: #3d2963;
+    --color-bg-neutral: #1a0b2e;
+    --color-bg-neutral-alt: #2d1b4e;
+
+    --color-text-dark: #f3e8ff;
+    --color-text-medium: #d4b5f7;
+    --color-text-light: #c4b5d0;
+    --color-text-muted: #a78bbd;
+
+    --color-surface: #2d1b4e;
+    --color-surface-elevated: #3d2963;
+    --color-surface-subtle: #251640;
+
+    --color-border: #4a3470;
+    --color-border-light: #3d2963;
+    --color-border-emphasis: #6b46c1;
+
+    --color-accent: #8b5cf6;
+    --color-accent-hover: #a78bfa;
+    --color-accent-light: #a78bfa;
+    --color-accent-alt: #fb923c;
+    --color-accent-alt-hover: #fdba74;
+
+    --gradient-surface: linear-gradient(to bottom right, var(--color-bg-primary), var(--color-bg-secondary));
+    --gradient-paper: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 50%, var(--color-bg-tertiary) 100%);
+  }
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
 
 * {
   margin: 0;
@@ -18,11 +186,20 @@
 
 body {
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--color-bg-neutral);
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.crumpled-background {
+  background: var(--gradient-paper);
+  box-shadow: var(--shadow-crumpled);
 }
 
 .loading-container {
@@ -32,14 +209,14 @@ body {
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  color: #64748b;
+  color: var(--color-text-light);
 }
 
 .loading-spinner {
   width: 2.5rem;
   height: 2.5rem;
-  border: 3px solid #e2e8f0;
-  border-top-color: #2563eb;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

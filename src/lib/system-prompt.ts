@@ -160,7 +160,9 @@ Provide ONE fully-worked scenario showing how the chart solves a realistic probl
 
 ## STEP 7: LEARNING PATH SEQUENCE [Progressive Mastery Guide]
 
-Define a suggested study sequence that organizes concepts into progressive stages. Frame entirely around capability expansion and skill building.
+Define a suggested study sequence that organizes concepts into **4-6 progressive stages**. Each stage should contain 5-8 related concepts. Frame entirely around capability expansion and skill building.
+
+**CRITICAL:** You MUST create at least 4 stages and at most 6 stages. Distribute all concepts evenly across these stages based on logical progression and dependencies.
 
 **STRUCTURE FOR EACH STAGE:**
 1. **Stage Name & Order:** Clear numbering and descriptive title

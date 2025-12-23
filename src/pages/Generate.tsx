@@ -1,10 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle2, Circle, Loader2, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, ArrowLeft, AlertTriangle, RefreshCw } from 'lucide-react';
 import { generateChartIteratively } from '@/lib/generation/multi-pass-generator';
 import { useGenerationStore } from '@/store/generation-store';
 import { PASS_NAMES } from '@/constants/ui-constants';
+import type { PassStatus, Pass1Result, ValidationResult } from '@/lib/types';
 import styles from './Generate.module.css';
+
+type ProgressData = {
+  message?: string;
+  partial?: string;
+  progress?: number;
+  content?: string;
+  domain?: string;
+} & Partial<Pass1Result> & Partial<ValidationResult>;
 
 export default function Generate() {
   const { subject } = useParams<{ subject: string }>();
@@ -15,67 +24,130 @@ export default function Generate() {
     currentActivity,
     progress,
     pass1Data,
-    isGenerating,
     error,
+    isGenerating,
     startGeneration,
-    updatePassStatus,
-    setCurrentActivity,
-    setProgress,
-    setPass1Data,
-    setPass2Content,
-    setPass3Content,
-    setValidation,
     completeGeneration,
     setError,
     addRecentSubject,
+    canResumeFromCheckpoint,
+    getCheckpointResumeData,
+    clearCheckpoint,
+    saveCheckpoint,
+    updateGenerationProgress,
   } = useGenerationStore();
 
-  useEffect(() => {
-    if (!subject || !bedrockConfig) return;
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const hasStartedRef = useRef(false);
 
-    const decodedSubject = decodeURIComponent(subject);
-    startGeneration(decodedSubject);
-    addRecentSubject(decodedSubject);
+  // Shared callback function to handle progress updates
+  const createProgressCallback = useCallback(() => {
+    return (pass: number, status: PassStatus, data?: ProgressData) => {
+      const update: {
+        pass: number;
+        status: PassStatus;
+        activity?: string;
+        progress?: number;
+        pass1Data?: Pass1Result;
+        pass2Content?: string;
+        pass3Content?: string;
+        validation?: ValidationResult;
+      } = { pass, status };
 
-    generateChartIteratively(decodedSubject, bedrockConfig, (pass, status, data) => {
-      updatePassStatus(pass, status);
-
+      // Set activity message
       if (data?.message) {
-        setCurrentActivity(data.message);
+        update.activity = data.message;
+      } else if (data?.partial) {
+        update.activity = 'Generating detailed content...';
       }
 
-      if (data?.partial) {
-        setCurrentActivity('Generating detailed content...');
-      }
-
+      // Set progress
       if (data?.progress !== undefined) {
-        setProgress(data.progress);
+        update.progress = data.progress;
       }
 
+      // Handle pass-specific data
       if (pass === 1 && status === 'complete' && data && 'domain' in data && data.domain) {
-        setPass1Data(data as any);
+        update.pass1Data = data as Pass1Result;
       }
 
       if (pass === 2 && status === 'complete' && data?.content) {
-        setPass2Content(data.content);
+        update.pass2Content = data.content;
       }
 
       if (pass === 3 && status === 'complete' && data?.content) {
-        setPass3Content(data.content);
+        update.pass3Content = data.content;
       }
 
       if (pass === 4 && status === 'complete' && data) {
-        setValidation(data as Parameters<typeof setValidation>[0]);
+        update.validation = data as ValidationResult;
       }
-    })
+
+      // Single atomic update
+      updateGenerationProgress(update);
+
+      // Save checkpoint on pass completion
+      if (status === 'complete') {
+        saveCheckpoint(pass);
+      }
+    };
+  }, [updateGenerationProgress, saveCheckpoint]);
+
+  // Start generation
+  const startGenerationProcess = useCallback((decodedSubject: string, resumeData?: ReturnType<typeof getCheckpointResumeData>) => {
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    if (resumeData) {
+      // Resume from checkpoint
+      useGenerationStore.setState({
+        ...resumeData.restoredState,
+        currentSubject: decodedSubject,
+        isGenerating: true,
+        error: null,
+      });
+    } else {
+      // Fresh start
+      startGeneration(decodedSubject);
+      addRecentSubject(decodedSubject);
+    }
+
+    const progressCallback = createProgressCallback();
+
+    generateChartIteratively(decodedSubject, bedrockConfig!, progressCallback, controller.signal)
       .then((result) => {
         completeGeneration(result);
+        clearCheckpoint();
         navigate(`/results/${Date.now()}`);
       })
       .catch((err) => {
-        setError(err.message || 'Generation failed');
+        if (err.message === 'Generation cancelled by user') {
+          navigate('/');
+        } else {
+          // Show error on the page instead of silent navigation
+          setError(err.message || 'Generation failed. Please check your AWS credentials and try again.');
+        }
       });
-  }, [subject, bedrockConfig]);
+  }, [bedrockConfig, createProgressCallback, startGeneration, addRecentSubject, completeGeneration, clearCheckpoint, setError, navigate]);
+
+  useEffect(() => {
+    if (!subject || !bedrockConfig || hasStartedRef.current) return;
+
+    const decodedSubject = decodeURIComponent(subject);
+
+    if (canResumeFromCheckpoint(decodedSubject)) {
+      setShowResumeDialog(true);
+      return;
+    }
+
+    hasStartedRef.current = true;
+    startGenerationProcess(decodedSubject);
+
+    return () => {
+      abortController?.abort();
+    };
+  }, [subject, bedrockConfig, canResumeFromCheckpoint, startGenerationProcess, abortController]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -102,6 +174,34 @@ export default function Generate() {
     }
   };
 
+  const handleResumeFromCheckpoint = () => {
+    if (!subject || !bedrockConfig) return;
+
+    const decodedSubject = decodeURIComponent(subject);
+    const resumeData = getCheckpointResumeData();
+
+    if (!resumeData) return;
+
+    setShowResumeDialog(false);
+    hasStartedRef.current = true;
+    startGenerationProcess(decodedSubject, resumeData);
+  };
+
+  const handleStartFresh = () => {
+    clearCheckpoint();
+    setShowResumeDialog(false);
+    hasStartedRef.current = false;
+    window.location.reload();
+  };
+
+  const handleRetry = () => {
+    if (!subject) return;
+    setError(null);
+    hasStartedRef.current = false;
+    const decodedSubject = decodeURIComponent(subject);
+    startGenerationProcess(decodedSubject);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.wrapper}>
@@ -109,6 +209,33 @@ export default function Generate() {
           <ArrowLeft className={styles.backIcon} />
           Back to Home
         </button>
+
+        {showResumeDialog && (
+          <div className={styles.resumeDialog}>
+            <h2>Resume Previous Generation?</h2>
+            <p>
+              Found an incomplete generation for this subject from{' '}
+              {(() => {
+                const checkpoint = useGenerationStore.getState().checkpoint;
+                if (!checkpoint) return 'earlier';
+                const age = Date.now() - checkpoint.timestamp;
+                const minutes = Math.floor(age / 60000);
+                return minutes < 1 ? 'just now' : `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+              })()}
+            </p>
+            <p>
+              Progress saved: Pass {getCheckpointResumeData()?.startFromPass! - 1} complete
+            </p>
+            <div className={styles.dialogActions}>
+              <button onClick={handleResumeFromCheckpoint} className={styles.primaryButton}>
+                Resume Generation
+              </button>
+              <button onClick={handleStartFresh} className={styles.secondaryButton}>
+                Start Fresh
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className={styles.card}>
           <h1 className={styles.title}>
@@ -133,10 +260,20 @@ export default function Generate() {
 
           {error && (
             <div className={styles.errorBox}>
-              <p>{error}</p>
-              <button onClick={() => navigate('/')} className={styles.retryButton}>
-                Try Again
-              </button>
+              <div className={styles.errorHeader}>
+                <AlertTriangle className={styles.errorIcon} />
+                <span className={styles.errorTitle}>Generation Failed</span>
+              </div>
+              <p className={styles.errorMessage}>{error}</p>
+              <div className={styles.errorActions}>
+                <button onClick={handleRetry} className={styles.retryButton}>
+                  <RefreshCw size={16} />
+                  Retry
+                </button>
+                <button onClick={() => navigate('/')} className={styles.homeButton}>
+                  Go Home
+                </button>
+              </div>
             </div>
           )}
 
@@ -178,10 +315,10 @@ export default function Generate() {
                 <div className={styles.activityInfo}>
                   <span className={styles.activityLabel}>Currently Processing</span>
                   <span className={styles.activityPhase}>
-                    {passes[3] === 'in-progress' ? 'Content Generation' : 
-                     passes[4] === 'in-progress' ? 'Quality Validation' :
-                     passes[2] === 'in-progress' ? 'Dependency Mapping' :
-                     passes[1] === 'in-progress' ? 'Domain Analysis' : 'Processing'}
+                    {passes[3] === 'in-progress' ? 'Content Generation' :
+                      passes[4] === 'in-progress' ? 'Quality Validation' :
+                        passes[2] === 'in-progress' ? 'Dependency Mapping' :
+                          passes[1] === 'in-progress' ? 'Domain Analysis' : 'Processing'}
                   </span>
                 </div>
               </div>
@@ -205,7 +342,7 @@ export default function Generate() {
                     className={styles.progressFill}
                     style={{ width: `${progress}%` }}
                   />
-                  <div 
+                  <div
                     className={styles.progressGlow}
                     style={{ left: `${progress}%` }}
                   />
@@ -221,7 +358,13 @@ export default function Generate() {
           )}
 
           <div className={styles.actions}>
-            <button onClick={() => navigate('/')} className={styles.cancelButton}>
+            <button
+              onClick={() => {
+                abortController?.abort();
+                navigate('/');
+              }}
+              className={styles.cancelButton}
+            >
               Cancel
             </button>
           </div>

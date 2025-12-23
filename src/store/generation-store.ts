@@ -3,6 +3,15 @@ import { persist } from 'zustand/middleware';
 import type { Pass1Result, PassStatus, ValidationResult, GenerationResult } from '@/lib/types';
 import type { BedrockConfig } from '@/lib/generation/claude-client';
 
+type GenerationCheckpoint = {
+  subject: string;
+  pass1Data: Pass1Result | null;
+  pass2Content: string | null;
+  pass3Content: string | null;
+  lastSuccessfulPass: number;
+  timestamp: number;
+};
+
 type GenerationState = {
   bedrockConfig: BedrockConfig | null;
   currentSubject: string | null;
@@ -18,6 +27,18 @@ type GenerationState = {
   recentSubjects: string[];
   isGenerating: boolean;
   error: string | null;
+  checkpoint: GenerationCheckpoint | null;
+};
+
+type GenerationProgressUpdate = {
+  pass?: number;
+  status?: PassStatus;
+  activity?: string;
+  progress?: number;
+  pass1Data?: Pass1Result;
+  pass2Content?: string;
+  pass3Content?: string;
+  validation?: ValidationResult;
 };
 
 type GenerationActions = {
@@ -31,10 +52,15 @@ type GenerationActions = {
   setPass2Content: (content: string) => void;
   setPass3Content: (content: string) => void;
   setValidation: (validation: ValidationResult) => void;
+  updateGenerationProgress: (update: GenerationProgressUpdate) => void;
   completeGeneration: (result: GenerationResult) => void;
   setError: (error: string | null) => void;
   reset: () => void;
   addRecentSubject: (subject: string) => void;
+  saveCheckpoint: (pass: number) => void;
+  canResumeFromCheckpoint: (subject: string) => boolean;
+  getCheckpointResumeData: () => { startFromPass: number; restoredState: Partial<GenerationState> } | null;
+  clearCheckpoint: () => void;
 };
 
 const getEnvBedrockConfig = (): BedrockConfig | null => {
@@ -68,6 +94,7 @@ const initialState: GenerationState = {
   recentSubjects: ['Azure Administrator', 'MCAT Biology', 'CPA Tax Accounting'],
   isGenerating: false,
   error: null,
+  checkpoint: null,
 };
 
 export const useGenerationStore = create<GenerationState & GenerationActions>()(
@@ -116,6 +143,35 @@ export const useGenerationStore = create<GenerationState & GenerationActions>()(
 
       setValidation: (validation) => set({ validation }),
 
+      updateGenerationProgress: (update) =>
+        set((state) => {
+          const newState: Partial<GenerationState> = {};
+
+          if (update.pass !== undefined && update.status !== undefined) {
+            newState.passes = { ...state.passes, [update.pass]: update.status };
+          }
+          if (update.activity !== undefined) {
+            newState.currentActivity = update.activity;
+          }
+          if (update.progress !== undefined) {
+            newState.progress = update.progress;
+          }
+          if (update.pass1Data !== undefined) {
+            newState.pass1Data = update.pass1Data;
+          }
+          if (update.pass2Content !== undefined) {
+            newState.pass2Content = update.pass2Content;
+          }
+          if (update.pass3Content !== undefined) {
+            newState.pass3Content = update.pass3Content;
+          }
+          if (update.validation !== undefined) {
+            newState.validation = update.validation;
+          }
+
+          return newState;
+        }),
+
       completeGeneration: (result) =>
         set((state) => ({
           fullDocument: result.fullDocument,
@@ -140,6 +196,45 @@ export const useGenerationStore = create<GenerationState & GenerationActions>()(
             recentSubjects: [subject, ...filtered].slice(0, 6),
           };
         }),
+
+      saveCheckpoint: (pass) => {
+        const state = get();
+        set({
+          checkpoint: {
+            subject: state.currentSubject!,
+            pass1Data: state.pass1Data,
+            pass2Content: state.pass2Content,
+            pass3Content: state.pass3Content,
+            lastSuccessfulPass: pass,
+            timestamp: Date.now(),
+          },
+        });
+      },
+
+      canResumeFromCheckpoint: (subject) => {
+        const { checkpoint } = get();
+        if (!checkpoint) return false;
+        if (checkpoint.subject !== subject) return false;
+
+        const age = Date.now() - checkpoint.timestamp;
+        return age < 3600000;
+      },
+
+      getCheckpointResumeData: () => {
+        const { checkpoint } = get();
+        if (!checkpoint) return null;
+
+        return {
+          startFromPass: checkpoint.lastSuccessfulPass + 1,
+          restoredState: {
+            pass1Data: checkpoint.pass1Data,
+            pass2Content: checkpoint.pass2Content,
+            pass3Content: checkpoint.pass3Content,
+          },
+        };
+      },
+
+      clearCheckpoint: () => set({ checkpoint: null }),
     }),
     {
       name: 'chart-generator-storage',
@@ -147,6 +242,7 @@ export const useGenerationStore = create<GenerationState & GenerationActions>()(
         bedrockConfig: state.bedrockConfig,
         recentSubjects: state.recentSubjects,
         results: state.results,
+        checkpoint: state.checkpoint,
       }),
     }
   )

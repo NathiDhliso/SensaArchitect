@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useLearningStore } from '@/store/learning-store';
 import styles from './JourneyMap.module.css';
@@ -10,8 +10,9 @@ interface JourneyMapProps {
 export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
   const { progress, getStageStatus, getConceptStatus, getStages, getConcepts } = useLearningStore();
 
-  const stages = getStages();
-  const concepts = getConcepts();
+  const stages = useMemo(() => getStages(), [getStages]);
+  const concepts = useMemo(() => getConcepts(), [getConcepts]);
+  const currentConceptRef = useRef<HTMLDivElement>(null);
   const completedCount = progress.completedConcepts.length;
   const totalCount = concepts.length;
   
@@ -19,6 +20,16 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
     const currentStage = stages.find(s => getStageStatus(s.id) === 'current');
     return new Set(currentStage ? [currentStage.id] : []);
   });
+
+  useEffect(() => {
+    if (currentConceptRef.current) {
+      currentConceptRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center'
+      });
+    }
+  }, [progress.currentConceptId]);
 
   const toggleStage = (stageId: string) => {
     setExpandedStages(prev => {
@@ -48,15 +59,22 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
     }
   };
 
+  const stageData = useMemo(() => {
+    return [...stages].reverse().map(stage => {
+      const status = getStageStatus(stage.id);
+      const stageConcepts = concepts.filter(c => c.stageId === stage.id);
+      const completedInStage = stageConcepts.filter(c => getConceptStatus(c.id) === 'completed').length;
+      
+      return { stage, status, stageConcepts, completedInStage };
+    });
+  }, [stages, concepts, progress.completedConcepts, getStageStatus, getConceptStatus]);
+
   return (
     <div className={styles.container}>
       <div className={styles.scaffolding}>
         <div className={styles.buildingFrame}>
-          {[...stages].reverse().map((stage) => {
-            const status = getStageStatus(stage.id);
-            const stageConcepts = concepts.filter(c => c.stageId === stage.id);
+          {stageData.map(({ stage, status, stageConcepts, completedInStage }) => {
             const isExpanded = expandedStages.has(stage.id);
-            const completedInStage = stageConcepts.filter(c => getConceptStatus(c.id) === 'completed').length;
             
             const floorClass = [
               styles.floor,
@@ -86,6 +104,7 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
                     <div className={styles.blocks}>
                       {stageConcepts.map((concept) => {
                         const conceptStatus = getConceptStatus(concept.id);
+                        const isCurrent = concept.id === progress.currentConceptId;
                         const blockClass = [
                           styles.block,
                           conceptStatus === 'completed' && styles.blockCompleted,
@@ -97,6 +116,7 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
                         return (
                           <div
                             key={concept.id}
+                            ref={isCurrent ? currentConceptRef : null}
                             className={blockClass}
                             onClick={() => handleConceptClick(concept.id)}
                             title={concept.name}

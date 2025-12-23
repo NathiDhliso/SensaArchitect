@@ -21,6 +21,7 @@ type LearningState = {
   celebrationData: CelebrationData | null;
   isExploreMode: boolean;
   customContent: CustomContent | null;
+  sessionTimer: ReturnType<typeof setInterval> | null;
 };
 
 type LearningActions = {
@@ -68,6 +69,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
       celebrationData: null,
       isExploreMode: false,
       customContent: null,
+      sessionTimer: null,
 
       getStages: () => {
         const state = get();
@@ -213,17 +215,42 @@ export const useLearningStore = create<LearningState & LearningActions>()(
       },
 
       startSession: () => {
-        set(state => ({
+        const state = get();
+        if (state.sessionTimer) {
+          clearInterval(state.sessionTimer);
+        }
+        
+        const timer = setInterval(() => {
+          const current = get();
+          if (current.progress.sessionStartTime) {
+            set(prev => ({
+              progress: {
+                ...prev.progress,
+                totalTimeSpentMinutes: prev.progress.totalTimeSpentMinutes + 1,
+              },
+            }));
+          }
+        }, 60000);
+        
+        set({
           progress: {
             ...state.progress,
             sessionStartTime: Date.now(),
           },
-        }));
+          sessionTimer: timer,
+        });
       },
 
       endSession: () => {
         const state = get();
-        if (!state.progress.sessionStartTime) return;
+        if (state.sessionTimer) {
+          clearInterval(state.sessionTimer);
+        }
+        
+        if (!state.progress.sessionStartTime) {
+          set({ sessionTimer: null });
+          return;
+        }
 
         const sessionMinutes = Math.round(
           (Date.now() - state.progress.sessionStartTime) / 60000
@@ -235,6 +262,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
             totalTimeSpentMinutes: state.progress.totalTimeSpentMinutes + sessionMinutes,
             sessionStartTime: null,
           },
+          sessionTimer: null,
         });
       },
 

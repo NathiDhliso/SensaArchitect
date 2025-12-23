@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Download, BookOpen, Cloud, HardDrive, Upload } from 'lucide-react';
+import { ArrowLeft, Trash2, Download, BookOpen, Cloud, HardDrive, Upload, Search } from 'lucide-react';
 import { storageManager, importFromFile } from '@/lib/storage';
 import { localFileStorage } from '@/lib/storage';
 import type { SavedResult } from '@/lib/storage';
@@ -15,6 +15,8 @@ export default function SavedResults() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'subject' | 'quality'>('date');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { loadCustomContent } = useLearningStore();
 
@@ -54,18 +56,52 @@ export default function SavedResults() {
 
   const handleStartLearning = (result: SavedResult) => {
     try {
-      const parsed = parseGeneratedContent(result.fullDocument);
-      const transformed = transformGeneratedContent(parsed);
+      const parseResult = parseGeneratedContent(result.fullDocument);
+      if (!parseResult.success) {
+        console.error('Failed to parse content:', parseResult.error);
+        alert(`Failed to load content: ${parseResult.error}`);
+        return;
+      }
+      const transformed = transformGeneratedContent(parseResult.data);
       loadCustomContent(transformed);
       navigate('/learn');
     } catch (error) {
       console.error('Failed to load content for learning:', error);
+      alert('An unexpected error occurred while loading the content');
     }
   };
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
   };
+
+  const filteredResults = useMemo(() => {
+    let filtered = results;
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(r => 
+        r.subject.toLowerCase().includes(query) ||
+        r.pass1Data.domain.toLowerCase().includes(query) ||
+        r.pass1Data.roleScope.toLowerCase().includes(query)
+      );
+    }
+    
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'date':
+          return new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime();
+        case 'subject':
+          return a.subject.localeCompare(b.subject);
+        case 'quality':
+          return b.validation.completeness - a.validation.completeness;
+        default:
+          return 0;
+      }
+    });
+    
+    return filtered;
+  }, [results, searchQuery, sortBy]);
 
   const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -125,7 +161,7 @@ export default function SavedResults() {
           <div>
             <h1 className={styles.title}>Saved Results</h1>
             <p className={styles.subtitle}>
-              {results.length} {results.length === 1 ? 'result' : 'results'} saved
+              {filteredResults.length} of {results.length} {results.length === 1 ? 'result' : 'results'}
             </p>
           </div>
           <div className={styles.headerActions}>
@@ -165,6 +201,31 @@ export default function SavedResults() {
           </div>
         )}
 
+        {!loading && results.length > 0 && (
+          <div className={styles.filterBar}>
+            <div className={styles.searchBox}>
+              <Search size={18} className={styles.searchIcon} />
+              <input
+                type="text"
+                placeholder="Search by subject, domain, or role..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+            </div>
+            
+            <select 
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className={styles.sortSelect}
+            >
+              <option value="date">Sort by Date</option>
+              <option value="subject">Sort by Subject</option>
+              <option value="quality">Sort by Quality</option>
+            </select>
+          </div>
+        )}
+
         {loading ? (
           <div className={styles.loadingState}>
             <div className={styles.spinner} />
@@ -179,9 +240,18 @@ export default function SavedResults() {
               Generate Chart
             </button>
           </div>
+        ) : filteredResults.length === 0 ? (
+          <div className={styles.emptyState}>
+            <Search size={48} className={styles.emptyIcon} />
+            <h2>No results match "{searchQuery}"</h2>
+            <p>Try a different search term or clear the filter</p>
+            <button onClick={() => setSearchQuery('')} className={styles.primaryButton}>
+              Clear Search
+            </button>
+          </div>
         ) : (
           <div className={styles.resultsGrid}>
-            {results.map((result) => (
+            {filteredResults.map((result) => (
               <div key={result.id} className={styles.resultCard}>
                 <div className={styles.cardHeader}>
                   <div>

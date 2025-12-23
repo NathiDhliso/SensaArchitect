@@ -45,7 +45,8 @@ export async function invokeClaudeModel(
   messages: BedrockMessage[],
   systemPrompt: string,
   maxTokens: number = 4000,
-  tools?: BedrockTool[]
+  tools?: BedrockTool[],
+  abortSignal?: AbortSignal
 ): Promise<string> {
   const payload = {
     anthropic_version: 'bedrock-2023-05-31',
@@ -65,6 +66,10 @@ export async function invokeClaudeModel(
     body: JSON.stringify(payload),
   });
 
+  if (abortSignal?.aborted) {
+    throw new Error('Generation cancelled by user');
+  }
+
   const response = await client.send(command);
   const responseBody = JSON.parse(new TextDecoder().decode(response.body));
   
@@ -75,7 +80,8 @@ export async function* invokeClaudeModelStream(
   client: BedrockRuntimeClient,
   messages: BedrockMessage[],
   systemPrompt: string,
-  maxTokens: number = 64000
+  maxTokens: number = 64000,
+  abortSignal?: AbortSignal
 ): AsyncGenerator<string, void, unknown> {
   const payload = {
     anthropic_version: 'bedrock-2023-05-31',
@@ -94,6 +100,10 @@ export async function* invokeClaudeModelStream(
     body: JSON.stringify(payload),
   });
 
+  if (abortSignal?.aborted) {
+    throw new Error('Generation cancelled by user');
+  }
+
   const response = await client.send(command);
 
   if (!response.body) {
@@ -101,6 +111,9 @@ export async function* invokeClaudeModelStream(
   }
 
   for await (const event of response.body) {
+    if (abortSignal?.aborted) {
+      throw new Error('Generation cancelled by user');
+    }
     if (event.chunk) {
       const chunk = JSON.parse(new TextDecoder().decode(event.chunk.bytes));
       

@@ -1,24 +1,81 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import {
+  ArrowLeft,
+  Sun,
+  Moon,
+  Monitor,
+  Palette,
+  Brain,
+  Trash2,
+  Download,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  CheckCircle2,
+  Sparkles,
+  BookOpen,
+  Database
+} from 'lucide-react';
+import { useThemeStore, type Theme } from '@/store/theme-store';
+import { usePersonalizationStore, type FamiliarSystem } from '@/store/personalization-store';
+import { useLearningStore } from '@/store/learning-store';
 import { useGenerationStore } from '@/store/generation-store';
 import type { BedrockConfig } from '@/lib/generation/claude-client';
 import styles from './Settings.module.css';
 
+const LEARNING_STYLES = [
+  { value: 'visual', label: 'Visual', icon: '👁️', desc: 'Diagrams, charts, and imagery' },
+  { value: 'practical', label: 'Practical', icon: '🛠️', desc: 'Hands-on examples and exercises' },
+  { value: 'theoretical', label: 'Theoretical', icon: '📚', desc: 'Deep concepts and principles' },
+] as const;
+
+const FAMILIAR_SYSTEMS = [
+  { value: 'construction', label: 'Construction', icon: '🏗️' },
+  { value: 'cooking', label: 'Cooking', icon: '👨‍🍳' },
+  { value: 'travel', label: 'Travel', icon: '✈️' },
+  { value: 'healthcare', label: 'Healthcare', icon: '🏥' },
+  { value: 'sports', label: 'Sports', icon: '⚽' },
+  { value: 'nature', label: 'Nature', icon: '🌿' },
+] as const;
+
 export default function Settings() {
   const navigate = useNavigate();
-  const { bedrockConfig, setBedrockConfig } = useGenerationStore();
+
+  // Theme
+  const { theme, setTheme } = useThemeStore();
+
+  // Personalization
+  const {
+    preferredLearningStyle,
+    familiarSystem,
+    onboardingComplete,
+    resetOnboarding,
+  } = usePersonalizationStore();
+  const updateLearningStyle = usePersonalizationStore(s => s.completeOnboarding);
+  const updateFamiliarSystem = usePersonalizationStore(s => s.updateFamiliarSystem);
+
+  // Learning
+  const { resetProgress, clearCustomContent, progress, customContent } = useLearningStore();
+
+  // Generation
+  const { bedrockConfig, setBedrockConfig, clearBedrockConfig, results, recentSubjects } = useGenerationStore();
+
+  // Local state
+  const [showAwsConfig, setShowAwsConfig] = useState(false);
   const [region, setRegion] = useState(bedrockConfig?.region || 'us-east-1');
   const [accessKeyId, setAccessKeyId] = useState(bedrockConfig?.accessKeyId || '');
   const [secretAccessKey, setSecretAccessKey] = useState(bedrockConfig?.secretAccessKey || '');
   const [showSecrets, setShowSecrets] = useState(false);
   const [saved, setSaved] = useState(false);
-  
-  const isEnvConfigured = import.meta.env.VITE_AWS_REGION && 
-                          import.meta.env.VITE_AWS_ACCESS_KEY_ID && 
-                          import.meta.env.VITE_AWS_SECRET_ACCESS_KEY;
+  const [confirmClear, setConfirmClear] = useState<string | null>(null);
 
-  const handleSave = () => {
+  const isEnvConfigured = import.meta.env.VITE_AWS_REGION &&
+    import.meta.env.VITE_AWS_ACCESS_KEY_ID &&
+    import.meta.env.VITE_AWS_SECRET_ACCESS_KEY;
+
+  const handleSaveAws = () => {
     if (region.trim() && accessKeyId.trim() && secretAccessKey.trim()) {
       const config: BedrockConfig = {
         region: region.trim(),
@@ -31,8 +88,65 @@ export default function Settings() {
     }
   };
 
+  const handleClearData = (type: string) => {
+    if (confirmClear === type) {
+      switch (type) {
+        case 'progress':
+          resetProgress();
+          break;
+        case 'results':
+          useGenerationStore.setState({ results: [], recentSubjects: [] });
+          break;
+        case 'all':
+          resetProgress();
+          clearCustomContent();
+          resetOnboarding();
+          useGenerationStore.setState({ results: [], recentSubjects: [] });
+          break;
+      }
+      setConfirmClear(null);
+    } else {
+      setConfirmClear(type);
+      setTimeout(() => setConfirmClear(null), 3000);
+    }
+  };
+
+  const handleExportData = () => {
+    const data = {
+      theme,
+      personalization: {
+        preferredLearningStyle,
+        familiarSystem,
+        onboardingComplete,
+      },
+      learning: {
+        progress,
+        customContent,
+      },
+      generation: {
+        results,
+        recentSubjects,
+      },
+      exportedAt: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sensa-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const maskSecret = (secret: string) =>
     secret ? `${secret.slice(0, 4)}${'•'.repeat(Math.max(0, secret.length - 8))}${secret.slice(-4)}` : '';
+
+  const themeOptions: { value: Theme; icon: typeof Sun; label: string }[] = [
+    { value: 'light', icon: Sun, label: 'Light' },
+    { value: 'dark', icon: Moon, label: 'Dark' },
+    { value: 'system', icon: Monitor, label: 'System' },
+  ];
 
   return (
     <div className={styles.container}>
@@ -45,132 +159,276 @@ export default function Settings() {
         <div className={styles.card}>
           <h1 className={styles.title}>Settings</h1>
 
+          {/* Appearance Section */}
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>AWS Bedrock Configuration</h2>
+            <div className={styles.sectionHeader}>
+              <Palette className={styles.sectionIcon} />
+              <h2 className={styles.sectionTitle}>Appearance</h2>
+            </div>
 
-            {isEnvConfigured ? (
-              <div className={styles.alert}>
-                <p><strong>✓ Credentials Configured via Environment Variables</strong></p>
-                <p>AWS credentials are loaded from your <code>.env</code> file:</p>
-                <ul>
-                  <li>Region: {import.meta.env.VITE_AWS_REGION}</li>
-                  <li>Access Key ID: {import.meta.env.VITE_AWS_ACCESS_KEY_ID?.slice(0, 8)}...</li>
-                  <li>Credentials are secure and not stored in browser</li>
-                </ul>
-                <p className={styles.description}>
-                  To update credentials, edit the <code>.env</code> file in your project root and restart the dev server.
-                </p>
+            <div className={styles.settingRow}>
+              <div className={styles.settingInfo}>
+                <span className={styles.settingLabel}>Theme</span>
+                <span className={styles.settingDesc}>Choose your preferred color scheme</span>
               </div>
-            ) : (
-              <>
-                <p className={styles.description}>
-                  Enter your AWS credentials to access Bedrock. Credentials are stored locally in your browser.
-                </p>
-
-                <div className={styles.alert}>
-                  <p><strong>AWS Credentials Required</strong></p>
-                  <p>Configure credentials either:</p>
-                  <ul>
-                    <li><strong>Option 1:</strong> Create a <code>.env</code> file with VITE_AWS_REGION, VITE_AWS_ACCESS_KEY_ID, VITE_AWS_SECRET_ACCESS_KEY</li>
-                    <li><strong>Option 2:</strong> Enter credentials below (stored in browser)</li>
-                  </ul>
-                </div>
-              </>
-            )}
-
-            {!isEnvConfigured && (
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>AWS Region</label>
-                <select
-                  value={region}
-                  onChange={(e) => setRegion(e.target.value)}
-                  className={styles.input}
-                >
-                  <option value="us-east-1">US East (N. Virginia)</option>
-                  <option value="us-west-2">US West (Oregon)</option>
-                  <option value="eu-west-1">Europe (Ireland)</option>
-                  <option value="eu-central-1">Europe (Frankfurt)</option>
-                  <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
-                  <option value="ap-northeast-1">Asia Pacific (Tokyo)</option>
-                </select>
-              </div>
-            )}
-
-            {!isEnvConfigured && (
-              <>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>AWS Access Key ID</label>
-                  <div className={styles.inputWrapper}>
-                    <input
-                      type={showSecrets ? 'text' : 'password'}
-                      value={showSecrets ? accessKeyId : maskSecret(accessKeyId)}
-                      onChange={(e) => setAccessKeyId(e.target.value)}
-                      placeholder="AKIA..."
-                      className={styles.input}
-                    />
-                    <button
-                      onClick={() => setShowSecrets(!showSecrets)}
-                      className={styles.toggleButton}
-                      type="button"
-                    >
-                      {showSecrets ? <span>👁️</span> : <span>👁️‍🗨️</span>}
-                    </button>
-                  </div>
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>AWS Secret Access Key</label>
-                  <div className={styles.inputWrapper}>
-                    <input
-                      type={showSecrets ? 'text' : 'password'}
-                      value={showSecrets ? secretAccessKey : maskSecret(secretAccessKey)}
-                      onChange={(e) => setSecretAccessKey(e.target.value)}
-                      placeholder="Secret key..."
-                      className={styles.input}
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.actions}>
+              <div className={styles.themeToggle}>
+                {themeOptions.map(({ value, icon: Icon, label }) => (
                   <button
-                    onClick={handleSave}
-                    disabled={!region.trim() || !accessKeyId.trim() || !secretAccessKey.trim()}
-                    className={styles.saveButton}
+                    key={value}
+                    onClick={() => setTheme(value)}
+                    className={`${styles.themeOption} ${theme === value ? styles.themeOptionActive : ''}`}
+                    title={label}
                   >
-                    {saved ? 'Saved!' : 'Save Credentials'}
+                    <Icon size={18} />
+                    <span>{label}</span>
                   </button>
-                </div>
-              </>
-            )}
+                ))}
+              </div>
+            </div>
+          </div>
 
-            {bedrockConfig && (
-              <div className={styles.statusBadge}>
-                <span className={styles.statusDot} />
-                AWS credentials configured ({bedrockConfig.region})
+          {/* Learning Preferences Section */}
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <Brain className={styles.sectionIcon} />
+              <h2 className={styles.sectionTitle}>Learning Preferences</h2>
+            </div>
+
+            <div className={styles.settingRow}>
+              <div className={styles.settingInfo}>
+                <span className={styles.settingLabel}>Learning Style</span>
+                <span className={styles.settingDesc}>How you prefer to learn new concepts</span>
+              </div>
+              <div className={styles.optionGrid}>
+                {LEARNING_STYLES.map(({ value, label, icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => {
+                      if (onboardingComplete && familiarSystem) {
+                        updateLearningStyle(
+                          usePersonalizationStore.getState().chosenRole || 'learner',
+                          familiarSystem,
+                          value
+                        );
+                      }
+                    }}
+                    className={`${styles.optionButton} ${preferredLearningStyle === value ? styles.optionActive : ''}`}
+                  >
+                    <span>{icon}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.settingRow}>
+              <div className={styles.settingInfo}>
+                <span className={styles.settingLabel}>Familiar System</span>
+                <span className={styles.settingDesc}>Metaphors used to explain concepts</span>
+              </div>
+              <div className={styles.optionGrid}>
+                {FAMILIAR_SYSTEMS.map(({ value, label, icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => updateFamiliarSystem(value as FamiliarSystem)}
+                    className={`${styles.optionButton} ${familiarSystem === value ? styles.optionActive : ''}`}
+                  >
+                    <span>{icon}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {onboardingComplete && (
+              <button
+                onClick={() => {
+                  resetOnboarding();
+                  navigate('/learn');
+                }}
+                className={styles.linkButton}
+              >
+                <RefreshCw size={14} />
+                Retake onboarding quiz
+              </button>
+            )}
+          </div>
+
+          {/* Data Management Section */}
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <Database className={styles.sectionIcon} />
+              <h2 className={styles.sectionTitle}>Data Management</h2>
+            </div>
+
+            <div className={styles.dataStats}>
+              <div className={styles.dataStat}>
+                <span className={styles.dataValue}>{progress.completedConcepts.length}</span>
+                <span className={styles.dataLabel}>Concepts Learned</span>
+              </div>
+              <div className={styles.dataStat}>
+                <span className={styles.dataValue}>{results.length}</span>
+                <span className={styles.dataLabel}>Saved Results</span>
+              </div>
+              <div className={styles.dataStat}>
+                <span className={styles.dataValue}>{progress.totalTimeSpentMinutes}</span>
+                <span className={styles.dataLabel}>Minutes Studied</span>
+              </div>
+            </div>
+
+            <div className={styles.dataActions}>
+              <button onClick={handleExportData} className={styles.actionButton}>
+                <Download size={16} />
+                Export Data
+              </button>
+            </div>
+
+            <div className={styles.dangerZone}>
+              <h3 className={styles.dangerTitle}>
+                <AlertTriangle size={16} />
+                Danger Zone
+              </h3>
+              <div className={styles.dangerActions}>
+                <button
+                  onClick={() => handleClearData('progress')}
+                  className={`${styles.dangerButton} ${confirmClear === 'progress' ? styles.dangerConfirm : ''}`}
+                >
+                  <Trash2 size={14} />
+                  {confirmClear === 'progress' ? 'Click again to confirm' : 'Clear Learning Progress'}
+                </button>
+                <button
+                  onClick={() => handleClearData('results')}
+                  className={`${styles.dangerButton} ${confirmClear === 'results' ? styles.dangerConfirm : ''}`}
+                >
+                  <Trash2 size={14} />
+                  {confirmClear === 'results' ? 'Click again to confirm' : 'Clear Saved Results'}
+                </button>
+                <button
+                  onClick={() => handleClearData('all')}
+                  className={`${styles.dangerButton} ${confirmClear === 'all' ? styles.dangerConfirm : ''}`}
+                >
+                  <Trash2 size={14} />
+                  {confirmClear === 'all' ? 'Click again to confirm' : 'Reset All Data'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* AWS Configuration Section */}
+          <div className={styles.section}>
+            <button
+              className={styles.collapsibleHeader}
+              onClick={() => setShowAwsConfig(!showAwsConfig)}
+            >
+              <div className={styles.sectionHeader}>
+                <Sparkles className={styles.sectionIcon} />
+                <h2 className={styles.sectionTitle}>AI Configuration</h2>
+                {(isEnvConfigured || bedrockConfig) && (
+                  <span className={styles.configuredBadge}>
+                    <CheckCircle2 size={14} />
+                    Configured
+                  </span>
+                )}
+              </div>
+              {showAwsConfig ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </button>
+
+            {showAwsConfig && (
+              <div className={styles.collapsibleContent}>
+                {isEnvConfigured ? (
+                  <div className={styles.envConfigured}>
+                    <CheckCircle2 className={styles.envIcon} />
+                    <div>
+                      <strong>Configured via Environment</strong>
+                      <p>Region: {import.meta.env.VITE_AWS_REGION}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className={styles.description}>
+                      Configure AWS Bedrock credentials to enable AI-powered content generation.
+                    </p>
+
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>AWS Region</label>
+                      <select
+                        value={region}
+                        onChange={(e) => setRegion(e.target.value)}
+                        className={styles.input}
+                      >
+                        <option value="us-east-1">US East (N. Virginia)</option>
+                        <option value="us-west-2">US West (Oregon)</option>
+                        <option value="eu-west-1">Europe (Ireland)</option>
+                        <option value="eu-central-1">Europe (Frankfurt)</option>
+                        <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                        <option value="ap-northeast-1">Asia Pacific (Tokyo)</option>
+                      </select>
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>AWS Access Key ID</label>
+                      <div className={styles.inputWrapper}>
+                        <input
+                          type={showSecrets ? 'text' : 'password'}
+                          value={showSecrets ? accessKeyId : maskSecret(accessKeyId)}
+                          onChange={(e) => setAccessKeyId(e.target.value)}
+                          placeholder="AKIA..."
+                          className={styles.input}
+                        />
+                        <button
+                          onClick={() => setShowSecrets(!showSecrets)}
+                          className={styles.toggleButton}
+                          type="button"
+                        >
+                          {showSecrets ? '👁️' : '👁️‍🗨️'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>AWS Secret Access Key</label>
+                      <div className={styles.inputWrapper}>
+                        <input
+                          type={showSecrets ? 'text' : 'password'}
+                          value={showSecrets ? secretAccessKey : maskSecret(secretAccessKey)}
+                          onChange={(e) => setSecretAccessKey(e.target.value)}
+                          placeholder="Secret key..."
+                          className={styles.input}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.actions}>
+                      <button
+                        onClick={handleSaveAws}
+                        disabled={!region.trim() || !accessKeyId.trim() || !secretAccessKey.trim()}
+                        className={styles.saveButton}
+                      >
+                        {saved ? 'Saved!' : 'Save Credentials'}
+                      </button>
+                      {bedrockConfig && (
+                        <button onClick={clearBedrockConfig} className={styles.clearButton}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
 
+          {/* About Section */}
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>About</h2>
-            <p className={styles.description}>
-              SensaAI uses Claude AI to create structured learning materials with zero cognitive overhead. 
-              The multi-pass generation system ensures accuracy through domain analysis, dependency mapping, content generation, and quality validation.
-            </p>
-            <div className={styles.features}>
-              <div className={styles.feature}>
-                <span className={styles.featureTitle}>4-Pass Generation</span>
-                <span className={styles.featureDesc}>Iterative refinement for maximum accuracy</span>
-              </div>
-              <div className={styles.feature}>
-                <span className={styles.featureTitle}>Lifecycle Enforcement</span>
-                <span className={styles.featureDesc}>Domain-specific 3-phase structure</span>
-              </div>
-              <div className={styles.feature}>
-                <span className={styles.featureTitle}>Positive Framing</span>
-                <span className={styles.featureDesc}>Capability-focused language throughout</span>
-              </div>
+            <div className={styles.sectionHeader}>
+              <BookOpen className={styles.sectionIcon} />
+              <h2 className={styles.sectionTitle}>About</h2>
             </div>
+            <p className={styles.aboutText}>
+              <strong>SensaPBL</strong> uses AI to create structured learning materials with zero cognitive overhead.
+              The multi-pass generation system ensures accuracy through domain analysis, dependency mapping, and quality validation.
+            </p>
+            <div className={styles.version}>Version 1.0.0</div>
           </div>
         </div>
       </div>

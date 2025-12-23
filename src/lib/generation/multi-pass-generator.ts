@@ -21,9 +21,14 @@ import type { Pass1Result, ProgressCallback, GenerationResult, ValidationResult,
 export async function generateChartIteratively(
   subject: string,
   config: BedrockConfig,
-  onProgress: ProgressCallback
+  onProgress: ProgressCallback,
+  abortSignal?: AbortSignal
 ): Promise<GenerationResult> {
   const bedrockClient = getBedrockClient(config);
+
+  if (abortSignal?.aborted) {
+    throw new Error('Generation cancelled by user');
+  }
 
   onProgress(1, 'in-progress', { message: 'Analyzing subject and generating optimal lifecycle...' });
 
@@ -32,7 +37,9 @@ export async function generateChartIteratively(
     bedrockClient,
     [{ role: 'user', content: lifecyclePrompt }],
     'You are an expert curriculum designer. Analyze subjects and determine the optimal operational lifecycle.',
-    2000
+    2000,
+    undefined,
+    abortSignal
   );
 
   let dynamicLifecycle: DynamicLifecycle | null = parseLifecycleResponse(lifecycleText);
@@ -40,7 +47,7 @@ export async function generateChartIteratively(
     dynamicLifecycle = getDefaultLifecycle(subject);
   }
 
-  onProgress(1, 'in-progress', { 
+  onProgress(1, 'in-progress', {
     message: `Lifecycle detected: ${dynamicLifecycle.phase1} → ${dynamicLifecycle.phase2} → ${dynamicLifecycle.phase3}`,
     lifecycle: {
       phase1: dynamicLifecycle.phase1,
@@ -90,15 +97,19 @@ OUTPUT FORMAT (JSON ONLY):
 CRITICAL: Use the EXACT lifecycle phases provided above. Do NOT modify them.
   `;
 
+  if (abortSignal?.aborted) throw new Error('Generation cancelled by user');
+
   const pass1Text = await invokeClaudeModel(
     bedrockClient,
     [{ role: 'user', content: pass1Content }],
     SYSTEM_PROMPT_V4,
-    8000
+    8000,
+    undefined,
+    abortSignal
   );
 
   let pass1Data = parseJsonFromResponse<Pass1Result>(pass1Text);
-  
+
   pass1Data.lifecycle = {
     phase1: dynamicLifecycle.phase1,
     phase2: dynamicLifecycle.phase2,
@@ -136,23 +147,27 @@ ROLE SCOPE: ${pass1Data.roleScope}
 EXCLUDED ACTIONS: ${pass1Data.excludedActions.join(', ')}
 
 POSITIVE FRAMING REQUIRED:
-- ✅ Use: "Choose X when you need [benefit]"
-- ✅ Use: "Option Y unlocks [capability]"
-- ✅ Use: "Select Z for [specific scenario]"
-- ✅ Use: "Best suited for", "Optimized for", "Designed for"
-- ❌ Avoid: "Don't use X if...", "X fails when...", "Won't work for..."
-- ❌ Avoid: "Common mistake is...", "Students wrongly...", "Avoid X because..."
+- Use: "Choose X when you need [benefit]"
+- Use: "Option Y unlocks [capability]"
+- Use: "Select Z for [specific scenario]"
+- Use: "Best suited for", "Optimized for", "Designed for"
+- Avoid: "Don't use X if...", "X fails when...", "Won't work for..."
+- Avoid: "Common mistake is...", "Students wrongly...", "Avoid X because..."
 
 OUTPUT: Generate only the Decision Framework Trees. No chart content yet.
   `;
 
   const lifecycleScopePrompt = createLifecycleScopePrompt(dynamicLifecycle, subject);
 
+  if (abortSignal?.aborted) throw new Error('Generation cancelled by user');
+
   const pass2Text = await invokeClaudeModel(
     bedrockClient,
     [{ role: 'user', content: pass2Content }],
     SYSTEM_PROMPT_V4 + '\n\n' + lifecycleScopePrompt,
-    6000
+    6000,
+    undefined,
+    abortSignal
   );
 
   onProgress(2, 'complete', { content: pass2Text });
@@ -162,7 +177,9 @@ OUTPUT: Generate only the Decision Framework Trees. No chart content yet.
   const totalConcepts = pass1Data.concepts.length;
   const batchSize = 10;
   const batches = Math.ceil(totalConcepts / batchSize);
-  let allConceptsContent = '';
+
+  // Track the highest progress to prevent regression during parallel execution
+  let globalMaxProgress = 0;
 
   const basePromptInfo = `
 FOUNDATION DATA (DO NOT MODIFY):
@@ -170,43 +187,61 @@ Domain: ${pass1Data.domain}
 Role Scope: ${pass1Data.roleScope}
 Lifecycle: ${pass1Data.lifecycle.phase1} → ${pass1Data.lifecycle.phase2} → ${pass1Data.lifecycle.phase3}
 Source: ${pass1Data.sourceVerification}
+Subject: ${subject}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL: DOMAIN-SPECIFIC CONTENT REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You MUST include ACTUAL technical terminology from "${subject}". 
+
+FORBIDDEN GENERIC PHRASES (will be rejected):
+- "Set up prerequisites" → Instead: Name the ACTUAL prerequisite (e.g., "Install Power Query add-in")
+- "Configure settings" → Instead: Name the ACTUAL setting (e.g., "Set Relationship cardinality to Many-to-One")
+- "Apply policies" → Instead: Name the ACTUAL policy (e.g., "Enable Row-Level Security filter")
+- "Execute deployment" → Instead: Name the ACTUAL action (e.g., "Publish to Power BI Service workspace")
+- "Review metrics" → Instead: Name the ACTUAL metric (e.g., "Check DAX query performance in Performance Analyzer")
+
+EVERY LINE MUST CONTAIN AT LEAST ONE OF:
+- A specific tool name (e.g., Power Query Editor, DAX Studio, Excel Data Model)
+- A specific function/command (e.g., RELATED(), CALCULATE(), Get Data > From Table)
+- A specific UI element (e.g., Relationships view, Field list pane, Pivot Table Fields)
+- A specific file type/format (e.g., .pbix, .xlsx, Power Query M formula)
+- A specific technical term from the domain (e.g., Star schema, Calculated column, Measure)
 
 DETAIL REQUIREMENTS FOR EACH CONCEPT:
 
 ${pass1Data.lifecycle.phase1} (Foundation Phase):
-  - Prerequisite: State what must exist first, or write "[None]"
-  - Selection: List 2-3 specific options/types with their key capabilities
-  - Execution: Name the EXACT tool/command/portal/form to use
+  - Prerequisite: Name the SPECIFIC tool, license, or data source required
+  - Selection: List 2-3 ACTUAL options with their real names and capabilities
+  - Execution: Provide the EXACT menu path, function, or command to start
 
 ${pass1Data.lifecycle.phase2} (Configuration Phase):
-  • Provide 5-8 configuration items per concept
-  • Include SPECIFIC commands, settings, or procedures
-  • Add **[Critical Distinction]:** for key comparisons
-  • Add **[Design Boundary]:** for limitations (positively framed)
-  • Add **[Prerequisite Check]:** for requirements (positively framed)
-  • Add **[Exam Focus]:** for tested concepts
+  • Provide 5-8 configuration items using REAL setting names
+  • Include ACTUAL DAX formulas, M code snippets, or Excel functions
+  • Add **[Critical Distinction]:** comparing REAL features by name
+  • Add **[Design Boundary]:** with ACTUAL technical limitations
+  • Add **[Exam Focus]:** referencing REAL exam objectives
 
 ${pass1Data.lifecycle.phase3} (Verification Phase):
-  ○ Name the EXACT tool/document
-  ○ Specify metrics to monitor
-  ○ Include deadlines or thresholds
+  ○ Name the EXACT tool (e.g., "Performance Analyzer", "Excel's Evaluate Formula")
+  ○ Specify the ACTUAL metrics or outputs to check
+  ○ Include REAL thresholds or benchmarks from the domain
 
-QUALITY: Each concept = 15-25 lines with specific commands, portal paths, and callouts.
+QUALITY STANDARD: Each concept = 15-25 lines with ZERO generic phrases.
+If you don't know a specific technical detail, state "[Verify: specific feature name]" rather than using generic text.
 `;
 
-  for (let batch = 0; batch < batches; batch++) {
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const generateBatch = async (batch: number): Promise<{ order: number; content: string }> => {
     const startIdx = batch * batchSize;
     const endIdx = Math.min(startIdx + batchSize, totalConcepts);
     const batchConcepts = pass1Data.concepts.slice(startIdx, endIdx);
-    
-    onProgress(3, 'in-progress', { 
-      message: `Generating concepts ${startIdx + 1}-${endIdx} of ${totalConcepts}...`,
-      progress: Math.round((batch / batches) * 100)
-    });
 
     const batchPrompt = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-BATCH ${batch + 1}/${batches}: Generate concepts ${startIdx + 1}-${endIdx}
+BATCH ${batch + 1}/${batches}: Generate concepts ${startIdx + 1}-${endIdx} for "${subject}"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${basePromptInfo}
@@ -214,40 +249,88 @@ ${basePromptInfo}
 CONCEPTS TO GENERATE IN THIS BATCH:
 ${batchConcepts.map((c, i) => `${startIdx + i + 1}. ${c}`).join('\n')}
 
-OUTPUT FORMAT:
+OUTPUT FORMAT (with REAL technical content):
 \`\`\`
 ## ${startIdx + 1}. ${batchConcepts[0]}
 - ${pass1Data.lifecycle.phase1}:
-  [detailed content]
+  • Prerequisite: [ACTUAL tool/license/data source name]
+  • Selection: [ACTUAL options like "Power Query vs. Import mode"]
+  • Execution: [ACTUAL menu path like "Get Data > From Table/Range"]
 • ${pass1Data.lifecycle.phase2}:
-  [detailed content with callouts]
+  • [ACTUAL setting]: [ACTUAL value/formula]
+  • [ACTUAL DAX/M code or Excel function]
+  • **[Critical Distinction]:** [REAL feature A] vs [REAL feature B]
 ○ ${pass1Data.lifecycle.phase3}:
-  [monitoring details]
+  • Tool: [ACTUAL tool name like "Performance Analyzer"]
+  • Metric: [ACTUAL metric like "Query duration < 100ms"]
+  • Validation: [ACTUAL check like "Verify cardinality in Model view"]
 
-[Continue for each concept in this batch]
+[Continue for each concept in this batch with REAL technical terminology]
 \`\`\`
 
-CRITICAL: Generate ALL ${batchConcepts.length} concepts completely. No skipping. No asking to continue.
+QUALITY CHECK: Before outputting, verify EVERY line contains at least one:
+- Real tool/feature name from ${pass1Data.domain}
+- Real function, formula, or command
+- Real UI element or menu path
+- Real file format or data type
+
+CRITICAL: Generate ALL ${batchConcepts.length} concepts completely with DOMAIN-SPECIFIC content. No generic phrases.
 `;
 
     let batchText = '';
+    if (abortSignal?.aborted) throw new Error('Generation cancelled by user');
+
     const batchStream = invokeClaudeModelStream(
       bedrockClient,
       [{ role: 'user', content: batchPrompt }],
-      lifecycleScopePrompt + '\nYou are an automated content generator. Output content only. No questions. No conversational phrases.',
-      32000
+      lifecycleScopePrompt + '\nYou are an automated content generator. Output content only. No questions.',
+      32000,
+      abortSignal
     );
 
     for await (const chunk of batchStream) {
       batchText += chunk;
-      onProgress(3, 'in-progress', {
-        partial: allConceptsContent + batchText,
-        progress: Math.round(((batch + 0.5) / batches) * 100),
-      });
+
+      // Calculate potential progress for this specific batch
+      const currentBatchProgress = Math.round(((batch + 0.5) / batches) * 100);
+
+      // Only update UI if this batch represents a "forward step" in progress
+      // This prevents Batch 1 (10%) from overwriting Batch 2 (30%)
+      if (currentBatchProgress >= globalMaxProgress) {
+        globalMaxProgress = currentBatchProgress;
+
+        onProgress(3, 'in-progress', {
+          message: `Batch ${batch + 1}/${batches}: ${batchText.length} chars`,
+          progress: globalMaxProgress,
+        });
+      }
     }
 
-    allConceptsContent += batchText + '\n\n';
+    return { order: batch, content: batchText };
+  };
+
+  onProgress(3, 'in-progress', { message: 'Generating batches with rate limiting...' });
+
+  const batchResults: { order: number; content: string }[] = [];
+  const concurrentLimit = 2;
+
+  for (let i = 0; i < batches; i += concurrentLimit) {
+    const batchGroup = [];
+    for (let j = 0; j < concurrentLimit && i + j < batches; j++) {
+      batchGroup.push(generateBatch(i + j));
+    }
+
+    const groupResults = await Promise.all(batchGroup);
+    batchResults.push(...groupResults);
+
+    if (i + concurrentLimit < batches) {
+      await delay(2000);
+    }
   }
+  const allConceptsContent = batchResults
+    .sort((a, b) => a.order - b.order)
+    .map(r => r.content)
+    .join('\n\n') + '\n\n';
 
   onProgress(3, 'in-progress', { message: 'Generating mental anchors and learning path...' });
 
@@ -287,11 +370,14 @@ OUTPUT ALL THREE SECTIONS NOW:
 `;
 
   let supplementaryText = '';
+  if (abortSignal?.aborted) throw new Error('Generation cancelled by user');
+
   const suppStream = invokeClaudeModelStream(
     bedrockClient,
     [{ role: 'user', content: supplementaryPrompt }],
     'You are an automated content generator. Output content only. No questions.',
-    16000
+    32000,
+    abortSignal
   );
 
   for await (const chunk of suppStream) {
@@ -323,18 +409,47 @@ ${supplementaryText}`;
 
   const pass4Content = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PASS 4 TASK: Validate Generated Content Against Standards
+PASS 4 TASK: Validate Generated Content Against Quality Standards
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-EXPECTED STRUCTURE FROM PASS 1:
+Subject: ${subject}
 Domain: ${pass1Data.domain}
 Lifecycle: ${pass1Data.lifecycle.phase1} → ${pass1Data.lifecycle.phase2} → ${pass1Data.lifecycle.phase3}
 Role Scope: ${pass1Data.roleScope}
 Excluded Actions: ${pass1Data.excludedActions.join(', ')}
 Expected Concept Count: ${pass1Data.concepts.length}
 
+VALIDATION CRITERIA:
+
+1. STRUCTURE CHECK:
+   - Each concept has all 3 lifecycle phases
+   - Correct formatting with -, •, ○ markers
+   - All expected concepts present
+
+2. TERMINOLOGY DENSITY CHECK (CRITICAL):
+   Count occurrences of these FORBIDDEN generic phrases:
+   - "Set up prerequisites" or "Setup prerequisites"
+   - "Configure settings" or "Adjust settings"
+   - "Apply policies" or "Implement policies"
+   - "Execute deployment" or "Run deployment"
+   - "Review metrics" or "Check metrics"
+   - "Select appropriate" (without specific options listed)
+   - "Follow best practices" (without naming them)
+   - "[detailed content]" or "[content here]"
+   
+   Each occurrence = -5 points from terminologyDensity score
+
+3. DOMAIN SPECIFICITY CHECK:
+   For "${pass1Data.domain}", expect to see terms like:
+   - Tool names (actual products, not "the tool")
+   - Function/command names (actual syntax)
+   - UI elements/menu paths (actual navigation)
+   - File formats/data types (actual extensions)
+   
+   Score based on: (domain-specific terms found) / (total content lines) * 100
+
 CONTENT TO VALIDATE:
-${pass3Text}
+${pass3Text.substring(0, 15000)}
 
 OUTPUT FORMAT (JSON ONLY):
 {
@@ -344,20 +459,28 @@ OUTPUT FORMAT (JSON ONLY):
   "positiveFraming": number (0-100),
   "formatConsistency": number (0-100),
   "completeness": number (0-100),
-  "issues": [],
+  "terminologyDensity": number (0-100, penalize generic phrases),
+  "domainSpecificity": number (0-100, based on real tool/feature names),
+  "genericPhraseCount": number (count of forbidden generic phrases found),
+  "issues": ["list specific problems found"],
   "violations": {
     "outOfScope": [],
-    "negativeFraming": []
+    "negativeFraming": [],
+    "genericContent": ["list concepts with generic placeholder content"]
   },
   "fixes": {}
 }
   `;
 
+  if (abortSignal?.aborted) throw new Error('Generation cancelled by user');
+
   const validationText = await invokeClaudeModel(
     bedrockClient,
     [{ role: 'user', content: pass4Content }],
     `You are a quality assurance validator for educational content.`,
-    4000
+    4000,
+    undefined,
+    abortSignal
   );
 
   const validation = parseJsonFromResponse<ValidationResult>(validationText);
