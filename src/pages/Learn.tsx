@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Map } from 'lucide-react';
-import { JourneyMap, ConceptCard, CelebrationModal } from '@/components/learning';
+import { JourneyMap, ConceptCard, CelebrationModal, LearningToolbar } from '@/components/learning';
 import { useLearningStore } from '@/store/learning-store';
 import styles from './Learn.module.css';
 
@@ -71,11 +71,7 @@ export default function Learn() {
               : 'SensaAI'}
           </span>
         </div>
-        {progress.conceptsLearnedToday > 0 && (
-          <div className={styles.streakBadge}>
-            🔥 {progress.conceptsLearnedToday}
-          </div>
-        )}
+        <LearningToolbar />
         <button
           className={styles.palaceButton}
           onClick={() => navigate('/palace')}
