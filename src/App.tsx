@@ -8,6 +8,7 @@ const Results = lazy(() => import('./pages/Results'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Learn = lazy(() => import('./pages/Learn'));
 const SavedResults = lazy(() => import('./pages/SavedResults'));
+const Palace = lazy(() => import('./pages/Palace'));
 
 function LoadingFallback() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/learn" element={<Learn />} />
           <Route path="/saved" element={<SavedResults />} />
+          <Route path="/palace" element={<Palace />} />
         </Routes>
         <SettingsPanel />
       </Suspense>

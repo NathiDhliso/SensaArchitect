@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen, Save, FolderDown } from 'lucide-react';
+import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen, Save, FolderDown, Map } from 'lucide-react';
 import { useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 import { useLearningStore } from '@/store/learning-store';
+import { usePalaceStore } from '@/store/palace-store';
 import { parseGeneratedContent, transformGeneratedContent } from '@/lib/content-adapter';
 import { storageManager } from '@/lib/storage';
 import type { SavedResult } from '@/lib/storage';
@@ -103,6 +104,53 @@ export default function Results() {
     return value >= threshold ? 'good' : 'warning';
   };
 
+  const { createPalace } = usePalaceStore();
+
+  const handleCreatePalace = () => {
+    if (!fullDocument || !pass1Data) return;
+
+    // Parse content to get stages
+    const parseResult = parseGeneratedContent(fullDocument);
+    if (!parseResult.success) {
+      console.error('Failed to parse content for palace:', parseResult.error);
+      return;
+    }
+
+    const { learningPath, concepts } = parseResult.data;
+
+    // Convert parsed stages to palace format
+    const stages = learningPath.stages.map(stage => {
+      // Find concepts that belong to this stage
+      const stageConcepts = concepts.filter(c => stage.concepts.includes(c.id));
+
+      return {
+        id: `stage-${stage.order}`,
+        name: stage.name,
+        concepts: stageConcepts.map(concept => ({
+          id: concept.id,
+          name: concept.name,
+          lifecycle: {
+            provision: [
+              concept.provision.prerequisite,
+              ...concept.provision.selection,
+              concept.provision.execution,
+            ].filter(Boolean),
+            configure: concept.configure || [],
+            monitor: [
+              concept.monitor.tool,
+              ...concept.monitor.metrics,
+              concept.monitor.thresholds,
+            ].filter(Boolean),
+          },
+        })),
+      };
+    });
+
+    // Create palace with first route
+    createPalace(currentSubject || 'study', 'tech-campus', stages);
+    navigate('/palace');
+  };
+
   if (!fullDocument) {
     return (
       <div className={styles.container}>
@@ -145,6 +193,13 @@ export default function Results() {
             >
               <BookOpen className={styles.buttonIcon} />
               {loadingLearn ? 'Loading...' : 'Start Learning'}
+            </button>
+            <button
+              onClick={handleCreatePalace}
+              className={styles.palaceButton}
+            >
+              <Map className={styles.buttonIcon} />
+              Create Memory Palace
             </button>
             <button
               onClick={handleSaveResult}

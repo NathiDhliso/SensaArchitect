@@ -1,0 +1,69 @@
+/**
+ * Memory Palace Types
+ * For spatial learning using Street View locations
+ */
+
+export interface MemoryPalace {
+    id: string;
+    subjectId: string;
+    routeId: string;
+    buildings: PalaceBuilding[];
+    createdAt: string;
+}
+
+export interface PalaceRoute {
+    id: string;
+    name: string;
+    description: string;
+    buildings: RouteBuilding[];
+}
+
+export interface RouteBuilding {
+    id: string;
+    name: string;
+    visualTheme: string;
+    coordinates: { lat: number; lng: number };
+    heading: number;
+    placements: PlacementSlot[];
+}
+
+export interface PlacementSlot {
+    id: string;
+    location: string;      // "Loading Dock LEFT"
+    visualAnchor: string;  // "shipping containers"
+    position: 'top' | 'center' | 'bottom';
+}
+
+export interface PalaceBuilding {
+    routeBuildingId: string;
+    stageId: string;
+    stageName: string;
+    concepts: PlacedConcept[];
+}
+
+export interface PlacedConcept {
+    conceptId: string;
+    conceptName: string;
+    slotId: string;
+    lifecycle: {
+        provision: string[];
+        configure: string[];
+        monitor: string[];
+    };
+    mastery: number; // 0-1
+}
+
+export interface PalaceProgress {
+    palaceId: string;
+    buildingProgress: Record<string, number>; // buildingId -> mastery %
+    conceptMastery: Record<string, ConceptMastery>;
+    streak: number;
+    lastWalkDate: string | null;
+}
+
+export interface ConceptMastery {
+    seen: number;
+    correct: number;
+    mastery: number; // 0-1
+    nextReview: string;
+}

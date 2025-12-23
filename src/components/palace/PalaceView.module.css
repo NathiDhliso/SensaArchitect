@@ -1,0 +1,275 @@
+.palaceContainer {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background: var(--gradient-surface);
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.backButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.backButton:hover {
+    background: var(--color-surface-subtle);
+}
+
+.buildingNav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.navButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    color: var(--color-text-medium);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.navButton:hover:not(:disabled) {
+    background: var(--color-primary-amethyst);
+    color: white;
+    border-color: var(--color-primary-amethyst);
+}
+
+.navButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.buildingTitle {
+    text-align: center;
+}
+
+.buildingTitle h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin: 0;
+}
+
+.buildingTitle p {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+    margin: 0.25rem 0 0;
+}
+
+.buildingIndicators {
+    display: flex;
+    gap: 0.375rem;
+}
+
+.indicator {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-border);
+    transition: all 0.2s;
+}
+
+.indicatorActive {
+    background: var(--color-primary-amethyst);
+    transform: scale(1.3);
+}
+
+.indicatorCompleted {
+    background: var(--color-success);
+}
+
+/* Main Content */
+.mainContent {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    overflow: hidden;
+}
+
+.streetViewPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--color-bg-neutral);
+}
+
+.streetViewCard {
+    background: var(--color-surface);
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+}
+
+.mapIcon {
+    width: 4rem;
+    height: 4rem;
+    background: var(--gradient-accent);
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+}
+
+.streetViewCard h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin: 0 0 0.5rem;
+}
+
+.streetViewCard p {
+    color: var(--color-text-light);
+    margin: 0 0 1.5rem;
+    font-size: 0.9375rem;
+}
+
+.openMapsButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--gradient-accent);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.openMapsButton:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow-primary);
+}
+
+/* Placement Panel */
+.placementPanel {
+    background: var(--color-surface);
+    border-left: 1px solid var(--color-border);
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.placementHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.placementHeader h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin: 0;
+}
+
+.placementList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+}
+
+.footerButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    color: var(--color-text-medium);
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.footerButton:hover {
+    background: var(--color-bg-neutral-alt);
+    border-color: var(--color-border-emphasis);
+}
+
+/* Empty State */
+.emptyState {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+}
+
+.emptyState h2 {
+    font-size: 1.5rem;
+    color: var(--color-text-dark);
+    margin: 1rem 0 0.5rem;
+}
+
+.emptyState p {
+    color: var(--color-text-light);
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .mainContent {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+
+    .streetViewPanel {
+        padding: 1rem;
+    }
+
+    .placementPanel {
+        border-left: none;
+        border-top: 1px solid var(--color-border);
+        max-height: 50vh;
+    }
+}
