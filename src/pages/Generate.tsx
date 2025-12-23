@@ -386,6 +386,46 @@ export default function Generate() {
                   )}
                 </div>
               </div>
+
+              {pass1Data && pass1Data.concepts.length > 0 && (
+                <div className={styles.livePreview}>
+                  <div className={styles.previewHeader}>
+                    <div className={styles.previewTitle}>
+                      📚 Concepts Detected
+                    </div>
+                    <div className={styles.previewBadge}>
+                      <span></span> Live
+                    </div>
+                  </div>
+
+                  {pass1Data.lifecycle && (
+                    <div className={styles.lifecyclePreview}>
+                      <span className={styles.lifecyclePhase}>📋 {pass1Data.lifecycle.phase1}</span>
+                      <span className={styles.lifecycleArrow}>→</span>
+                      <span className={styles.lifecyclePhase}>⚙️ {pass1Data.lifecycle.phase2}</span>
+                      <span className={styles.lifecycleArrow}>→</span>
+                      <span className={styles.lifecyclePhase}>📊 {pass1Data.lifecycle.phase3}</span>
+                    </div>
+                  )}
+
+                  <div className={styles.conceptsGrid}>
+                    {pass1Data.concepts.slice(0, 12).map((concept, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`${styles.conceptChip} ${passes[3] === 'in-progress' && idx === pass1Data.concepts.length - 1 ? styles.generating : ''}`}
+                      >
+                        <span className={styles.conceptIcon}>💡</span>
+                        <span className={styles.conceptName}>{concept}</span>
+                      </div>
+                    ))}
+                    {pass1Data.concepts.length > 12 && (
+                      <div className={styles.conceptChip}>
+                        <span className={styles.conceptName}>+{pass1Data.concepts.length - 12} more</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

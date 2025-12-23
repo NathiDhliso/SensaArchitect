@@ -1,21 +1,131 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
-import { Archive } from 'lucide-react';
+import { Search, Archive, Sparkles, Clock, BookOpen, TrendingUp, ChevronRight, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGenerationStore } from '@/store/generation-store';
 import { useUIStore } from '@/store/ui-store';
+import { useLearningStore } from '@/store/learning-store';
 import styles from './Home.module.css';
+
+const SUBJECT_CATEGORIES = [
+  {
+    id: 'cloud',
+    name: 'Cloud & DevOps',
+    icon: '☁️',
+    color: '#3b82f6',
+    subjects: [
+      { name: 'AWS Solutions Architect', difficulty: 'Advanced', hours: 40 },
+      { name: 'Azure Administrator', difficulty: 'Intermediate', hours: 35 },
+      { name: 'Kubernetes', difficulty: 'Advanced', hours: 30 },
+      { name: 'Docker Fundamentals', difficulty: 'Beginner', hours: 15 },
+      { name: 'Terraform', difficulty: 'Intermediate', hours: 25 },
+    ],
+  },
+  {
+    id: 'data',
+    name: 'Data & AI',
+    icon: '🧠',
+    color: '#8b5cf6',
+    subjects: [
+      { name: 'Machine Learning Fundamentals', difficulty: 'Intermediate', hours: 35 },
+      { name: 'Python for Data Science', difficulty: 'Beginner', hours: 20 },
+      { name: 'SQL Mastery', difficulty: 'Beginner', hours: 15 },
+      { name: 'Power BI', difficulty: 'Intermediate', hours: 20 },
+      { name: 'Data Engineering', difficulty: 'Advanced', hours: 40 },
+    ],
+  },
+  {
+    id: 'dev',
+    name: 'Development',
+    icon: '💻',
+    color: '#10b981',
+    subjects: [
+      { name: 'React & TypeScript', difficulty: 'Intermediate', hours: 30 },
+      { name: 'Node.js Backend', difficulty: 'Intermediate', hours: 25 },
+      { name: 'System Design', difficulty: 'Advanced', hours: 35 },
+      { name: 'REST API Design', difficulty: 'Beginner', hours: 15 },
+      { name: 'GraphQL', difficulty: 'Intermediate', hours: 20 },
+    ],
+  },
+  {
+    id: 'security',
+    name: 'Security',
+    icon: '🔐',
+    color: '#ef4444',
+    subjects: [
+      { name: 'CompTIA Security+', difficulty: 'Intermediate', hours: 40 },
+      { name: 'Ethical Hacking', difficulty: 'Advanced', hours: 45 },
+      { name: 'CISSP', difficulty: 'Expert', hours: 60 },
+      { name: 'Network Security', difficulty: 'Intermediate', hours: 30 },
+    ],
+  },
+  {
+    id: 'business',
+    name: 'Business & PM',
+    icon: '💼',
+    color: '#f59e0b',
+    subjects: [
+      { name: 'PMP Certification', difficulty: 'Advanced', hours: 50 },
+      { name: 'Agile & Scrum', difficulty: 'Beginner', hours: 15 },
+      { name: 'Product Management', difficulty: 'Intermediate', hours: 30 },
+      { name: 'Business Analysis', difficulty: 'Intermediate', hours: 25 },
+    ],
+  },
+];
+
+const DIFFICULTY_CONFIG = {
+  Beginner: { color: '#22c55e', icon: '🌱', label: '~15-20 hrs' },
+  Intermediate: { color: '#f59e0b', icon: '💪', label: '~25-35 hrs' },
+  Advanced: { color: '#ef4444', icon: '🚀', label: '~40-50 hrs' },
+  Expert: { color: '#8b5cf6', icon: '🏆', label: '~60+ hrs' },
+};
 
 export default function Home() {
   const [subject, setSubject] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const navigate = useNavigate();
   const { recentSubjects, bedrockConfig } = useGenerationStore();
   const { openSettingsPanel } = useUIStore();
+  const { progress, getConcepts } = useLearningStore();
+
+  const concepts = getConcepts();
+  const hasProgress = concepts.length > 0 && progress.completedConcepts.length > 0;
+  const progressPercent = concepts.length > 0 
+    ? Math.round((progress.completedConcepts.length / concepts.length) * 100) 
+    : 0;
+
+  const filteredSuggestions = useMemo(() => {
+    if (!subject.trim()) return [];
+    const query = subject.toLowerCase();
+    const matches: Array<{ name: string; difficulty: string; hours: number; category: string }> = [];
+    
+    SUBJECT_CATEGORIES.forEach(cat => {
+      cat.subjects.forEach(s => {
+        if (s.name.toLowerCase().includes(query)) {
+          matches.push({ ...s, category: cat.name });
+        }
+      });
+    });
+    
+    return matches.slice(0, 5);
+  }, [subject]);
+
   const handleGenerate = () => {
     if (subject.trim()) {
+      setShowSuggestions(false);
       navigate(`/generate/${encodeURIComponent(subject)}`);
     }
   };
+
+  const handleSelectSuggestion = (name: string) => {
+    setSubject(name);
+    setShowSuggestions(false);
+  };
+
+  const selectedCategoryData = selectedCategory 
+    ? SUBJECT_CATEGORIES.find(c => c.id === selectedCategory) 
+    : null;
 
   return (
     <div className={styles.container}>
@@ -27,6 +137,34 @@ export default function Home() {
           </p>
         </div>
 
+        {hasProgress && (
+          <motion.div 
+            className={styles.progressCard}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className={styles.progressInfo}>
+              <TrendingUp size={20} />
+              <div>
+                <strong>Continue Learning</strong>
+                <p>{progress.completedConcepts.length} of {concepts.length} concepts mastered</p>
+              </div>
+            </div>
+            <div className={styles.progressBar}>
+              <div 
+                className={styles.progressFill} 
+                style={{ width: `${progressPercent}%` }} 
+              />
+            </div>
+            <button 
+              className={styles.continueButton}
+              onClick={() => navigate('/learn')}
+            >
+              Continue <ChevronRight size={16} />
+            </button>
+          </motion.div>
+        )}
+
         <div className={styles.card}>
           <div className={styles.inputSection}>
             <label className={styles.label}>What do you want to master?</label>
@@ -35,11 +173,53 @@ export default function Home() {
               <input
                 type="text"
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
+                onChange={(e) => {
+                  setSubject(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                placeholder="e.g., AWS Solutions Architect"
+                placeholder="e.g., AWS Solutions Architect, Python, PMP..."
                 className={styles.input}
               />
+              <AnimatePresence>
+                {showSuggestions && filteredSuggestions.length > 0 && (
+                  <motion.div 
+                    className={styles.suggestionsDropdown}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    {filteredSuggestions.map((s, idx) => (
+                      <button
+                        key={idx}
+                        className={styles.suggestionItem}
+                        onMouseDown={() => handleSelectSuggestion(s.name)}
+                      >
+                        <div className={styles.suggestionMain}>
+                          <Sparkles size={14} />
+                          <span>{s.name}</span>
+                        </div>
+                        <div className={styles.suggestionMeta}>
+                          <span 
+                            className={styles.difficultyBadge}
+                            style={{ 
+                              background: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color + '20',
+                              color: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color 
+                            }}
+                          >
+                            {DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.icon} {s.difficulty}
+                          </span>
+                          <span className={styles.hoursBadge}>
+                            <Clock size={12} /> {s.hours}h
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -48,6 +228,7 @@ export default function Home() {
             disabled={!subject.trim()}
             className={styles.generateButton}
           >
+            <Zap size={18} />
             Generate Learning System
           </button>
 
@@ -60,28 +241,83 @@ export default function Home() {
             </div>
           )}
 
-          <div className={styles.recentSection}>
-            <p className={styles.helpText}>
-              The app automatically detects the professional role and lifecycle phases
-            </p>
-            <div className={styles.recentTags}>
-              <span className={styles.recentLabel}>Recent:</span>
-              {recentSubjects.map((item) => (
+          <div className={styles.categoriesSection}>
+            <p className={styles.categoriesLabel}>Or explore by category:</p>
+            <div className={styles.categoryTabs}>
+              {SUBJECT_CATEGORIES.map(cat => (
                 <button
-                  key={item}
-                  onClick={() => setSubject(item)}
-                  className={styles.recentTag}
+                  key={cat.id}
+                  className={`${styles.categoryTab} ${selectedCategory === cat.id ? styles.categoryTabActive : ''}`}
+                  onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                  style={{ '--cat-color': cat.color } as React.CSSProperties}
                 >
-                  {item}
+                  <span>{cat.icon}</span>
+                  <span>{cat.name}</span>
                 </button>
               ))}
             </div>
+
+            <AnimatePresence>
+              {selectedCategoryData && (
+                <motion.div 
+                  className={styles.categorySubjects}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  {selectedCategoryData.subjects.map((s, idx) => (
+                    <button
+                      key={idx}
+                      className={styles.subjectCard}
+                      onClick={() => {
+                        setSubject(s.name);
+                        setSelectedCategory(null);
+                      }}
+                    >
+                      <div className={styles.subjectName}>{s.name}</div>
+                      <div className={styles.subjectMeta}>
+                        <span 
+                          className={styles.difficultyBadge}
+                          style={{ 
+                            background: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color + '20',
+                            color: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color 
+                          }}
+                        >
+                          {DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.icon} {s.difficulty}
+                        </span>
+                        <span className={styles.hoursBadge}>
+                          <Clock size={12} /> ~{s.hours} hrs
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+
+          {recentSubjects.length > 0 && (
+            <div className={styles.recentSection}>
+              <div className={styles.recentTags}>
+                <span className={styles.recentLabel}>Recent:</span>
+                {recentSubjects.map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => setSubject(item)}
+                    className={styles.recentTag}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className={styles.actionButtons}>
           <button onClick={() => navigate('/learn')} className={styles.learnButton}>
-            Start Learning Journey
+            <BookOpen size={18} />
+            Learning Journey
           </button>
           <button onClick={() => navigate('/saved')} className={styles.savedButton}>
             <Archive size={18} />

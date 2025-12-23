@@ -406,6 +406,62 @@ export default function Results() {
 
         {/* Content Panel */}
         <main className={styles.contentPanel}>
+          {displayPass1Data && (
+            <div className={styles.conceptOverview}>
+              <div className={styles.overviewHeader}>
+                <div className={styles.overviewTitle}>
+                  🎯 Learning Roadmap
+                </div>
+                <span className={styles.overviewCount}>
+                  {displayPass1Data.concepts.length} concepts
+                </span>
+              </div>
+
+              <div className={styles.quickStats}>
+                <div className={styles.quickStat}>
+                  <span className={styles.quickStatValue}>{displayPass1Data.concepts.length}</span>
+                  <span className={styles.quickStatLabel}>Core Concepts</span>
+                </div>
+                <div className={styles.quickStat}>
+                  <span className={styles.quickStatValue}>3</span>
+                  <span className={styles.quickStatLabel}>Lifecycle Phases</span>
+                </div>
+                <div className={styles.quickStat}>
+                  <span className={styles.quickStatValue}>~{Math.ceil(displayPass1Data.concepts.length * 5)}</span>
+                  <span className={styles.quickStatLabel}>Est. Minutes</span>
+                </div>
+              </div>
+
+              <div className={styles.conceptsList}>
+                {displayPass1Data.concepts.slice(0, 8).map((concept, idx) => (
+                  <span key={idx} className={styles.conceptTag}>
+                    <span className={styles.conceptTagIcon}>💡</span>
+                    {concept}
+                  </span>
+                ))}
+                {displayPass1Data.concepts.length > 8 && (
+                  <span className={styles.conceptTag}>
+                    +{displayPass1Data.concepts.length - 8} more
+                  </span>
+                )}
+              </div>
+
+              <div className={styles.lifecycleFlow}>
+                <span className={styles.lifecycleStep}>
+                  <span>📋</span> {displayPass1Data.lifecycle.phase1}
+                </span>
+                <span className={styles.lifecycleArrow}>→</span>
+                <span className={styles.lifecycleStep}>
+                  <span>⚙️</span> {displayPass1Data.lifecycle.phase2}
+                </span>
+                <span className={styles.lifecycleArrow}>→</span>
+                <span className={styles.lifecycleStep}>
+                  <span>📊</span> {displayPass1Data.lifecycle.phase3}
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className={styles.contentCard}>
             <h2 className={styles.sectionTitle}>Generated Content</h2>
             <pre className={styles.contentPre}>{displayDocument}</pre>

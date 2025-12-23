@@ -436,3 +436,123 @@
     flex-wrap: wrap;
   }
 }
+
+.conceptOverview {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+}
+
+.overviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.overviewTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.overviewCount {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  background: var(--color-accent);
+  color: white;
+  border-radius: 1rem;
+  font-weight: 600;
+}
+
+.conceptsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.conceptTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 2rem;
+  font-size: 0.8rem;
+  color: var(--color-text-dark);
+  transition: all 0.2s;
+}
+
+.conceptTag:hover {
+  border-color: var(--color-accent);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.conceptTagIcon {
+  font-size: 0.875rem;
+}
+
+.lifecycleFlow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border-radius: 0.5rem;
+}
+
+.lifecycleStep {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--color-text-medium);
+  font-weight: 500;
+}
+
+.lifecycleStep span:first-child {
+  font-size: 0.875rem;
+}
+
+.lifecycleArrow {
+  color: var(--color-accent);
+  font-size: 0.875rem;
+}
+
+.quickStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.quickStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.875rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.quickStatValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.quickStatLabel {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
