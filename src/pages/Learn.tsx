@@ -2,14 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { JourneyMap, ConceptCard, CelebrationModal } from '@/components/learning';
-import OnboardingQuiz from '@/components/learning/OnboardingQuiz';
 import { useLearningStore } from '@/store/learning-store';
-import { usePersonalizationStore } from '@/store/personalization-store';
 import styles from './Learn.module.css';
 
 export default function Learn() {
   const navigate = useNavigate();
-  const { onboardingComplete } = usePersonalizationStore();
   const {
     progress,
     showCelebration,
@@ -34,12 +31,12 @@ export default function Learn() {
 
   useEffect(() => {
     startSession();
-    
+
     if (currentConcept && progress.completedConcepts.length > 0) {
       setShowWelcomeToast(true);
       setTimeout(() => setShowWelcomeToast(false), 5000);
     }
-    
+
     return () => endSession();
   }, [startSession, endSession]);
 
@@ -59,10 +56,6 @@ export default function Learn() {
     dismissCelebration();
     navigate('/');
   };
-
-  if (!onboardingComplete) {
-    return <OnboardingQuiz onComplete={() => {}} />;
-  }
 
   return (
     <div className={styles.container}>

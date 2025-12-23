@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { Archive } from 'lucide-react';
 import { useGenerationStore } from '@/store/generation-store';
+import { useUIStore } from '@/store/ui-store';
 import styles from './Home.module.css';
 
 export default function Home() {
   const [subject, setSubject] = useState('');
   const navigate = useNavigate();
   const { recentSubjects, bedrockConfig } = useGenerationStore();
-
+  const { openSettingsPanel } = useUIStore();
   const handleGenerate = () => {
     if (subject.trim()) {
       navigate(`/generate/${encodeURIComponent(subject)}`);
@@ -86,7 +87,7 @@ export default function Home() {
             <Archive size={18} />
             Saved Results
           </button>
-          <button onClick={() => navigate('/settings')} className={styles.settingsButton}>
+          <button onClick={openSettingsPanel} className={styles.settingsButton}>
             Settings
           </button>
         </div>

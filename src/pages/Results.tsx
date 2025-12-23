@@ -42,7 +42,7 @@ export default function Results() {
 
   const handleStartLearning = () => {
     if (!fullDocument) return;
-    
+
     setLoadingLearn(true);
     try {
       const parseResult = parseGeneratedContent(fullDocument);
@@ -63,7 +63,7 @@ export default function Results() {
 
   const handleSaveResult = async () => {
     if (!fullDocument || !currentSubject || !pass1Data || !validation) return;
-    
+
     setSaving(true);
     try {
       const savedResult: SavedResult = {
@@ -87,7 +87,7 @@ export default function Results() {
       };
 
       const result = await storageManager.saveResult(savedResult);
-      
+
       if (result.success) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
@@ -120,37 +120,34 @@ export default function Results() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.wrapper}>
+      {/* Header Row */}
+      <header className={styles.header}>
         <button onClick={() => navigate('/')} className={styles.backButton}>
           <ArrowLeft className={styles.backIcon} />
-          Back to Home
+          Back
         </button>
+        <div className={styles.headerContent}>
+          <h1 className={styles.title}>Generation Complete</h1>
+          <span className={styles.subtitle}>{currentSubject}</span>
+        </div>
+      </header>
 
-        <div className={styles.headerCard}>
-          <div className={styles.headerContent}>
-            <h1 className={styles.title}>Generation Complete</h1>
-            <p className={styles.subtitle}>{currentSubject}</p>
-          </div>
-          <div className={styles.headerActions}>
-            <button onClick={handleCopy} className={styles.secondaryButton}>
-              {copied ? (
-                <>
-                  <CheckCircle2 className={styles.buttonIcon} />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className={styles.buttonIcon} />
-                  Copy
-                </>
-              )}
+      {/* Dashboard Layout */}
+      <div className={styles.mainLayout}>
+        {/* Sidebar - Metrics & Actions */}
+        <aside className={styles.sidebar}>
+          {/* Action Buttons */}
+          <div className={styles.actionSection}>
+            <button
+              onClick={handleStartLearning}
+              className={styles.learnButton}
+              disabled={loadingLearn}
+            >
+              <BookOpen className={styles.buttonIcon} />
+              {loadingLearn ? 'Loading...' : 'Start Learning'}
             </button>
-            <button onClick={handleDownload} className={styles.primaryButton}>
-              <Download className={styles.buttonIcon} />
-              Download
-            </button>
-            <button 
-              onClick={handleSaveResult} 
+            <button
+              onClick={handleSaveResult}
               className={styles.saveButton}
               disabled={saving || saved}
             >
@@ -166,101 +163,85 @@ export default function Results() {
                 </>
               )}
             </button>
-            <button 
-              onClick={handleStartLearning} 
-              className={styles.learnButton}
-              disabled={loadingLearn}
-            >
-              <BookOpen className={styles.buttonIcon} />
-              {loadingLearn ? 'Loading...' : 'Start Learning'}
-            </button>
+            <div className={styles.actionRow}>
+              <button onClick={handleCopy} className={styles.secondaryButton}>
+                {copied ? <CheckCircle2 className={styles.buttonIcon} /> : <Copy className={styles.buttonIcon} />}
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+              <button onClick={handleDownload} className={styles.secondaryButton}>
+                <Download className={styles.buttonIcon} />
+                Download
+              </button>
+            </div>
           </div>
+
           {saved && (
             <div className={styles.saveHint}>
               <FolderDown className={styles.hintIcon} />
-              <span>File saved to your Downloads folder</span>
+              <span>Saved to Downloads</span>
             </div>
           )}
-        </div>
 
-        {validation && (
-          <div className={styles.metricsCard}>
-            <h2 className={styles.sectionTitle}>Quality Metrics</h2>
-            <div className={styles.metricsGrid}>
-              <div
-                className={`${styles.metricItem} ${
-                  getMetricStatus(validation.lifecycleConsistency, QUALITY_THRESHOLDS.lifecycleConsistency) === 'good'
-                    ? styles.metricGood
-                    : styles.metricWarning
-                }`}
-              >
-                <span className={styles.metricLabel}>Lifecycle Consistency</span>
-                <span className={styles.metricValue}>{validation.lifecycleConsistency}%</span>
-              </div>
-              <div
-                className={`${styles.metricItem} ${
-                  getMetricStatus(validation.positiveFraming, QUALITY_THRESHOLDS.positiveFraming) === 'good'
-                    ? styles.metricGood
-                    : styles.metricWarning
-                }`}
-              >
-                <span className={styles.metricLabel}>Positive Framing</span>
-                <span className={styles.metricValue}>{validation.positiveFraming}%</span>
-              </div>
-              <div
-                className={`${styles.metricItem} ${
-                  getMetricStatus(validation.formatConsistency, QUALITY_THRESHOLDS.formatConsistency) === 'good'
-                    ? styles.metricGood
-                    : styles.metricWarning
-                }`}
-              >
-                <span className={styles.metricLabel}>Format Consistency</span>
-                <span className={styles.metricValue}>{validation.formatConsistency}%</span>
-              </div>
-              <div
-                className={`${styles.metricItem} ${
-                  getMetricStatus(validation.completeness, QUALITY_THRESHOLDS.completeness) === 'good'
-                    ? styles.metricGood
-                    : styles.metricWarning
-                }`}
-              >
-                <span className={styles.metricLabel}>Completeness</span>
-                <span className={styles.metricValue}>{validation.completeness}%</span>
+          {/* Quality Metrics */}
+          {validation && (
+            <div className={styles.metricsSection}>
+              <h2 className={styles.sectionTitle}>Quality Metrics</h2>
+              <div className={styles.metricsGrid}>
+                <div className={`${styles.metricItem} ${getMetricStatus(validation.lifecycleConsistency, QUALITY_THRESHOLDS.lifecycleConsistency) === 'good' ? styles.metricGood : styles.metricWarning}`}>
+                  <span className={styles.metricLabel}>Lifecycle</span>
+                  <span className={styles.metricValue}>{validation.lifecycleConsistency}%</span>
+                </div>
+                <div className={`${styles.metricItem} ${getMetricStatus(validation.positiveFraming, QUALITY_THRESHOLDS.positiveFraming) === 'good' ? styles.metricGood : styles.metricWarning}`}>
+                  <span className={styles.metricLabel}>Framing</span>
+                  <span className={styles.metricValue}>{validation.positiveFraming}%</span>
+                </div>
+                <div className={`${styles.metricItem} ${getMetricStatus(validation.formatConsistency, QUALITY_THRESHOLDS.formatConsistency) === 'good' ? styles.metricGood : styles.metricWarning}`}>
+                  <span className={styles.metricLabel}>Format</span>
+                  <span className={styles.metricValue}>{validation.formatConsistency}%</span>
+                </div>
+                <div className={`${styles.metricItem} ${getMetricStatus(validation.completeness, QUALITY_THRESHOLDS.completeness) === 'good' ? styles.metricGood : styles.metricWarning}`}>
+                  <span className={styles.metricLabel}>Complete</span>
+                  <span className={styles.metricValue}>{validation.completeness}%</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {pass1Data && (
-          <div className={styles.detailsCard}>
-            <h2 className={styles.sectionTitle}>Domain Analysis</h2>
-            <div className={styles.detailsGrid}>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Domain</span>
-                <span className={styles.detailValue}>{pass1Data.domain}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Role Scope</span>
-                <span className={styles.detailValue}>{pass1Data.roleScope}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Lifecycle</span>
-                <span className={styles.detailValue}>
-                  {pass1Data.lifecycle.phase1} → {pass1Data.lifecycle.phase2} → {pass1Data.lifecycle.phase3}
-                </span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Concepts</span>
-                <span className={styles.detailValue}>{pass1Data.concepts.length} core concepts</span>
+          {/* Domain Analysis */}
+          {pass1Data && (
+            <div className={styles.detailsSection}>
+              <h2 className={styles.sectionTitle}>Domain Analysis</h2>
+              <div className={styles.detailsList}>
+                <div className={styles.detailItem}>
+                  <span className={styles.detailLabel}>Domain</span>
+                  <span className={styles.detailValue}>{pass1Data.domain}</span>
+                </div>
+                <div className={styles.detailItem}>
+                  <span className={styles.detailLabel}>Role</span>
+                  <span className={styles.detailValue}>{pass1Data.roleScope}</span>
+                </div>
+                <div className={styles.detailItem}>
+                  <span className={styles.detailLabel}>Lifecycle</span>
+                  <span className={styles.detailValue}>
+                    {pass1Data.lifecycle.phase1} → {pass1Data.lifecycle.phase2} → {pass1Data.lifecycle.phase3}
+                  </span>
+                </div>
+                <div className={styles.detailItem}>
+                  <span className={styles.detailLabel}>Concepts</span>
+                  <span className={styles.detailValue}>{pass1Data.concepts.length} core</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </aside>
 
-        <div className={styles.contentCard}>
-          <h2 className={styles.sectionTitle}>Generated Content</h2>
-          <pre className={styles.contentPre}>{fullDocument}</pre>
-        </div>
+        {/* Content Panel */}
+        <main className={styles.contentPanel}>
+          <div className={styles.contentCard}>
+            <h2 className={styles.sectionTitle}>Generated Content</h2>
+            <pre className={styles.contentPre}>{fullDocument}</pre>
+          </div>
+        </main>
       </div>
     </div>
   );

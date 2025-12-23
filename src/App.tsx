@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { SettingsPanel } from './components/settings';
 
 const Home = lazy(() => import('./pages/Home'));
 const Generate = lazy(() => import('./pages/Generate'));
@@ -29,6 +30,7 @@ function App() {
           <Route path="/learn" element={<Learn />} />
           <Route path="/saved" element={<SavedResults />} />
         </Routes>
+        <SettingsPanel />
       </Suspense>
     </BrowserRouter>
   );
