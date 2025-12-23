@@ -7,7 +7,7 @@ interface BreadcrumbsProps {
 }
 
 export default function Breadcrumbs({ onNavigate }: BreadcrumbsProps) {
-  const { progress, getPreviousConcept, getNextConcept, canAccessConcept, getConcepts } = useLearningStore();
+  const { progress, getPreviousConcept, getNextConcept, getConcepts } = useLearningStore();
 
   const concepts = getConcepts();
   const currentConcept = concepts.find(c => c.id === progress.currentConceptId);
@@ -18,13 +18,13 @@ export default function Breadcrumbs({ onNavigate }: BreadcrumbsProps) {
   const nextConcept = nextConceptId ? concepts.find(c => c.id === nextConceptId) : null;
 
   const handlePrevious = () => {
-    if (prevConceptId && canAccessConcept(prevConceptId)) {
+    if (prevConceptId) {
       onNavigate(prevConceptId);
     }
   };
 
   const handleNext = () => {
-    if (nextConceptId && canAccessConcept(nextConceptId)) {
+    if (nextConceptId) {
       onNavigate(nextConceptId);
     }
   };

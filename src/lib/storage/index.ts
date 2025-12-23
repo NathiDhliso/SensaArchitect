@@ -1,6 +1,8 @@
 export * from './types';
 export { LocalFileStorage, localFileStorage } from './local-storage';
 export { CloudStorage, cloudStorage } from './cloud-storage';
+export { importFromFile, createFileInput } from './import';
+export type { ImportResult } from './import';
 
 import { localFileStorage } from './local-storage';
 import { cloudStorage } from './cloud-storage';

@@ -16,6 +16,19 @@ export type UniversalLifecycle = {
   };
 };
 
+export type DynamicLifecycle = {
+  phase1: string;
+  phase2: string;
+  phase3: string;
+  roleScope: string;
+  domain: string;
+  justification: string;
+  excludedActions: string[];
+  phase1Description: string;
+  phase2Description: string;
+  phase3Description: string;
+};
+
 export type DomainType =
   | 'IT/Cloud'
   | 'Coding/Dev'
@@ -26,7 +39,7 @@ export type DomainType =
   | 'Education';
 
 export type Pass1Result = {
-  domain: DomainType;
+  domain: string;
   lifecycle: LifecyclePhases;
   roleScope: string;
   excludedActions: string[];
@@ -34,6 +47,7 @@ export type Pass1Result = {
   numericalLimits: string[];
   recentUpdates: string[];
   sourceVerification: string;
+  lifecycleJustification?: string;
 };
 
 export type PassStatus = 'queued' | 'in-progress' | 'complete' | 'fixing';

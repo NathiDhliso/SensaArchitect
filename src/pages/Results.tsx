@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen, Save } from 'lucide-react';
+import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen, Save, FolderDown } from 'lucide-react';
 import { useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 import { useLearningStore } from '@/store/learning-store';
@@ -169,6 +169,12 @@ export default function Results() {
               {loadingLearn ? 'Loading...' : 'Start Learning'}
             </button>
           </div>
+          {saved && (
+            <div className={styles.saveHint}>
+              <FolderDown className={styles.hintIcon} />
+              <span>File saved to your Downloads folder</span>
+            </div>
+          )}
         </div>
 
         {validation && (

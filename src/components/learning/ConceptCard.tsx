@@ -134,12 +134,14 @@ export default function ConceptCard({ conceptId, onComplete }: ConceptCardProps)
           </button>
         )}
 
-        <button
-          className={styles.deepDiveLink}
-          onClick={() => setShowDeepDive(true)}
-        >
-          View technical details →
-        </button>
+        <div className={styles.secondaryActions}>
+          <button
+            className={styles.deepDiveLink}
+            onClick={() => setShowDeepDive(true)}
+          >
+            View technical details →
+          </button>
+        </div>
       </div>
 
       {showDeepDive && (

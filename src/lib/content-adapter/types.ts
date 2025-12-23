@@ -41,19 +41,6 @@ export interface ParsedDomainAnalysis {
   conceptNames: string[];
 }
 
-export interface ParsedDependencyGraph {
-  layers: {
-    name: string;
-    description: string;
-    concepts: {
-      id: string;
-      name: string;
-      dependencies: string[];
-      relationshipType: string;
-    }[];
-  }[];
-}
-
 export interface ParsedLearningPath {
   stages: {
     order: number;
@@ -72,7 +59,6 @@ export interface ParsedMentalAnchor {
 
 export interface ParsedGeneratedContent {
   domainAnalysis: ParsedDomainAnalysis;
-  dependencyGraph: ParsedDependencyGraph;
   concepts: ParsedConcept[];
   learningPath: ParsedLearningPath;
   mentalAnchors: ParsedMentalAnchor[];

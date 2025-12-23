@@ -78,7 +78,7 @@ export function validatePass1Result(data: unknown): data is Pass1Result {
 }
 
 export function correctLifecycleToRegistry(pass1Data: Pass1Result): Pass1Result {
-  const registryLifecycle = LIFECYCLE_REGISTRY[pass1Data.domain];
+  const registryLifecycle = LIFECYCLE_REGISTRY[pass1Data.domain as keyof typeof LIFECYCLE_REGISTRY];
   if (!registryLifecycle) {
     return pass1Data;
   }

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Download, BookOpen, Cloud, HardDrive } from 'lucide-react';
-import { storageManager } from '@/lib/storage';
+import { ArrowLeft, Trash2, Download, BookOpen, Cloud, HardDrive, Upload } from 'lucide-react';
+import { storageManager, importFromFile } from '@/lib/storage';
 import { localFileStorage } from '@/lib/storage';
 import type { SavedResult } from '@/lib/storage';
 import { useLearningStore } from '@/store/learning-store';
@@ -13,6 +13,9 @@ export default function SavedResults() {
   const [results, setResults] = useState<SavedResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { loadCustomContent } = useLearningStore();
 
   useEffect(() => {
@@ -60,6 +63,38 @@ export default function SavedResults() {
     }
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportError(null);
+
+    try {
+      const importResult = await importFromFile(file);
+      
+      if (importResult.success && importResult.result) {
+        await storageManager.saveResult(importResult.result);
+        await loadResults();
+      } else {
+        setImportError(importResult.error || 'Failed to import file');
+        setTimeout(() => setImportError(null), 5000);
+      }
+    } catch (error) {
+      setImportError('Failed to import file');
+      setTimeout(() => setImportError(null), 5000);
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -93,13 +128,42 @@ export default function SavedResults() {
               {results.length} {results.length === 1 ? 'result' : 'results'} saved
             </p>
           </div>
-          {storageManager.isCloudEnabled() && (
-            <div className={styles.cloudBadge}>
-              <Cloud size={16} />
-              Cloud Sync Enabled
-            </div>
-          )}
+          <div className={styles.headerActions}>
+            <button 
+              onClick={handleImportClick}
+              className={styles.importButton}
+              disabled={importing}
+            >
+              <Upload size={16} />
+              {importing ? 'Importing...' : 'Import File'}
+            </button>
+            {storageManager.isCloudEnabled() ? (
+              <div className={styles.cloudBadge}>
+                <Cloud size={16} />
+                Cloud Sync Enabled
+              </div>
+            ) : (
+              <div className={styles.localHint}>
+                <HardDrive size={14} />
+                Files saved to Downloads folder
+              </div>
+            )}
+          </div>
         </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          onChange={handleFileSelected}
+          style={{ display: 'none' }}
+        />
+
+        {importError && (
+          <div className={styles.errorBanner}>
+            {importError}
+          </div>
+        )}
 
         {loading ? (
           <div className={styles.loadingState}>

@@ -1,7 +1,6 @@
 import type {
   ParsedGeneratedContent,
   ParsedDomainAnalysis,
-  ParsedDependencyGraph,
   ParsedConcept,
   ParsedLearningPath,
   ParsedMentalAnchor,
@@ -31,7 +30,7 @@ function extractSection(content: string, startMarker: string, endMarker?: string
 }
 
 function parseDomainAnalysis(content: string): ParsedDomainAnalysis {
-  const domainSection = extractSection(content, 'DOMAIN ANALYSIS', 'CONCEPT DEPENDENCY GRAPH');
+  const domainSection = extractSection(content, 'DOMAIN ANALYSIS', 'DECISION FRAMEWORK');
   
   const domainMatch = domainSection.match(/Domain:\s*(.+)/i);
   const roleMatch = domainSection.match(/Professional Role:\s*(.+)/i);
@@ -85,34 +84,6 @@ function parseDomainAnalysis(content: string): ParsedDomainAnalysis {
   };
 }
 
-function parseDependencyGraph(content: string): ParsedDependencyGraph {
-  const graphSection = extractSection(content, 'CONCEPT DEPENDENCY GRAPH', 'DECISION FRAMEWORK');
-  
-  const layers: ParsedDependencyGraph['layers'] = [];
-  
-  const layerMatches = graphSection.matchAll(/\[([A-Z\s]+(?:LAYER)?)\]\s*-?\s*(.+?)(?=\n)/gi);
-  
-  for (const match of layerMatches) {
-    const layerName = match[1].trim();
-    const layerDesc = match[2]?.trim() || '';
-    
-    layers.push({
-      name: layerName,
-      description: layerDesc,
-      concepts: [],
-    });
-  }
-  
-  if (layers.length === 0) {
-    layers.push(
-      { name: 'FOUNDATION LAYER', description: 'Core Identity & Organization', concepts: [] },
-      { name: 'DEPENDENT LAYER', description: 'Infrastructure Services', concepts: [] },
-      { name: 'INTEGRATION LAYER', description: 'Cross-Cutting Services', concepts: [] }
-    );
-  }
-  
-  return { layers };
-}
 
 function parseConceptBlock(block: string, order: number, stageId: string): ParsedConcept | null {
   const nameMatch = block.match(/^##\s*\d+\.\s*(.+)/m);
@@ -309,14 +280,12 @@ function parseMentalAnchors(content: string): ParsedMentalAnchor[] {
 
 export function parseGeneratedContent(rawContent: string): ParsedGeneratedContent {
   const domainAnalysis = parseDomainAnalysis(rawContent);
-  const dependencyGraph = parseDependencyGraph(rawContent);
   const concepts = parseConcepts(rawContent);
   const learningPath = parseLearningPath(rawContent);
   const mentalAnchors = parseMentalAnchors(rawContent);
   
   return {
     domainAnalysis,
-    dependencyGraph,
     concepts,
     learningPath,
     mentalAnchors,

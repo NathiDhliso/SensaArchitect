@@ -453,3 +453,31 @@
     padding: 0.5rem 0;
   }
 }
+
+.secondaryActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.mindMapLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #8b5cf6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.mindMapLink:hover {
+  background: #f5f3ff;
+  color: #7c3aed;
+}

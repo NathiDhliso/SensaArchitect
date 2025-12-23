@@ -52,8 +52,8 @@ export default function Generate() {
         setProgress(data.progress);
       }
 
-      if (pass === 1 && status === 'complete' && data) {
-        setPass1Data(data as typeof pass1Data);
+      if (pass === 1 && status === 'complete' && data && 'domain' in data && data.domain) {
+        setPass1Data(data as any);
       }
 
       if (pass === 2 && status === 'complete' && data?.content) {

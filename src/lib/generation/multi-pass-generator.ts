@@ -1,5 +1,4 @@
 import { SYSTEM_PROMPT_V4 } from '@/lib/system-prompt';
-import { enforceLifecycleScope, LIFECYCLE_REGISTRY } from './lifecycle-engine';
 import {
   getBedrockClient,
   invokeClaudeModel,
@@ -8,12 +7,16 @@ import {
   type BedrockConfig,
 } from './claude-client';
 import {
-  calculateProgress,
   applyFixes,
   assembleFinalDocument,
-  correctLifecycleToRegistry,
 } from './validation';
-import type { Pass1Result, ProgressCallback, GenerationResult, ValidationResult, DomainType } from '@/lib/types';
+import {
+  createLifecycleAnalysisPrompt,
+  parseLifecycleResponse,
+  createLifecycleScopePrompt,
+  getDefaultLifecycle,
+} from './dynamic-lifecycle';
+import type { Pass1Result, ProgressCallback, GenerationResult, ValidationResult, DynamicLifecycle } from '@/lib/types';
 
 export async function generateChartIteratively(
   subject: string,
@@ -22,39 +25,69 @@ export async function generateChartIteratively(
 ): Promise<GenerationResult> {
   const bedrockClient = getBedrockClient(config);
 
-  onProgress(1, 'in-progress', { message: 'Classifying domain and detecting lifecycle...' });
+  onProgress(1, 'in-progress', { message: 'Analyzing subject and generating optimal lifecycle...' });
+
+  const lifecyclePrompt = createLifecycleAnalysisPrompt(subject);
+  const lifecycleText = await invokeClaudeModel(
+    bedrockClient,
+    [{ role: 'user', content: lifecyclePrompt }],
+    'You are an expert curriculum designer. Analyze subjects and determine the optimal operational lifecycle.',
+    2000
+  );
+
+  let dynamicLifecycle: DynamicLifecycle | null = parseLifecycleResponse(lifecycleText);
+  if (!dynamicLifecycle) {
+    dynamicLifecycle = getDefaultLifecycle(subject);
+  }
+
+  onProgress(1, 'in-progress', { 
+    message: `Lifecycle detected: ${dynamicLifecycle.phase1} → ${dynamicLifecycle.phase2} → ${dynamicLifecycle.phase3}`,
+    lifecycle: {
+      phase1: dynamicLifecycle.phase1,
+      phase2: dynamicLifecycle.phase2,
+      phase3: dynamicLifecycle.phase3,
+    },
+    roleScope: dynamicLifecycle.roleScope,
+  });
 
   const pass1Content = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PASS 1 TASK: Execute ONLY STEP 1 (Live Verification) and Domain Analysis
+PASS 1 TASK: Execute ONLY STEP 1 (Live Verification) and Concept Extraction
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Subject: "${subject}"
 
+PRE-DETERMINED LIFECYCLE (USE EXACTLY):
+Domain: ${dynamicLifecycle.domain}
+Role: ${dynamicLifecycle.roleScope}
+Phase 1: ${dynamicLifecycle.phase1} - ${dynamicLifecycle.phase1Description}
+Phase 2: ${dynamicLifecycle.phase2} - ${dynamicLifecycle.phase2Description}
+Phase 3: ${dynamicLifecycle.phase3} - ${dynamicLifecycle.phase3Description}
+
 INSTRUCTIONS:
 1. Browse the web for the most recent official syllabus/standard
 2. Extract 3 specific recent updates (last 12 months)
-3. Identify numerical limits/thresholds that have changed
-4. Classify the domain (IT/Cloud, Law, Medicine, Coding/Dev, Accountancy, Project Management, Education)
-5. Detect the 3-phase lifecycle based on domain type
+3. Identify numerical limits/thresholds
+4. Extract ALL core concepts from the official syllabus
 
 OUTPUT FORMAT (JSON ONLY):
 {
   "sourceVerification": "Name of official source found",
   "recentUpdates": ["Update 1", "Update 2", "Update 3"],
   "numericalLimits": ["Limit 1 with value", "Limit 2 with value"] OR ["None found - marked for verification"],
-  "domain": "IT/Cloud" | "Law" | "Medicine" | "Coding/Dev" | "Accountancy" | "Project Management" | "Education",
+  "domain": "${dynamicLifecycle.domain}",
   "lifecycle": {
-    "phase1": "PROVISION" (or appropriate verb),
-    "phase2": "CONFIGURE" (or appropriate verb),
-    "phase3": "MONITOR" (or appropriate verb)
+    "phase1": "${dynamicLifecycle.phase1}",
+    "phase2": "${dynamicLifecycle.phase2}",
+    "phase3": "${dynamicLifecycle.phase3}"
   },
-  "roleScope": "Azure Administrator" (or appropriate professional role),
-  "excludedActions": ["architect", "design", "plan"] (actions outside this role),
-  "concepts": ["Concept 1", "Concept 2", ...] (Identify ALL core concepts covered in the official exam/syllabus - typically 15-35 depending on subject scope, names only)
+  "roleScope": "${dynamicLifecycle.roleScope}",
+  "excludedActions": ${JSON.stringify(dynamicLifecycle.excludedActions)},
+  "concepts": ["Concept 1", "Concept 2", ...] (Identify ALL core concepts - typically 15-35),
+  "lifecycleJustification": "${dynamicLifecycle.justification}"
 }
 
-CRITICAL: Do NOT generate any chart content yet. This pass is ONLY for analysis and verification.
+CRITICAL: Use the EXACT lifecycle phases provided above. Do NOT modify them.
   `;
 
   const pass1Text = await invokeClaudeModel(
@@ -65,13 +98,17 @@ CRITICAL: Do NOT generate any chart content yet. This pass is ONLY for analysis 
   );
 
   let pass1Data = parseJsonFromResponse<Pass1Result>(pass1Text);
+  
+  pass1Data.lifecycle = {
+    phase1: dynamicLifecycle.phase1,
+    phase2: dynamicLifecycle.phase2,
+    phase3: dynamicLifecycle.phase3,
+  };
+  pass1Data.roleScope = dynamicLifecycle.roleScope;
+  pass1Data.domain = dynamicLifecycle.domain;
+  pass1Data.excludedActions = dynamicLifecycle.excludedActions;
+  pass1Data.lifecycleJustification = dynamicLifecycle.justification;
 
-  const registryLifecycle = LIFECYCLE_REGISTRY[pass1Data.domain as DomainType];
-  if (!registryLifecycle) {
-    throw new Error(`Unknown domain detected: ${pass1Data.domain}. Cannot proceed.`);
-  }
-
-  pass1Data = correctLifecycleToRegistry(pass1Data);
   onProgress(1, 'complete', pass1Data);
 
   onProgress(2, 'in-progress', { message: 'Building concept dependencies...' });
@@ -107,10 +144,12 @@ POSITIVE FRAMING REQUIRED:
 OUTPUT: Generate only the three structures listed above. No chart content yet.
   `;
 
+  const lifecycleScopePrompt = createLifecycleScopePrompt(dynamicLifecycle, subject);
+
   const pass2Text = await invokeClaudeModel(
     bedrockClient,
     [{ role: 'user', content: pass2Content }],
-    SYSTEM_PROMPT_V4 + '\n\n' + enforceLifecycleScope(subject, pass1Data.domain),
+    SYSTEM_PROMPT_V4 + '\n\n' + lifecycleScopePrompt,
     6000
   );
 
@@ -193,7 +232,7 @@ CRITICAL: Generate ALL ${batchConcepts.length} concepts completely. No skipping.
     const batchStream = invokeClaudeModelStream(
       bedrockClient,
       [{ role: 'user', content: batchPrompt }],
-      enforceLifecycleScope(subject, pass1Data.domain) + '\nYou are an automated content generator. Output content only. No questions. No conversational phrases.',
+      lifecycleScopePrompt + '\nYou are an automated content generator. Output content only. No questions. No conversational phrases.',
       32000
     );
 
