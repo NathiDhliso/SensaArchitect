@@ -85,9 +85,9 @@ LEARNING PATH SEQUENCE
             expect(result.data.domainAnalysis.lifecycle.phase3).toBe('DELIVER');
             expect(result.data.concepts.length).toBe(2);
             expect(result.data.concepts[0].name).toBe('Power BI Service');
-            expect(result.data.concepts[0].provision.prerequisite).toContain('Power BI Pro license');
-            expect(result.data.concepts[0].configure.length).toBeGreaterThan(0);
-            expect(result.data.concepts[0].monitor.tool).toContain('Power BI Service Admin Portal');
+            expect(result.data.concepts[0].phase1.prerequisite).toContain('Power BI Pro license');
+            expect(result.data.concepts[0].phase2.length).toBeGreaterThan(0);
+            expect(result.data.concepts[0].phase3.tool).toContain('Power BI Service Admin Portal');
         }
     });
 
@@ -184,7 +184,7 @@ VISUAL MENTAL ANCHORS
             expect(result.data.domainAnalysis.lifecycle.phase3).toBe('REVIEW');
             expect(result.data.concepts.length).toBe(1);
             expect(result.data.concepts[0].name).toBe('Contract Analysis');
-            expect(result.data.concepts[0].provision.prerequisite).toContain('legal database');
+            expect(result.data.concepts[0].phase1.prerequisite).toContain('legal database');
         }
     });
 });

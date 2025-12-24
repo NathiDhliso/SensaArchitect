@@ -6,6 +6,7 @@ import type {
   ParsedMentalAnchor,
   ParsedStage,
   ParsedAcronym,
+  ParsedConfusionPair,
 } from './types';
 
 export type ParseResult =
@@ -144,6 +145,12 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
     phase3Section = extractSection(block, `○ ${lifecycle.phase3}:`, '##');
   }
 
+  // Extract new fields: Hook Sentence and Micro-Metaphor
+  const hookSentenceMatch = phase1Section.match(/\*\*Hook Sentence\*\*:\s*(.+?)(?=\n|\*\*Micro|$)/i) ||
+    block.match(/\*\*Hook Sentence\*\*:\s*(.+?)(?=\n|$)/i);
+  const microMetaphorMatch = phase1Section.match(/\*\*Micro-Metaphor\*\*:\s*(.+?)(?=\n|Prerequisite|$)/i) ||
+    block.match(/\*\*Micro-Metaphor\*\*:\s*(.+?)(?=\n|$)/i);
+
   const prereqMatch = phase1Section.match(/Prerequisite:\s*(.+?)(?=Selection:|Execution:|$)/is);
   const selectionMatch = phase1Section.match(/Selection:([\s\S]*?)(?=Execution:|$)/i);
   const executionMatch = phase1Section.match(/Execution:\s*(.+?)$/is);
@@ -194,6 +201,9 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
     metricsMatch[1].split(',').forEach(m => metrics.push(m.trim()));
   }
 
+  // Extract SHAPE sections
+  const shapeSections = parseShapeSections(block);
+
   return {
     id,
     name,
@@ -201,6 +211,8 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
     stageId,
     logicalConnection: logicalConnectionMatch?.[1]?.trim(),
     phase1: {
+      hookSentence: hookSentenceMatch?.[1]?.trim() || '',
+      microMetaphor: microMetaphorMatch?.[1]?.trim() || '',
       prerequisite: prereqMatch?.[1]?.trim() || '',
       selection: selectionItems,
       execution: executionMatch?.[1]?.trim() || '',
@@ -211,9 +223,64 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
       metrics,
       thresholds: thresholdMatch?.[1]?.trim() || '',
     },
+    shape: shapeSections,
     criticalDistinctions,
     designBoundaries,
     examFocus,
+  };
+}
+
+/**
+ * Parse SHAPE micro-learning sections from a concept block
+ */
+function parseShapeSections(block: string): ParsedConcept['shape'] | undefined {
+  // S - Simple Core
+  const simpleCoreMatch = block.match(/###?\s*S\s*[-–—]\s*Simple Core\s*\n([\s\S]*?)(?=###?\s*H\s*[-–—]|$)/i) ||
+    block.match(/\*\*S\s*[-–—]\s*Simple Core\*\*[:\s]*([\s\S]*?)(?=\*\*H|###|$)/i);
+  
+  // H - High-Stakes Example
+  const highStakesMatch = block.match(/###?\s*H\s*[-–—]\s*High-Stakes Example\s*\n([\s\S]*?)(?=###?\s*A\s*[-–—]|$)/i) ||
+    block.match(/\*\*H\s*[-–—]\s*High-Stakes Example\*\*[:\s]*([\s\S]*?)(?=\*\*A|###|$)/i);
+  
+  // A - Analogical Model
+  const analogicalMatch = block.match(/###?\s*A\s*[-–—]\s*Analogical Model\s*\n([\s\S]*?)(?=###?\s*P\s*[-–—]|$)/i) ||
+    block.match(/\*\*A\s*[-–—]\s*Analogical Model\*\*[:\s]*([\s\S]*?)(?=\*\*P|###|$)/i);
+  
+  // P - Pattern Recognition
+  const patternMatch = block.match(/###?\s*P\s*[-–—]\s*Pattern Recognition\s*\n([\s\S]*?)(?=###?\s*E\s*[-–—]|$)/i) ||
+    block.match(/\*\*P\s*[-–—]\s*Pattern Recognition\*\*[:\s]*([\s\S]*?)(?=\*\*E|###|$)/i);
+  
+  // E - Elimination Logic
+  const eliminationMatch = block.match(/###?\s*E\s*[-–—]\s*Elimination Logic\s*\n([\s\S]*?)(?=###|---|$)/i) ||
+    block.match(/\*\*E\s*[-–—]\s*Elimination Logic\*\*[:\s]*([\s\S]*?)(?=###|---|$)/i);
+
+  // Only return shape if we found at least the Simple Core section
+  if (!simpleCoreMatch) {
+    return undefined;
+  }
+
+  // Parse P section for question/answer
+  let patternQuestion = '';
+  let patternAnswer = '';
+  if (patternMatch) {
+    const patternContent = patternMatch[1];
+    const questionMatch = patternContent.match(/\*\*Question:\*\*\s*(.+?)(?=\*\*Answer|$)/is) ||
+      patternContent.match(/Question:\s*(.+?)(?=Answer:|$)/is);
+    const answerMatch = patternContent.match(/\*\*Answer:\*\*\s*(.+?)$/is) ||
+      patternContent.match(/Answer:\s*(.+?)$/is);
+    patternQuestion = questionMatch?.[1]?.trim() || patternContent.trim();
+    patternAnswer = answerMatch?.[1]?.trim() || '';
+  }
+
+  return {
+    simpleCore: simpleCoreMatch[1]?.trim() || '',
+    highStakesExample: highStakesMatch?.[1]?.trim() || '',
+    analogicalModel: analogicalMatch?.[1]?.trim() || '',
+    patternRecognition: {
+      question: patternQuestion,
+      answer: patternAnswer,
+    },
+    eliminationLogic: eliminationMatch?.[1]?.trim() || '',
   };
 }
 
@@ -259,22 +326,49 @@ function parseLearningPath(content: string): ParsedLearningPath {
 
     const stageContent = pathSection.slice(stageStart, stageEnd);
 
-    const conceptsMatch = stageContent.match(/\*\*Concepts:\*\*\s*(.+?)(?=\n\n|\*\*Capabilities|\*\*Narrative)/is);
+    const conceptsMatch = stageContent.match(/\*\*Concepts(?:\s*Included)?:\*\*\s*(.+?)(?=\n\n|\*\*Difficulty|\*\*Capabilities|\*\*Narrative)/is);
+    const difficultyProfileMatch = stageContent.match(/\*\*Difficulty Profile:\*\*\s*(.+?)(?=\n|\*\*Capabilities|$)/i);
     const capabilitiesMatch = stageContent.match(/\*\*Capabilities Gained:\*\*\s*([\s\S]+?)(?=\*\*Narrative|###|$)/i);
     const narrativeBridgeMatch = stageContent.match(/\*\*Narrative Handshake:\*\*\s*([\s\S]+?)(?=###|$)/i);
 
     const conceptNames: string[] = [];
+    const conceptsWithDifficulty: { name: string; difficulty: 'foundational' | 'intermediate' | 'advanced' }[] = [];
+    
     if (conceptsMatch) {
-      conceptsMatch[1].split(',').forEach(c => {
-        const name = c.replace(/[()]/g, '').trim();
-        if (name) conceptNames.push(name);
-      });
+      // Parse concepts with difficulty markers (🟢🟡🔴)
+      const conceptLines = conceptsMatch[1].split(/\n|,/).map(c => c.trim()).filter(Boolean);
+      for (const line of conceptLines) {
+        // Check for emoji difficulty markers
+        let difficulty: 'foundational' | 'intermediate' | 'advanced' = 'intermediate';
+        let name = line;
+        
+        if (line.includes('🟢') || line.toLowerCase().includes('foundational')) {
+          difficulty = 'foundational';
+          name = line.replace(/🟢/g, '').replace(/[-–]\s*foundational.*/i, '').trim();
+        } else if (line.includes('🔴') || line.toLowerCase().includes('advanced')) {
+          difficulty = 'advanced';
+          name = line.replace(/🔴/g, '').replace(/[-–]\s*advanced.*/i, '').trim();
+        } else if (line.includes('🟡') || line.toLowerCase().includes('intermediate')) {
+          difficulty = 'intermediate';
+          name = line.replace(/🟡/g, '').replace(/[-–]\s*intermediate.*/i, '').trim();
+        }
+        
+        // Clean brackets and extra markers
+        name = name.replace(/^\[|\]$/g, '').replace(/[()]/g, '').trim();
+        
+        if (name) {
+          conceptNames.push(name);
+          conceptsWithDifficulty.push({ name, difficulty });
+        }
+      }
     }
 
     stages.push({
       order: stageOrder,
       name: stageName,
       concepts: conceptNames,
+      conceptsWithDifficulty,
+      difficultyProfile: difficultyProfileMatch?.[1]?.trim(),
       capabilitiesGained: capabilitiesMatch?.[1]?.trim() || '',
       narrativeBridge: narrativeBridgeMatch?.[1]?.trim(),
     });
@@ -282,7 +376,7 @@ function parseLearningPath(content: string): ParsedLearningPath {
 
   if (stages.length === 0) {
     stages.push(
-      { order: 1, name: 'Foundation', concepts: [], capabilitiesGained: 'Core understanding established' }
+      { order: 1, name: 'Foundation', concepts: [], conceptsWithDifficulty: [], capabilitiesGained: 'Core understanding established' }
     );
   }
 
@@ -331,16 +425,68 @@ function parseMentalAnchors(content: string): ParsedMentalAnchor[] {
       }
     }
 
+    // Extract Binary Decision Rule
+    const binaryRuleMatch = anchorContent.match(/\*\*Binary Decision Rule[^*]*:\*\*\s*([\s\S]+?)(?=\*\*Why|\*\*Memory|###|$)/i) ||
+      anchorContent.match(/If\s+\[?([^\]]+)\]?,\s*YES\s*[→→-]+\s*(.+?)(?=\.\s*Otherwise|$)/i);
+    const binaryDecisionRule = binaryRuleMatch?.[0]?.includes('If') 
+      ? binaryRuleMatch[0].trim()
+      : binaryRuleMatch?.[1]?.trim();
+
     anchors.push({
       name: anchorName,
       metaphor: metaphorMatch?.[1]?.trim() || '',
       mappings,
       whyItHelps: whyMatch?.[1]?.trim() || '',
       acronym,
+      binaryDecisionRule,
     });
   }
 
   return anchors;
+}
+
+/**
+ * Parse confusion pairs JSON block from generated content
+ */
+function parseConfusionPairs(content: string): ParsedConfusionPair[] {
+  const pairs: ParsedConfusionPair[] = [];
+  
+  // Look for the confusion pairs JSON block
+  const jsonMatch = content.match(/```json\s*\n?\s*\{\s*"confusionPairs"\s*:\s*(\[[\s\S]*?\])\s*\}\s*\n?```/i) ||
+    content.match(/"confusionPairs"\s*:\s*(\[[\s\S]*?\])/i);
+  
+  if (jsonMatch) {
+    try {
+      const pairsArray = JSON.parse(jsonMatch[1]);
+      if (Array.isArray(pairsArray)) {
+        for (const pair of pairsArray) {
+          pairs.push({
+            id: pair.id || `conf-${pairs.length + 1}`,
+            conceptA: pair.conceptA || '',
+            conceptB: pair.conceptB || '',
+            distinctionKey: pair.distinctionKey || '',
+            whenToUseA: pair.whenToUseA || '',
+            whenToUseB: pair.whenToUseB || '',
+          });
+        }
+      }
+    } catch {
+      // JSON parsing failed, try regex fallback
+      const pairMatches = content.matchAll(/"id"\s*:\s*"([^"]+)"[\s\S]*?"conceptA"\s*:\s*"([^"]+)"[\s\S]*?"conceptB"\s*:\s*"([^"]+)"[\s\S]*?"distinctionKey"\s*:\s*"([^"]+)"[\s\S]*?"whenToUseA"\s*:\s*"([^"]+)"[\s\S]*?"whenToUseB"\s*:\s*"([^"]+)"/gi);
+      for (const match of pairMatches) {
+        pairs.push({
+          id: match[1],
+          conceptA: match[2],
+          conceptB: match[3],
+          distinctionKey: match[4],
+          whenToUseA: match[5],
+          whenToUseB: match[6],
+        });
+      }
+    }
+  }
+  
+  return pairs;
 }
 
 export function parseGeneratedContent(rawContent: string): ParseResult {
@@ -378,6 +524,7 @@ export function parseGeneratedContent(rawContent: string): ParseResult {
 
     const learningPath = parseLearningPath(rawContent);
     const mentalAnchors = parseMentalAnchors(rawContent);
+    const confusionPairs = parseConfusionPairs(rawContent);
 
     return {
       success: true,
@@ -386,6 +533,7 @@ export function parseGeneratedContent(rawContent: string): ParseResult {
         concepts,
         learningPath,
         mentalAnchors,
+        confusionPairs,
         rawContent,
       },
     };

@@ -59,10 +59,28 @@ function getConceptIcon(conceptName: string, mentalAnchors: ParsedMentalAnchor[]
 }
 
 function generateHookSentence(concept: ParsedConcept, metaphor: string): string {
+  // Use extracted hook sentence if available
+  if (concept.phase1.hookSentence) {
+    return concept.phase1.hookSentence;
+  }
+  // Use SHAPE simple core as fallback
+  if (concept.shape?.simpleCore) {
+    return concept.shape.simpleCore;
+  }
+  // Generate fallback
   if (concept.phase1.prerequisite) {
     return `${metaphor} - ${concept.name} provides the foundation for effective operations.`;
   }
   return `Every system needs a ${metaphor.toLowerCase()}. ${concept.name} makes it possible.`;
+}
+
+function getConceptMetaphor(concept: ParsedConcept, mentalAnchors: ParsedMentalAnchor[]): string {
+  // Use extracted micro-metaphor if available
+  if (concept.phase1.microMetaphor) {
+    return concept.phase1.microMetaphor;
+  }
+  // Fall back to finding from mental anchors
+  return findMetaphorForConcept(concept.name, mentalAnchors);
 }
 
 function extractPrerequisites(concept: ParsedConcept, allConcepts: ParsedConcept[]): string[] {
@@ -83,6 +101,10 @@ function extractPrerequisites(concept: ParsedConcept, allConcepts: ParsedConcept
 }
 
 function generateWhyYouNeed(concept: ParsedConcept): string {
+  // Use SHAPE elimination logic if available (it explains key distinctions)
+  if (concept.shape?.eliminationLogic) {
+    return concept.shape.eliminationLogic;
+  }
   if (concept.criticalDistinctions.length > 0) {
     return concept.criticalDistinctions[0];
   }
@@ -95,6 +117,14 @@ function generateWhyYouNeed(concept: ParsedConcept): string {
 }
 
 function generateRealWorldExample(concept: ParsedConcept, metaphor: string): string {
+  // Use SHAPE high-stakes example if available
+  if (concept.shape?.highStakesExample) {
+    return concept.shape.highStakesExample;
+  }
+  // Use SHAPE analogical model if available
+  if (concept.shape?.analogicalModel) {
+    return concept.shape.analogicalModel;
+  }
   return `Just like ${metaphor.toLowerCase()}, ${concept.name} provides essential functionality in this domain.`;
 }
 
@@ -273,7 +303,7 @@ export function transformToLearningConcepts(
       },
     };
 
-    const metaphor = findMetaphorForConcept(parsedConcept.name, parsed.mentalAnchors);
+    const metaphor = getConceptMetaphor(parsedConcept, parsed.mentalAnchors);
     const icon = getConceptIcon(parsedConcept.name, parsed.mentalAnchors);
 
     concepts.push({

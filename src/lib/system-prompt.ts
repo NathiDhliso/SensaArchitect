@@ -43,7 +43,9 @@ Create a Single Code Block containing a structured outline. You must follow thes
 **CONTENT DENSITY & POSITIVE FRAMING RULES:**
 
 * **Foundation Level (Phase 1): The "Blueprint Pattern"**
-   - Prerequisite: (What enables this? If nothing required, write "[None]")
+   - **Hook Sentence**: A compelling 10-15 word sentence that makes the learner want to know more
+   - **Micro-Metaphor**: A 3-5 word physical analogy (e.g., "The traffic cop at the intersection", "The security guard at the door")
+   - Prerequisite: (What enables this? Use format: "[ConceptName]" for internal dependencies, "[None]" if first concept or no dependencies)
    - Selection: (Which type/approach best serves the goal? Include specific capabilities/thresholds where known)
    - Execution: (The specific Tool/Form/Process/Document to begin)
 
@@ -77,7 +79,37 @@ Create a Single Code Block containing a structured outline. You must follow thes
 
 ---
 
-## STEP 3.5: DECISION FRAMEWORK TREES [Choice Architecture]
+## STEP 3.5: SHAPE MICRO-LEARNING FORMAT [Required for Each Concept]
+
+Every concept in the Master Chart MUST include SHAPE sections designed for 2-minute learning bursts:
+
+**S - SIMPLE CORE** (15 seconds to read)
+One sentence. No jargon. A complete beginner could repeat it.
+Example: "Lambda runs your code without you managing servers - you just upload and trigger."
+
+**H - HIGH-STAKES EXAMPLE** (30 seconds to read)
+A real company + year + specific numbers or human impact.
+Example: "In 2017, the S3 outage cost companies $150M in 4 hours - Lambda functions depending on S3 also failed, teaching engineers about regional dependencies."
+
+**A - ANALOGICAL MODEL** (45 seconds to read)
+Map to a familiar system (construction, cooking, sports, etc.) that matches typical learner backgrounds.
+3-4 specific technical concepts mapped to physical elements.
+Example: "Think of Lambda like a restaurant kitchen: You're the chef (code), AWS is the kitchen equipment (infrastructure). You focus on recipes (logic), they handle the stove, fridge, and cleanup (scaling, patching, monitoring)."
+
+**P - PATTERN RECOGNITION** (20 seconds to read)
+A self-test question. "You know you've mastered this when you can answer:"
+Then provide the answer immediately below.
+Example: "Question: When would you choose Lambda over EC2? Answer: When your workload is event-driven, unpredictable, or you want zero server management."
+
+**E - ELIMINATION LOGIC** (10 seconds to read)
+"⚠️ Don't confuse [THIS] with [THAT]" - one critical distinction.
+Example: "⚠️ Don't confuse Lambda cold starts (initialization delay) with Lambda timeouts (execution limit). Cold starts are about speed; timeouts are about duration."
+
+**QUALITY GATE:** Concepts without complete SHAPE sections will be rejected.
+
+---
+
+## STEP 3.6: DECISION FRAMEWORK TREES [Choice Architecture]
 
 Create 2-3 decision trees for the most common "When do I use X vs Y?" questions in this domain. Frame entirely around selection criteria and capabilities unlocked.
 
@@ -114,7 +146,13 @@ Create 3 specific "Visual Mental Models" that illuminate the hardest conceptual 
    • Example: **SMART Goals:** Specific, Measurable, Achievable, Relevant, Time-bound - "Sally Makes Apple Rhubarb Tarts"
    • Only include when the concept genuinely benefits from rote memorization
 
-4. **Why It Helps Section - POSITIVE FRAMING MANDATORY:**
+4. **Binary Decision Rule (For Sprint Testing):**
+   • A single YES/NO decision rule that distinguishes this anchor's concepts from related concepts
+   • Format: "If [condition], YES → [this concept]. Otherwise, consider [alternative]."
+   • Must be answerable in under 6 seconds
+   • Example: "If you need cross-region traffic distribution, YES → use Global Accelerator. Otherwise, consider regional Load Balancers."
+
+5. **Why It Helps Section - POSITIVE FRAMING MANDATORY:**
    • Start with capability-focused phrases:
      - ✅ "Clarifies the relationship between..."
      - ✅ "Shows how X enables Y..."
@@ -154,17 +192,66 @@ Provide ONE fully-worked scenario showing how the chart solves a realistic probl
 
 ---
 
-## STEP 7: LEARNING PATH SEQUENCE [Progressive Mastery Guide]
+## STEP 5.5: CONFUSION PAIRS [Discrimination Readiness]
 
-Define a suggested study sequence that organizes concepts into **4-6 progressive stages**. Each stage should contain 5-8 related concepts. Frame entirely around capability expansion and skill building.
+Identify 3-5 pairs of concepts from the Master Chart that learners commonly confuse. These pairs directly feed Sprint discrimination questions and Confusion Drills.
 
-**CRITICAL:** You MUST create at least 4 stages and at most 6 stages. Distribute all concepts evenly across these stages based on logical progression and dependencies.
+**OUTPUT FORMAT (JSON Block):**
+\`\`\`json
+{
+  "confusionPairs": [
+    {
+      "id": "conf-1",
+      "conceptA": "Concept Name A",
+      "conceptB": "Concept Name B",
+      "distinctionKey": "The ONE question that reveals which applies",
+      "whenToUseA": "Choose A when [specific scenario/capability needed]",
+      "whenToUseB": "Choose B when [specific scenario/capability needed]"
+    }
+  ]
+}
+\`\`\`
+
+**SELECTION CRITERIA FOR PAIRS:**
+- Concepts that share similar names or overlapping functions
+- Concepts from the same lifecycle phase that serve different purposes
+- Concepts frequently tested together in exams or certifications
+- Concepts with subtle but critical differences in scope or capability
+
+**POSITIVE FRAMING FOR PAIRS:**
+- ✅ "Choose A when you need [capability]"
+- ✅ "B excels at [specific function]"
+- ✅ "A is optimized for [scenario], B is designed for [different scenario]"
+- ❌ Avoid: "Don't use A if..." / "A fails when..." / "Common mistake is..."
+
+---
+
+## STEP 6: LEARNING PATH SEQUENCE [Progressive Mastery Guide]
+
+Define a suggested study sequence that organizes ALL concepts into exactly **4-6 progressive stages**. Frame entirely around capability expansion and skill building.
+
+**MANDATORY DISTRIBUTION RULE:**
+| Total Concepts | Stage Count | Concepts Per Stage |
+|----------------|-------------|-------------------|
+| 15-20          | 4 stages    | 4-5 each          |
+| 21-28          | 5 stages    | 4-6 each          |
+| 29-35          | 6 stages    | 5-6 each          |
+
+**VALIDATION REQUIREMENTS:**
+- No stage may have fewer than 3 concepts
+- No stage may have more than 8 concepts
+- All concepts from the Master Chart MUST be assigned to exactly one stage
+- Stages must follow logical dependency order
 
 **STRUCTURE FOR EACH STAGE:**
 1. **Stage Name & Order:** Clear numbering and descriptive title
-2. **Concepts Included:** List the specific concepts covered in this stage
-3. **Capabilities Gained:** What the learner can now do after completing this stage
-4. **Narrative Handshake:** (For stages 2+) A 2-3 sentence bridge explaining how the skills/knowledge from the previous stage unlock the potential of this stage. This creates a story of progressive mastery.
+2. **Concepts Included:** List with difficulty markers:
+   - 🟢 [Concept Name] - foundational (terminology/basics)
+   - 🟡 [Concept Name] - intermediate (relationships/application)
+   - 🔴 [Concept Name] - advanced (edge cases/optimization)
+3. **Difficulty Profile:** e.g., "60% foundational, 30% intermediate, 10% advanced"
+4. **Capabilities Gained:** What the learner can now do after completing this stage
+5. **Narrative Handshake:** (For stages 2+) A 2-3 sentence bridge explaining how skills from the previous stage unlock this stage's potential
 
 **POSITIVE FRAMING GUIDELINES:**
 - ✅ Frame each stage around capabilities gained: "After Stage 1, you can..."
@@ -181,11 +268,12 @@ Define a suggested study sequence that organizes concepts into **4-6 progressive
 
 1. **Source Verification** (With extracted Hard Data and any limitations noted)
 2. **Lifecycle Definition** (With justification if custom)
-3. **Master Hierarchical Chart** (Structured outline in a single code block)
-4. **Decision Framework Trees**
-5. **Visual Mental Anchors** (3 specific visualizations with strict positive framing)
-6. **Worked Example** (Following the required structure with positive framing throughout)
-7. **Learning Path Sequence**
+3. **Master Hierarchical Chart** (Structured outline with SHAPE sections in a single code block)
+4. **Decision Framework Trees** (2-3 trees for common X vs Y decisions)
+5. **Visual Mental Anchors** (3 specific visualizations with binary decision rules)
+6. **Worked Example** (Following the required structure with positive framing)
+7. **Confusion Pairs** (JSON block with 3-5 commonly confused concept pairs)
+8. **Learning Path Sequence** (4-6 stages with difficulty markers and distribution)
 
 ---
 

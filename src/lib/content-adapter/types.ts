@@ -5,6 +5,8 @@ export interface ParsedConcept {
   stageId: string;
   logicalConnection?: string;
   phase1: {
+    hookSentence: string;
+    microMetaphor: string;
     prerequisite: string;
     selection: string[];
     execution: string;
@@ -14,6 +16,14 @@ export interface ParsedConcept {
     tool: string;
     metrics: string[];
     thresholds: string;
+  };
+  // SHAPE micro-learning sections
+  shape?: {
+    simpleCore: string;
+    highStakesExample: string;
+    analogicalModel: string;
+    patternRecognition: { question: string; answer: string };
+    eliminationLogic: string;
   };
   criticalDistinctions: string[];
   designBoundaries: string[];
@@ -47,6 +57,8 @@ export interface ParsedLearningPath {
     order: number;
     name: string;
     concepts: string[];
+    conceptsWithDifficulty: { name: string; difficulty: 'foundational' | 'intermediate' | 'advanced' }[];
+    difficultyProfile?: string;
     capabilitiesGained: string;
     narrativeBridge?: string;
   }[];
@@ -64,6 +76,16 @@ export interface ParsedMentalAnchor {
   mappings: { concept: string; metaphorElement: string }[];
   whyItHelps: string;
   acronym?: ParsedAcronym;
+  binaryDecisionRule?: string;
+}
+
+export interface ParsedConfusionPair {
+  id: string;
+  conceptA: string;
+  conceptB: string;
+  distinctionKey: string;
+  whenToUseA: string;
+  whenToUseB: string;
 }
 
 export interface ParsedGeneratedContent {
@@ -71,5 +93,6 @@ export interface ParsedGeneratedContent {
   concepts: ParsedConcept[];
   learningPath: ParsedLearningPath;
   mentalAnchors: ParsedMentalAnchor[];
+  confusionPairs: ParsedConfusionPair[];
   rawContent: string;
 }

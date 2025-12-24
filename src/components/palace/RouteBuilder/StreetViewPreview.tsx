@@ -56,7 +56,7 @@ export function StreetViewPreview({
   const [placements, setPlacements] = useState<CustomPlacement[]>([]);
 
   // Generate automatic placements based on the current heading
-  const generateAutoPlacements = useCallback((heading: number): CustomPlacement[] => {
+  const generateAutoPlacements = useCallback((_heading: number): CustomPlacement[] => {
     return AUTO_PLACEMENTS.map((p, idx) => ({
       id: `auto-placement-${idx}`,
       label: p.label,

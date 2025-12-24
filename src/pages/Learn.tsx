@@ -14,7 +14,6 @@ import {
 import HelpModal from '@/components/ui/HelpModal';
 import { useLearningStore } from '@/store/learning-store';
 import { useFocusSessionStore } from '@/store/focus-session-store';
-import { UI_TIMINGS } from '@/constants/ui-constants';
 import styles from './Learn.module.css';
 
 export default function Learn() {
