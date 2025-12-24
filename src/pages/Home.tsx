@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGenerationStore } from '@/store/generation-store';
 import { useUIStore } from '@/store/ui-store';
 import { useLearningStore } from '@/store/learning-store';
+import { DiagnosticModal, DiagnosticResults } from '@/components/diagnostic';
 import { CATEGORY_COLORS, DIFFICULTY_COLORS } from '@/constants/theme-colors';
 import { UI_TIMINGS } from '@/constants/ui-constants';
 import styles from './Home.module.css';
@@ -87,9 +88,14 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const navigate = useNavigate();
-  const { recentSubjects, bedrockConfig } = useGenerationStore();
+  const { recentSubjects, bedrockConfig, diagnosticResult, clearDiagnosticResult } = useGenerationStore();
   const { openSettingsPanel } = useUIStore();
   const { progress, getConcepts } = useLearningStore();
+
+  // Diagnostic flow state
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [showDiagnosticResults, setShowDiagnosticResults] = useState(false);
+  const [pendingSubject, setPendingSubject] = useState<string | null>(null);
 
   const concepts = getConcepts();
   const hasProgress = concepts.length > 0 && progress.completedConcepts.length > 0;
@@ -116,7 +122,34 @@ export default function Home() {
   const handleGenerate = () => {
     if (subject.trim()) {
       setShowSuggestions(false);
-      navigate(`/generate/${encodeURIComponent(subject)}`);
+      if (bedrockConfig) {
+        // Start diagnostic flow
+        setPendingSubject(subject);
+        clearDiagnosticResult();
+        setShowDiagnostic(true);
+      } else {
+        // No credentials - prompt to configure
+        openSettingsPanel();
+      }
+    }
+  };
+
+  const handleDiagnosticComplete = () => {
+    setShowDiagnostic(false);
+    setShowDiagnosticResults(true);
+  };
+
+  const handleDiagnosticSkip = () => {
+    setShowDiagnostic(false);
+    if (pendingSubject) {
+      navigate(`/generate/${encodeURIComponent(pendingSubject)}`);
+    }
+  };
+
+  const handleResultsContinue = () => {
+    setShowDiagnosticResults(false);
+    if (pendingSubject) {
+      navigate(`/generate/${encodeURIComponent(pendingSubject)}`);
     }
   };
 
@@ -330,6 +363,19 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      {/* Diagnostic Modals */}
+      {showDiagnostic && pendingSubject && (
+        <DiagnosticModal
+          subject={pendingSubject}
+          onComplete={handleDiagnosticComplete}
+          onSkip={handleDiagnosticSkip}
+        />
+      )}
+
+      {showDiagnosticResults && diagnosticResult && (
+        <DiagnosticResults onContinue={handleResultsContinue} />
+      )}
     </div>
   );
 }

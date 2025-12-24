@@ -47,4 +47,47 @@ export const UI_TIMINGS = {
 
   // Session timings (in milliseconds)
   CHECKPOINT_EXPIRY: 3600000, // 1 hour - session checkpoint expiry
+
+  // Diagnostic timings
+  DIAGNOSTIC_QUESTION_TIME: 6000,   // 6 seconds per diagnostic question
+  DIAGNOSTIC_FEEDBACK_TIME: 1500,   // 1.5 seconds for correct/incorrect feedback
+  DIAGNOSTIC_RESULTS_DELAY: 3000,   // 3 seconds analyzing results animation
+
+  // Sprint/automaticity timings
+  SPRINT_QUESTION_TIME: 6000,       // 6 seconds per sprint question
+  SPRINT_FEEDBACK_TIME: 2000,       // 2 seconds for feedback after answer
+
+  // Learning session timings
+  TWO_HOUR_SESSION_MS: 7200000,     // 2 hours in milliseconds
+  LEARNING_PHASE_MS: 5400000,       // 90 minutes learning phase
+  SPRINT_PHASE_MS: 900000,          // 15 minutes sprint phase
 } as const;
+
+/**
+ * Diagnostic configuration constants
+ */
+export const DIAGNOSTIC_CONFIG = {
+  QUESTION_COUNT: 20,
+  SECONDS_PER_QUESTION: 6,
+  TOTAL_TIME_SECONDS: 120,  // 2 minutes total
+  DISTRIBUTION: {
+    beginner: 7,
+    intermediate: 7,
+    advanced: 6,
+  },
+} as const;
+
+/**
+ * Sprint configuration constants
+ */
+export const SPRINT_CONFIG = {
+  QUESTION_COUNT: 30,
+  SECONDS_PER_QUESTION: 6,
+  TOTAL_TIME_MINUTES: 15,
+  DISTRIBUTION: {
+    core: 10,
+    discrimination: 10,
+    application: 10,
+  },
+} as const;
+

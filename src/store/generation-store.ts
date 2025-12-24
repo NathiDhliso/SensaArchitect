@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Pass1Result, PassStatus, ValidationResult, GenerationResult } from '@/lib/types';
 import type { BedrockConfig } from '@/lib/generation/claude-client';
+import type { DiagnosticResult } from '@/lib/types/diagnostic';
 
 type GenerationCheckpoint = {
   subject: string;
@@ -28,6 +29,8 @@ type GenerationState = {
   isGenerating: boolean;
   error: string | null;
   checkpoint: GenerationCheckpoint | null;
+  diagnosticResult: DiagnosticResult | null;
+  conceptsToSkip: string[];
 };
 
 type GenerationProgressUpdate = {
@@ -61,6 +64,8 @@ type GenerationActions = {
   canResumeFromCheckpoint: (subject: string) => boolean;
   getCheckpointResumeData: () => { startFromPass: number; restoredState: Partial<GenerationState> } | null;
   clearCheckpoint: () => void;
+  setDiagnosticResult: (result: DiagnosticResult, conceptsToSkip: string[]) => void;
+  clearDiagnosticResult: () => void;
 };
 
 const getEnvBedrockConfig = (): BedrockConfig | null => {
@@ -95,6 +100,8 @@ const initialState: GenerationState = {
   isGenerating: false,
   error: null,
   checkpoint: null,
+  diagnosticResult: null,
+  conceptsToSkip: [],
 };
 
 export const useGenerationStore = create<GenerationState & GenerationActions>()(
@@ -235,6 +242,12 @@ export const useGenerationStore = create<GenerationState & GenerationActions>()(
       },
 
       clearCheckpoint: () => set({ checkpoint: null }),
+
+      setDiagnosticResult: (result, conceptsToSkip) =>
+        set({ diagnosticResult: result, conceptsToSkip }),
+
+      clearDiagnosticResult: () =>
+        set({ diagnosticResult: null, conceptsToSkip: [] }),
     }),
     {
       name: 'chart-generator-storage',
