@@ -1,15 +1,58 @@
 @import "tailwindcss";
 
 /* ============================================
-   SensaPBL Color Palette - Single Source of Truth
+   SensaPBL Design System - Single Source of Truth
    "Twilight Learning" Theme
    ============================================ */
 
 :root {
-  /* Typography */
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* ========== SENSA TYPOGRAPHY SYSTEM ========== */
+  /* 
+   * Font Philosophy:
+   * - Display/Headings: Plus Jakarta Sans - geometric, confident, modern
+   * - Body/Reading: Source Sans 3 - humanist, warm, optimized for learning
+   * - Mono/Code: JetBrains Mono - technical clarity for code snippets
+   */
+  --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  
+  /* Font Sizes - Fluid Scale */
+  --font-size-xs: 0.75rem;    /* 12px - captions, badges */
+  --font-size-sm: 0.875rem;   /* 14px - secondary text */
+  --font-size-base: 1rem;     /* 16px - body text */
+  --font-size-lg: 1.125rem;   /* 18px - lead text */
+  --font-size-xl: 1.25rem;    /* 20px - small headings */
+  --font-size-2xl: 1.5rem;    /* 24px - section headings */
+  --font-size-3xl: 1.875rem;  /* 30px - page headings */
+  --font-size-4xl: 2.25rem;   /* 36px - hero headings */
+  --font-size-5xl: 3rem;      /* 48px - display text */
+  
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+  
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  
+  /* Apply defaults */
+  font-family: var(--font-body);
+  line-height: var(--line-height-normal);
+  font-weight: var(--font-weight-normal);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -97,6 +140,14 @@
   --shadow-glow-amber-hover: 0 6px 20px rgba(245, 158, 11, 0.4);
   --shadow-glow-error: 0 4px 12px rgba(220, 38, 38, 0.3);
 
+  /* ========== ICON TREATMENTS ========== */
+  --icon-stroke-default: 1.5;
+  --icon-stroke-bold: 2;
+  --icon-glow-primary: 0 0 10px var(--overlay-primary-15);
+  --icon-glow-accent: 0 0 10px var(--overlay-accent-15);
+  --icon-glow-sage: 0 0 10px var(--overlay-sage-10);
+  --icon-transition-default: all 0.2s ease-out;
+
   /* ========== TRANSPARENT OVERLAYS ========== */
   /* Use these for backgrounds, hover states, and gradients */
   --overlay-primary-5: rgba(107, 70, 193, 0.05);
@@ -111,8 +162,23 @@
   --overlay-amber-10: rgba(245, 158, 11, 0.1);
   --overlay-amber-20: rgba(245, 158, 11, 0.2);
   --overlay-white-10: rgba(255, 255, 255, 0.1);
+  --overlay-white-20: rgba(255, 255, 255, 0.2);
+  --overlay-white-30: rgba(255, 255, 255, 0.3);
+  --overlay-white-40: rgba(255, 255, 255, 0.4);
+  --overlay-white-50: rgba(255, 255, 255, 0.5);
+  --overlay-white-60: rgba(255, 255, 255, 0.6);
+  --overlay-white-80: rgba(255, 255, 255, 0.8);
   --overlay-black-40: rgba(0, 0, 0, 0.4);
   --overlay-black-60: rgba(0, 0, 0, 0.6);
+
+  /* ========== SHAPE-SPECIFIC COLORS ========== */
+  /* Darker variants for gradient endpoints */
+  --color-sage-dark: #059669;
+  --color-error-dark: #b91c1c;
+  --color-amber-dark: #d97706;
+  --color-amber-darker: #b45309;
+  /* Highlight/gem colors */
+  --color-gold-highlight: #fef08a;
 
   /* ========== CRUMPLED PAPER EFFECT ========== */
   --shadow-crumpled:
@@ -318,4 +384,69 @@ body::before {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ============================================
+   SENSA TYPOGRAPHY UTILITY CLASSES
+   ============================================ */
+
+/* Display/Heading Font */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Body/Reading Font */
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* Monospace/Code Font */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Heading Styles - Use display font with tighter tracking */
+h1, h2, h3, h4, h5, h6,
+.heading {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--color-text-dark);
+}
+
+/* Prose/Reading Content - Optimized for learning */
+.prose {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-medium);
+}
+
+.prose strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-dark);
+}
+
+/* Code Blocks */
+code, pre, .code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* Small/Caption Text */
+.text-caption {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-muted);
+}
+
+/* Label Text */
+.text-label {
+  font-family: var(--font-display);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-light);
 }

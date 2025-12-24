@@ -7,7 +7,7 @@ import {
   CelebrationModal,
   LearningToolbar,
   CognitiveGauge,
-  NeuralResetModal,
+  NeuralResetBanner,
   UnifiedSessionBar,
   SessionSummary,
 } from '@/components/learning';
@@ -48,24 +48,12 @@ export default function Learn() {
     ? Math.round((progress.completedConcepts.length / concepts.length) * 100)
     : 0;
 
-  const [showWelcomeToast, setShowWelcomeToast] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     startSession();
     return () => endSession();
   }, [startSession, endSession]);
-
-  useEffect(() => {
-    if (currentConcept && progress.completedConcepts.length > 0) {
-      const showTimer = setTimeout(() => setShowWelcomeToast(true), 0);
-      const hideTimer = setTimeout(() => setShowWelcomeToast(false), UI_TIMINGS.TOAST_LONG);
-      return () => {
-        clearTimeout(showTimer);
-        clearTimeout(hideTimer);
-      };
-    }
-  }, [currentConcept, progress.completedConcepts.length]);
 
   const handleConceptComplete = () => {
     // Record concept completion in focus session if active
@@ -168,18 +156,6 @@ export default function Learn() {
         </main>
       </div>
 
-      {showWelcomeToast && currentConcept && (
-        <div className={styles.welcomeToast}>
-          <div className={styles.toastContent}>
-            <span className={styles.toastIcon}>👋</span>
-            <div>
-              <strong>Welcome back!</strong>
-              <p>Continue with: {currentConcept.name}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {showCelebration && celebrationData && (
         <CelebrationModal
           data={celebrationData}
@@ -211,8 +187,8 @@ export default function Learn() {
       {/* Session Summary Modal - displays when focus session ends */}
       <SessionSummary />
 
-      {/* Neural Reset Modal - triggers when cognitive load is too high */}
-      <NeuralResetModal />
+      {/* Neural Reset Banner - suggests break when cognitive load is high */}
+      <NeuralResetBanner />
 
       {/* Help Modal */}
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />

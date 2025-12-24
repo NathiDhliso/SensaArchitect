@@ -1,202 +1,56 @@
-.overlay {
+/* Neural Reset Banner - Non-blocking notification */
+.banner {
     position: fixed;
-    inset: 0;
-    background: var(--overlay-black-40);
-    backdrop-filter: blur(8px);
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem 0.875rem 1.25rem;
+    background: linear-gradient(135deg, var(--color-secondary-amber) 0%, #f59e0b 100%);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
     z-index: 1000;
-    animation: fadeIn 0.3s ease-out;
+    max-width: calc(100% - 2rem);
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-.modal {
-    width: 100%;
-    max-width: 420px;
-    margin: 1rem;
-    background: var(--color-bg-primary);
-    border-radius: 1.5rem;
-    overflow: hidden;
-    box-shadow: var(--shadow-xl);
-    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Header */
-.header {
-    padding: 2rem 2rem 1.5rem;
-    background: linear-gradient(135deg, var(--overlay-amber-10) 0%, var(--overlay-sage-10) 100%);
-    text-align: center;
-    border-bottom: 1px solid var(--color-border);
-}
-
-.icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    display: block;
-}
-
-.title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-text-dark);
-    margin: 0 0 0.5rem;
-}
-
-.subtitle {
-    font-size: 1rem;
-    color: var(--color-text-medium);
-    margin: 0;
-}
-
-/* Content */
-.content {
-    padding: 1.5rem 2rem;
-}
-
-.tips {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.tip {
+.bannerContent {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    background: var(--color-surface);
-    border-radius: 0.75rem;
-    border: 1px solid var(--color-border);
 }
 
-.tipIcon {
-    font-size: 1.5rem;
+.bannerIcon {
+    color: white;
     flex-shrink: 0;
 }
 
-.tipText {
-    flex: 1;
-}
-
-.tipTitle {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--color-text-dark);
-    margin-bottom: 0.125rem;
-}
-
-.tipDesc {
-    font-size: 0.8125rem;
-    color: var(--color-text-light);
-}
-
-/* Timer */
-.timer {
-    text-align: center;
-    padding: 1.5rem;
-    background: var(--color-surface);
-    border-radius: 1rem;
-    margin-top: 1rem;
-}
-
-.timerLabel {
-    font-size: 0.8125rem;
-    color: var(--color-text-light);
-    margin-bottom: 0.5rem;
-}
-
-.timerDisplay {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--color-success);
-    font-variant-numeric: tabular-nums;
-    transition: color 0.3s ease;
-}
-
-.timerDisplay.active {
-    color: var(--color-secondary-amber);
-}
-
-/* Actions */
-.actions {
-    padding: 1rem 2rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.primaryButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 1rem;
-    background: var(--gradient-sage);
+.bannerText {
     color: white;
-    border: none;
-    border-radius: 0.75rem;
-    font-size: 1rem;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+}
+
+.bannerText strong {
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-glow-sage);
 }
 
-.primaryButton:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-glow-sage-hover);
-}
-
-.primaryButton:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.secondaryButton {
+.bannerDismiss {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.75rem;
-    background: transparent;
-    color: var(--color-text-light);
-    border: 1px solid var(--color-border);
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
     border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
+    color: white;
     cursor: pointer;
-    transition: all 0.2s ease;
+    flex-shrink: 0;
+    transition: background 0.2s;
 }
 
-.secondaryButton:hover {
-    background: var(--color-surface);
-    color: var(--color-text-dark);
+.bannerDismiss:hover {
+    background: rgba(255, 255, 255, 0.3);
 }

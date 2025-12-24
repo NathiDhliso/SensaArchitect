@@ -16,7 +16,7 @@ import { UI_TIMINGS, SPRINT_CONFIG } from '@/constants/ui-constants';
 import type { SprintQuestion, SprintAnswer } from '@/lib/types/sprint';
 import styles from './Sprint.module.css';
 
-type SprintPhase = 'intro' | 'loading' | 'active' | 'feedback' | 'complete';
+type SprintPhase = 'countdown' | 'loading' | 'active' | 'feedback' | 'complete';
 
 export default function Sprint() {
     const navigate = useNavigate();
@@ -24,7 +24,8 @@ export default function Sprint() {
     const { getConcepts, customContent, setSprintResult } = useLearningStore();
 
     // Phase state
-    const [phase, setPhase] = useState<SprintPhase>('intro');
+    const [phase, setPhase] = useState<SprintPhase>('countdown');
+    const [countdown, setCountdown] = useState(3);
 
     // Quiz state
     const [questions, setQuestions] = useState<SprintQuestion[]>([]);
@@ -44,31 +45,40 @@ export default function Sprint() {
     const concepts = getConcepts();
     const subject = customContent?.metadata?.domain || 'General Knowledge';
 
-    // Start sprint
-    const handleStart = async () => {
+    // Auto-start countdown and then load questions
+    useEffect(() => {
+        if (phase !== 'countdown') return;
+
+        // Check prerequisites first
         if (!bedrockConfig) {
             setError('AWS credentials not configured.');
             return;
         }
-
         if (concepts.length === 0) {
             setError('No concepts loaded. Complete the learning journey first.');
             return;
         }
 
-        setPhase('loading');
-        setError(null);
-
-        try {
-            const generatedQuestions = await generateSprintQuestions(concepts, subject, bedrockConfig);
-            setQuestions(generatedQuestions);
-            setPhase('active');
-            questionStartTime.current = Date.now();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to generate questions');
-            setPhase('intro');
+        // Countdown timer
+        if (countdown > 0) {
+            const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+            return () => clearTimeout(timer);
         }
-    };
+
+        // Start loading questions when countdown hits 0
+        setPhase('loading');
+        generateSprintQuestions(concepts, subject, bedrockConfig)
+            .then(generatedQuestions => {
+                setQuestions(generatedQuestions);
+                setPhase('active');
+                questionStartTime.current = Date.now();
+            })
+            .catch(err => {
+                setError(err instanceof Error ? err.message : 'Failed to generate questions');
+                setPhase('countdown');
+                setCountdown(3);
+            });
+    }, [phase, countdown, bedrockConfig, concepts, subject]);
 
     // Handle answer
     const handleAnswer = useCallback((userAnswer: boolean | null) => {
@@ -223,64 +233,48 @@ export default function Sprint() {
             {/* Main content */}
             <main className={styles.main}>
                 <AnimatePresence mode="wait">
-                    {/* Intro Screen */}
-                    {phase === 'intro' && (
+                    {/* Countdown Screen */}
+                    {phase === 'countdown' && !error && (
                         <motion.div
-                            key="intro"
+                            key="countdown"
+                            className={styles.countdownScreen}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 1.1 }}
+                        >
+                            <motion.div
+                                key={countdown}
+                                className={styles.countdownNumber}
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 1.5, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {countdown > 0 ? countdown : '⚡'}
+                            </motion.div>
+                            <p className={styles.countdownLabel}>
+                                {countdown > 0 ? 'Get ready...' : 'GO!'}
+                            </p>
+                        </motion.div>
+                    )}
+
+                    {/* Error State */}
+                    {phase === 'countdown' && error && (
+                        <motion.div
+                            key="error"
                             className={styles.introScreen}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                         >
-                            <span className={styles.introIcon}>🎯</span>
-                            <h2 className={styles.introTitle}>Ready for Your Sprint?</h2>
-                            <p className={styles.introDescription}>
-                                Test your pattern recognition with rapid yes/no questions.
-                                Answer quickly - 6 seconds per question!
-                            </p>
-
-                            <div className={styles.introStats}>
-                                <div className={styles.introStat}>
-                                    <div className={styles.introStatValue}>30</div>
-                                    <div className={styles.introStatLabel}>Questions</div>
-                                </div>
-                                <div className={styles.introStat}>
-                                    <div className={styles.introStatValue}>6s</div>
-                                    <div className={styles.introStatLabel}>Per Question</div>
-                                </div>
-                                <div className={styles.introStat}>
-                                    <div className={styles.introStatValue}>15m</div>
-                                    <div className={styles.introStatLabel}>Total Time</div>
-                                </div>
-                            </div>
-
-                            {error && (
-                                <div style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
-                                    {error}
-                                </div>
-                            )}
-
-                            <button className={styles.startButton} onClick={handleStart}>
-                                <Zap size={20} />
-                                Start Sprint
-                                <ChevronRight size={20} />
-                            </button>
-
+                            <span className={styles.introIcon}>⚠️</span>
+                            <h2 className={styles.introTitle}>Can't Start Sprint</h2>
+                            <p className={styles.introDescription}>{error}</p>
                             <button
                                 onClick={() => navigate('/learn')}
-                                style={{
-                                    marginTop: '1rem',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--color-text-light)',
-                                    cursor: 'pointer',
-                                    fontSize: '0.875rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.25rem',
-                                }}
+                                className={styles.startButton}
                             >
-                                <ArrowLeft size={14} />
+                                <ArrowLeft size={20} />
                                 Back to Learning
                             </button>
                         </motion.div>

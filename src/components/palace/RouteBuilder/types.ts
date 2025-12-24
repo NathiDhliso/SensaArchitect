@@ -1,3 +1,10 @@
+export interface CustomPlacement {
+    id: string;
+    label: string;
+    headingOffset: number;
+    pitch: number;
+}
+
 export interface LocationInput {
     id: string;
     name: string;
@@ -7,6 +14,10 @@ export interface LocationInput {
     error: string | null;
     template?: LocationTemplate;
     streetViewHeading?: number;
+    streetViewStatus?: 'unchecked' | 'checking' | 'available' | 'unavailable';
+    streetViewPanoId?: string;
+    isConfirmed?: boolean;
+    customPlacements?: CustomPlacement[];
 }
 
 export interface LocationTemplate {

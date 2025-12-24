@@ -12,7 +12,9 @@ import {
     Map,
     HelpCircle,
     Loader2,
-    Navigation
+    Navigation,
+    Edit3,
+    Save
 } from 'lucide-react';
 import { usePalaceStore } from '@/store/palace-store';
 import { getRouteById, getStreetViewUrl } from '@/constants/palace-routes';
@@ -32,6 +34,8 @@ import DailyWalk from './DailyWalk';
 import QuizMode from './QuizMode';
 import ProgressPanel from './ProgressPanel';
 import { PlacementGuide } from './PlacementGuide';
+import { PanoramaPalaceView } from './PanoramaViewer';
+import { hasPanorama } from '@/lib/panorama';
 import { UI_TIMINGS } from '@/constants/ui-constants';
 import styles from './PalaceView.module.css';
 
@@ -39,7 +43,7 @@ const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 export default function PalaceView() {
     const navigate = useNavigate();
-    const { currentPalace, currentBuildingIndex, setCurrentBuilding, updateStreak, customRoutes } = usePalaceStore();
+    const { currentPalace, currentBuildingIndex, setCurrentBuilding, updateStreak, customRoutes, updatePlacementPosition, placementOverrides } = usePalaceStore();
     const [showQuiz, setShowQuiz] = useState(false);
     const [showProgress, setShowProgress] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
@@ -58,6 +62,19 @@ export default function PalaceView() {
     const tourIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const fullscreenRef = useRef<HTMLDivElement>(null);
+    const [editMode, setEditMode] = useState(false);
+    const [hasPanoramaImage, setHasPanoramaImage] = useState(false);
+    const [panoramaCheckCount, setPanoramaCheckCount] = useState(0);
+
+    // Compute route and building info first (needed by effects below)
+    const route = currentPalace 
+        ? (getRouteById(currentPalace.routeId) || customRoutes.find(r => r.id === currentPalace.routeId))
+        : null;
+    const currentBuilding = currentPalace?.buildings[currentBuildingIndex];
+    const routeBuilding = route?.buildings.find(b => b.id === currentBuilding?.routeBuildingId);
+
+    const canGoPrev = currentBuildingIndex > 0;
+    const canGoNext = currentPalace ? currentBuildingIndex < currentPalace.buildings.length - 1 : false;
 
     useEffect(() => {
         const hasSeenGuide = localStorage.getItem('palace-guide-seen');
@@ -67,14 +84,34 @@ export default function PalaceView() {
         }
     }, [currentPalace]);
 
-    const route = currentPalace 
-        ? (getRouteById(currentPalace.routeId) || customRoutes.find(r => r.id === currentPalace.routeId))
-        : null;
-    const currentBuilding = currentPalace?.buildings[currentBuildingIndex];
-    const routeBuilding = route?.buildings.find(b => b.id === currentBuilding?.routeBuildingId);
-
-    const canGoPrev = currentBuildingIndex > 0;
-    const canGoNext = currentPalace ? currentBuildingIndex < currentPalace.buildings.length - 1 : false;
+    // Check for panorama with retry logic (panorama capture is async)
+    useEffect(() => {
+        let retryTimeout: ReturnType<typeof setTimeout>;
+        
+        async function checkPanorama() {
+            if (!currentPalace || !routeBuilding) {
+                setHasPanoramaImage(false);
+                return;
+            }
+            console.log('Checking panorama for:', currentPalace.id, routeBuilding.id);
+            const exists = await hasPanorama(currentPalace.id, routeBuilding.id);
+            console.log('Panorama exists:', exists);
+            setHasPanoramaImage(exists);
+            
+            // If not found and we haven't retried much, retry after a delay
+            // (panorama capture happens async after palace creation)
+            if (!exists && panoramaCheckCount < 5) {
+                retryTimeout = setTimeout(() => {
+                    setPanoramaCheckCount(c => c + 1);
+                }, 1000);
+            }
+        }
+        checkPanorama();
+        
+        return () => {
+            if (retryTimeout) clearTimeout(retryTimeout);
+        };
+    }, [currentPalace?.id, routeBuilding?.id, panoramaCheckCount]);
 
     const handleOpenStreetView = useCallback(() => {
         if (!routeBuilding) return;
@@ -87,15 +124,26 @@ export default function PalaceView() {
     }, [routeBuilding]);
 
     const updateMarkerPositions = useCallback(() => {
-        if (!panoramaRef.current || !currentBuilding || !routeBuilding) return;
+        if (!panoramaRef.current || !currentBuilding || !routeBuilding || !currentPalace) return;
         
         const container = streetViewRef.current;
         if (!container) return;
         
+        const palaceOverrides = placementOverrides[currentPalace.id];
+        const buildingOverrides = palaceOverrides?.[routeBuilding.id] || {};
+        
+        const placementsWithOverrides = routeBuilding.placements.map(slot => {
+            const override = buildingOverrides[slot.id];
+            if (override) {
+                return { ...slot, headingOffset: override.headingOffset, pitch: override.pitch };
+            }
+            return slot;
+        });
+        
         const pov = panoramaRef.current.getPov();
         const positions = calculateMarkerPositions(
             currentBuilding.concepts,
-            routeBuilding.placements,
+            placementsWithOverrides,
             {
                 containerWidth: container.offsetWidth,
                 containerHeight: container.offsetHeight,
@@ -106,7 +154,7 @@ export default function PalaceView() {
             }
         );
         setMarkerPositions(positions);
-    }, [currentBuilding, routeBuilding]);
+    }, [currentBuilding, routeBuilding, currentPalace, placementOverrides]);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -141,20 +189,30 @@ export default function PalaceView() {
                 }
 
                 if (panoramaRef.current) {
-                    panoramaRef.current.setPosition({
-                        lat: routeBuilding.coordinates.lat,
-                        lng: routeBuilding.coordinates.lng,
-                    });
+                    if (coverage.nearestPanoId) {
+                        panoramaRef.current.setPano(coverage.nearestPanoId);
+                    } else {
+                        panoramaRef.current.setPosition({
+                            lat: routeBuilding.coordinates.lat,
+                            lng: routeBuilding.coordinates.lng,
+                        });
+                    }
                     panoramaRef.current.setPov({
                         heading: routeBuilding.heading,
                         pitch: 0,
                     });
                 } else {
+                    const container = streetViewRef.current;
+                    if (!container || container.offsetWidth === 0 || container.offsetHeight === 0) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                    
                     const panorama = createStreetViewPanorama({
                         container: streetViewRef.current!,
                         lat: routeBuilding.coordinates.lat,
                         lng: routeBuilding.coordinates.lng,
                         heading: routeBuilding.heading,
+                        panoId: coverage.nearestPanoId,
                     });
 
                     if (panorama) {
@@ -176,9 +234,10 @@ export default function PalaceView() {
             }
         };
 
-        initStreetView();
+        const timer = setTimeout(initStreetView, 50);
 
         return () => {
+            clearTimeout(timer);
             if (panoramaRef.current) {
                 google.maps.event.clearListeners(panoramaRef.current, 'pov_changed');
                 google.maps.event.clearListeners(panoramaRef.current, 'position_changed');
@@ -309,6 +368,34 @@ export default function PalaceView() {
         }
     }, [updateMarkerPositions]);
 
+    const handleMarkerDragEnd = useCallback((conceptId: string, deltaX: number, deltaY: number) => {
+        if (!routeBuilding || !currentBuilding || !streetViewRef.current || !currentPalace) return;
+
+        const container = streetViewRef.current;
+        const fov = 90;
+        
+        const headingChange = (deltaX / container.offsetWidth) * fov;
+        const pitchChange = -(deltaY / container.offsetHeight) * 45;
+
+        const concept = currentBuilding.concepts.find(c => c.conceptId === conceptId);
+        if (!concept) return;
+
+        const slot = routeBuilding.placements.find(p => p.id === concept.slotId);
+        if (!slot) return;
+
+        const palaceOverrides = placementOverrides[currentPalace.id];
+        const buildingOverrides = palaceOverrides?.[routeBuilding.id] || {};
+        const existingOverride = buildingOverrides[concept.slotId];
+        
+        const currentHeadingOffset = existingOverride?.headingOffset ?? slot.headingOffset ?? 0;
+        const currentPitch = existingOverride?.pitch ?? slot.pitch ?? 0;
+
+        const newHeadingOffset = currentHeadingOffset + headingChange;
+        const newPitch = Math.max(-30, Math.min(30, currentPitch + pitchChange));
+
+        updatePlacementPosition(routeBuilding.id, concept.slotId, newHeadingOffset, newPitch);
+    }, [routeBuilding, currentBuilding, currentPalace, placementOverrides, updatePlacementPosition]);
+
     if (!currentPalace) {
         return (
             <div className={styles.palaceContainer}>
@@ -411,7 +498,23 @@ export default function PalaceView() {
                 <div className={styles.streetViewPanel}>
                     <DailyWalk onStartWalk={handleStartWalk} />
 
-                    {streetViewEnabled ? (
+                    {hasPanoramaImage && currentPalace && routeBuilding && currentBuilding ? (
+                        <div className={styles.streetViewWrapper}>
+                            <PanoramaPalaceView
+                                palaceId={currentPalace.id}
+                                routeBuildingId={routeBuilding.id}
+                                concepts={currentBuilding.concepts.map(c => ({
+                                    conceptId: c.conceptId,
+                                    conceptName: c.conceptName,
+                                    slotId: c.slotId,
+                                }))}
+                                onMarkerClick={(conceptId) => {
+                                    setActiveConcept(conceptId);
+                                    setShowTooltip(true);
+                                }}
+                            />
+                        </div>
+                    ) : streetViewEnabled ? (
                         <div 
                             ref={fullscreenRef}
                             className={`${styles.streetViewWrapper} ${isFullscreen ? styles.fullscreenMode : ''}`}
@@ -422,24 +525,37 @@ export default function PalaceView() {
                                 <div className={styles.streetViewLoading}>
                                     <Loader2 size={32} className={styles.spinner} />
                                     <span>Loading Street View...</span>
+                                    <span className={styles.loadingHint}>
+                                        Ensure Google Maps API key is configured
+                                    </span>
                                 </div>
                             )}
 
                             {!isLoading && (
-                                <div className={`${styles.markerOverlay} ${isFullscreen ? styles.markerOverlayFullscreen : ''}`}>
+                                <div className={`${styles.markerOverlay} ${isFullscreen ? styles.markerOverlayFullscreen : ''} ${editMode ? styles.markerOverlayEdit : ''}`}>
                                     {markerPositions.map(marker => (
                                         <ConceptMarker
                                             key={marker.conceptId}
                                             marker={marker}
                                             isActive={activeConcept === marker.conceptId}
                                             onClick={() => handleMarkerClick(marker.conceptId, marker.heading)}
-                                            hideTooltip={showTour}
+                                            hideTooltip={showTour || editMode}
+                                            editMode={editMode}
+                                            onDragEnd={handleMarkerDragEnd}
                                         />
                                     ))}
                                 </div>
                             )}
 
                             <div className={`${styles.streetViewControls} ${isFullscreen ? styles.streetViewControlsFullscreen : ''}`}>
+                                <button 
+                                    className={`${styles.controlBtn} ${editMode ? styles.controlBtnActive : ''}`} 
+                                    onClick={() => setEditMode(!editMode)} 
+                                    title={editMode ? "Save & Exit Edit Mode" : "Edit Marker Positions"}
+                                >
+                                    {editMode ? <Save size={16} /> : <Edit3 size={16} />}
+                                    {editMode ? 'Done Editing' : 'Edit Positions'}
+                                </button>
                                 <button className={styles.controlBtn} onClick={toggleFullscreen} title="Toggle Fullscreen">
                                     {isFullscreen ? <ExternalLink size={16} /> : <ExternalLink size={16} />}
                                     {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}

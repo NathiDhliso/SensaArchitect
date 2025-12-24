@@ -15,7 +15,7 @@ export async function loadGoogleMapsAPI(apiKey: string): Promise<void> {
 
   loadPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
@@ -40,6 +40,7 @@ export interface StreetViewConfig {
   heading?: number;
   pitch?: number;
   zoom?: number;
+  panoId?: string;
 }
 
 export function createStreetViewPanorama(config: StreetViewConfig): google.maps.StreetViewPanorama | null {
@@ -48,8 +49,12 @@ export function createStreetViewPanorama(config: StreetViewConfig): google.maps.
     return null;
   }
 
-  const panorama = new window.google.maps.StreetViewPanorama(config.container, {
-    position: { lat: config.lat, lng: config.lng },
+  if (!config.container || config.container.offsetWidth === 0 || config.container.offsetHeight === 0) {
+    console.error('Street View container has no dimensions');
+    return null;
+  }
+
+  const panoramaOptions: google.maps.StreetViewPanoramaOptions = {
     pov: {
       heading: config.heading || 90,
       pitch: config.pitch || 0,
@@ -59,7 +64,16 @@ export function createStreetViewPanorama(config: StreetViewConfig): google.maps.
     showRoadLabels: false,
     motionTracking: false,
     motionTrackingControl: false,
-  });
+    visible: true,
+  };
+
+  if (config.panoId) {
+    panoramaOptions.pano = config.panoId;
+  } else {
+    panoramaOptions.position = { lat: config.lat, lng: config.lng };
+  }
+
+  const panorama = new window.google.maps.StreetViewPanorama(config.container, panoramaOptions);
 
   return panorama;
 }
@@ -80,7 +94,7 @@ export interface StreetViewStatus {
 export async function checkStreetViewCoverage(
   lat: number,
   lng: number,
-  radius = 50
+  radius = 200
 ): Promise<StreetViewStatus> {
   if (!window.google?.maps) {
     return { available: false, error: 'Google Maps API not loaded' };

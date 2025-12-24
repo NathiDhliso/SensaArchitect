@@ -101,6 +101,18 @@ export const FEEDBACK_COLORS = {
 } as const;
 
 // ============================================
+// ICON COLORS (for SensaIcon component)
+// ============================================
+export const ICON_COLORS = {
+    default: COLORS.accent.default,    // #6B46C1 - primary amethyst
+    accent: COLORS.accent.light,       // #8b5cf6 - lighter purple
+    success: COLORS.success,           // #22c55e - green
+    warning: COLORS.warning,           // #f59e0b - amber
+    error: COLORS.error,               // #ef4444 - red
+    muted: COLORS.text.muted,          // #94a3b8 - gray
+} as const;
+
+// ============================================
 // HELPER: Get CSS variable value at runtime
 // ============================================
 export function getCSSVariable(name: string): string {

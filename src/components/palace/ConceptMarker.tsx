@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Box, Zap, Activity } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { MapPin, GripVertical } from 'lucide-react';
 import type { MarkerPosition } from '@/lib/google-maps';
 import styles from './ConceptMarker.module.css';
 
@@ -9,61 +9,96 @@ interface ConceptMarkerProps {
   onClick: () => void;
   scale?: number;
   hideTooltip?: boolean;
+  editMode?: boolean;
+  onDragEnd?: (conceptId: string, deltaX: number, deltaY: number) => void;
 }
 
-export default function ConceptMarker({ marker, isActive, onClick, scale = 1, hideTooltip = false }: ConceptMarkerProps) {
+export default function ConceptMarker({ 
+  marker, 
+  isActive, 
+  onClick, 
+  scale = 1, 
+  hideTooltip = false,
+  editMode = false,
+  onDragEnd,
+}: ConceptMarkerProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const startPosRef = useRef({ x: 0, y: 0 });
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (!editMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsDragging(true);
+    startPosRef.current = { x: e.clientX, y: e.clientY };
+    setDragOffset({ x: 0, y: 0 });
+    
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, [editMode]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const deltaX = e.clientX - startPosRef.current.x;
+    const deltaY = e.clientY - startPosRef.current.y;
+    setDragOffset({ x: deltaX, y: deltaY });
+  }, [isDragging]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const deltaX = e.clientX - startPosRef.current.x;
+    const deltaY = e.clientY - startPosRef.current.y;
+    
+    if (onDragEnd && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+      onDragEnd(marker.conceptId, deltaX, deltaY);
+    }
+    
+    setIsDragging(false);
+    setDragOffset({ x: 0, y: 0 });
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  }, [isDragging, onDragEnd, marker.conceptId]);
 
   if (!marker.visible) return null;
 
+  const showLabel = isActive || isHovered;
+
   return (
     <div
-      className={`${styles.marker} ${isActive ? styles.markerActive : ''}`}
+      className={`${styles.marker} ${isActive ? styles.markerActive : ''} ${isHovered ? styles.markerHovered : ''} ${editMode ? styles.markerEditable : ''} ${isDragging ? styles.markerDragging : ''}`}
       style={{
-        left: marker.x,
-        top: marker.y,
-        transform: `translate(-50%, -100%) scale(${scale})`,
+        left: marker.x + dragOffset.x,
+        top: marker.y + dragOffset.y,
+        transform: `translate(-50%, -50%) scale(${scale})`,
+        cursor: editMode ? (isDragging ? 'grabbing' : 'grab') : 'pointer',
       }}
-      onClick={onClick}
+      onClick={editMode ? undefined : onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
     >
-      <div className={styles.markerIcon}>
-        <Box size={24} />
+      {editMode && (
+        <div className={styles.dragHandle}>
+          <GripVertical size={12} />
+        </div>
+      )}
+      <div className={styles.markerPin}>
+        <MapPin size={20} />
+        <span className={styles.markerNumber}>
+          {marker.conceptName.charAt(0).toUpperCase()}
+        </span>
       </div>
-      <div className={styles.markerLabel}>{marker.conceptName}</div>
 
-      {!hideTooltip && (isActive || isHovered) && (
-        <div className={styles.tooltip}>
-          <h4 className={styles.tooltipTitle}>{marker.conceptName}</h4>
-          
-          <div className={styles.lifecycleSection}>
-            <div className={styles.phase}>
-              <span className={styles.phaseIcon}><Zap size={12} /></span>
-              <span className={styles.phaseLabel}>{marker.lifecycleLabels?.phase1 || 'Phase 1'}</span>
-            </div>
-            <ul className={styles.phaseList}>
-              {marker.lifecycle.phase1.slice(0, 2).map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className={styles.lifecycleSection}>
-            <div className={styles.phase}>
-              <span className={styles.phaseIcon}><Activity size={12} /></span>
-              <span className={styles.phaseLabel}>{marker.lifecycleLabels?.phase2 || 'Phase 2'}</span>
-            </div>
-            <ul className={styles.phaseList}>
-              {marker.lifecycle.phase2.slice(0, 2).map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          </div>
-
-          <button className={styles.detailsButton} onClick={(e) => { e.stopPropagation(); }}>
-            View Full Details
-          </button>
+      {!hideTooltip && showLabel && (
+        <div className={styles.markerLabel}>
+          {marker.conceptName}
         </div>
       )}
     </div>

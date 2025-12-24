@@ -25,6 +25,7 @@ export interface RouteBuilding {
     coordinates: { lat: number; lng: number };
     heading: number;
     placements: PlacementSlot[];
+    panoId?: string;
 }
 
 export interface PlacementSlot {

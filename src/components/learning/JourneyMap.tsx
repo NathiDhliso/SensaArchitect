@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useLearningStore } from '@/store/learning-store';
+import { renderShapeOrIcon } from '@/components/ui';
 import styles from './JourneyMap.module.css';
 
 interface JourneyMapProps {
@@ -15,7 +16,7 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
   const currentConceptRef = useRef<HTMLDivElement>(null);
   const completedCount = progress.completedConcepts.length;
   const totalCount = concepts.length;
-  
+
   const [expandedStages, setExpandedStages] = useState<Set<string>>(() => {
     const currentStage = stages.find(s => getStageStatus(s.id) === 'current');
     return new Set(currentStage ? [currentStage.id] : []);
@@ -55,7 +56,7 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
       const status = getStageStatus(stage.id);
       const stageConcepts = concepts.filter(c => c.stageId === stage.id);
       const completedInStage = stageConcepts.filter(c => getConceptStatus(c.id) === 'completed').length;
-      
+
       return { stage, status, stageConcepts, completedInStage };
     });
   }, [stages, concepts, getStageStatus, getConceptStatus]);
@@ -75,7 +76,7 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
         <div className={styles.buildingFrame}>
           {stageData.map(({ stage, status, stageConcepts, completedInStage }) => {
             const isExpanded = expandedStages.has(stage.id);
-            
+
             const floorClass = [
               styles.floor,
               status === 'completed' && styles.floorCompleted,
@@ -86,7 +87,7 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
 
             return (
               <div key={stage.id} className={floorClass}>
-                <button 
+                <button
                   className={styles.floorHeader}
                   onClick={() => toggleStage(stage.id)}
                 >
@@ -121,7 +122,7 @@ export default function JourneyMap({ onConceptClick }: JourneyMapProps) {
                             onClick={() => handleConceptClick(concept.id)}
                             title={concept.name}
                           >
-                            <span className={styles.blockIcon}>{concept.icon}</span>
+                            {renderShapeOrIcon(concept.icon, 'sm', styles.blockIcon)}
                             <span className={styles.blockName}>{concept.name}</span>
                           </div>
                         );

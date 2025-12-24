@@ -16,8 +16,18 @@ import {
   CheckCircle2,
   Sparkles,
   BookOpen,
-  Database
+  Database,
+  Eye,
+  Hammer,
+  HardHat,
+  ChefHat,
+  Plane,
+  Stethoscope,
+  Trophy,
+  Leaf,
+  EyeOff
 } from 'lucide-react';
+import { SensaIcon } from '@/components/ui';
 import { useThemeStore, type Theme } from '@/store/theme-store';
 import { usePersonalizationStore, type FamiliarSystem } from '@/store/personalization-store';
 import { useLearningStore } from '@/store/learning-store';
@@ -28,18 +38,18 @@ import type { BedrockConfig } from '@/lib/generation/claude-client';
 import styles from './Settings.module.css';
 
 const LEARNING_STYLES = [
-  { value: 'visual', label: 'Visual', icon: '👁️', desc: 'Diagrams, charts, and imagery' },
-  { value: 'practical', label: 'Practical', icon: '🛠️', desc: 'Hands-on examples and exercises' },
-  { value: 'theoretical', label: 'Theoretical', icon: '📚', desc: 'Deep concepts and principles' },
+  { value: 'visual', label: 'Visual', icon: <SensaIcon icon={Eye} variant="glow" />, desc: 'Diagrams, charts, and imagery' },
+  { value: 'practical', label: 'Practical', icon: <SensaIcon icon={Hammer} variant="glow" />, desc: 'Hands-on examples and exercises' },
+  { value: 'theoretical', label: 'Theoretical', icon: <SensaIcon icon={BookOpen} variant="glow" />, desc: 'Deep concepts and principles' },
 ] as const;
 
 const FAMILIAR_SYSTEMS = [
-  { value: 'construction', label: 'Construction', icon: '🏗️' },
-  { value: 'cooking', label: 'Cooking', icon: '👨‍🍳' },
-  { value: 'travel', label: 'Travel', icon: '✈️' },
-  { value: 'healthcare', label: 'Healthcare', icon: '🏥' },
-  { value: 'sports', label: 'Sports', icon: '⚽' },
-  { value: 'nature', label: 'Nature', icon: '🌿' },
+  { value: 'construction', label: 'Construction', icon: <SensaIcon icon={HardHat} /> },
+  { value: 'cooking', label: 'Cooking', icon: <SensaIcon icon={ChefHat} /> },
+  { value: 'travel', label: 'Travel', icon: <SensaIcon icon={Plane} /> },
+  { value: 'healthcare', label: 'Healthcare', icon: <SensaIcon icon={Stethoscope} /> },
+  { value: 'sports', label: 'Sports', icon: <SensaIcon icon={Trophy} /> },
+  { value: 'nature', label: 'Nature', icon: <SensaIcon icon={Leaf} /> },
 ] as const;
 
 export default function Settings() {
@@ -396,7 +406,7 @@ export default function Settings() {
                           className={styles.toggleButton}
                           type="button"
                         >
-                          {showSecrets ? '👁️' : '👁️‍🗨️'}
+                          {showSecrets ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                       </div>
                     </div>

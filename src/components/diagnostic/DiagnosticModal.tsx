@@ -21,13 +21,14 @@ interface DiagnosticModalProps {
     onSkip: () => void;
 }
 
-type ModalPhase = 'intro' | 'loading' | 'quiz' | 'feedback' | 'analyzing';
+type ModalPhase = 'countdown' | 'loading' | 'quiz' | 'feedback';
 
 export default function DiagnosticModal({ subject, onComplete, onSkip }: DiagnosticModalProps) {
     const { bedrockConfig, setDiagnosticResult } = useGenerationStore();
 
     // Phase state
-    const [phase, setPhase] = useState<ModalPhase>('intro');
+    const [phase, setPhase] = useState<ModalPhase>('countdown');
+    const [countdown, setCountdown] = useState(3);
 
     // Quiz state
     const [questions, setQuestions] = useState<DiagnosticQuestion[]>([]);
@@ -46,26 +47,35 @@ export default function DiagnosticModal({ subject, onComplete, onSkip }: Diagnos
 
     const currentQuestion = questions[currentIndex];
 
-    // Start diagnostic
-    const handleStart = async () => {
+    // Auto-start countdown and then load questions
+    useEffect(() => {
+        if (phase !== 'countdown') return;
+
+        // Check prerequisites first
         if (!bedrockConfig) {
-            setError('AWS credentials not configured. Please configure in Settings.');
+            setError('AWS credentials not configured.');
             return;
         }
 
-        setPhase('loading');
-        setError(null);
-
-        try {
-            const generatedQuestions = await generateDiagnosticQuestions(subject, bedrockConfig);
-            setQuestions(generatedQuestions);
-            setPhase('quiz');
-            questionStartTime.current = Date.now();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to generate questions');
-            setPhase('intro');
+        // Countdown timer
+        if (countdown > 0) {
+            const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+            return () => clearTimeout(timer);
         }
-    };
+
+        // Start loading when countdown hits 0
+        setPhase('loading');
+        generateDiagnosticQuestions(subject, bedrockConfig)
+            .then(generatedQuestions => {
+                setQuestions(generatedQuestions);
+                setPhase('quiz');
+                questionStartTime.current = Date.now();
+            })
+            .catch(err => {
+                setError(err instanceof Error ? err.message : 'Failed to generate questions');
+                onSkip(); // Go straight to content generation on error
+            });
+    }, [phase, countdown, bedrockConfig, subject, onSkip]);
 
     // Handle answer selection
     const handleAnswer = useCallback((optionIndex: number) => {
@@ -102,16 +112,12 @@ export default function DiagnosticModal({ subject, onComplete, onSkip }: Diagnos
         }, UI_TIMINGS.DIAGNOSTIC_FEEDBACK_TIME);
     }, [phase, selectedOption, currentQuestion, currentIndex, questions.length, answers]);
 
-    // Finish and calculate results
+    // Finish and calculate results - immediately, no fake delay
     const finishDiagnostic = (finalAnswers: DiagnosticAnswer[]) => {
-        setPhase('analyzing');
-
-        setTimeout(() => {
-            const result = calculateDiagnosticResult(questions, finalAnswers);
-            const conceptsToSkip = getConceptsToSkip(result);
-            setDiagnosticResult(result, conceptsToSkip);
-            onComplete();
-        }, UI_TIMINGS.DIAGNOSTIC_RESULTS_DELAY);
+        const result = calculateDiagnosticResult(questions, finalAnswers);
+        const conceptsToSkip = getConceptsToSkip(result);
+        setDiagnosticResult(result, conceptsToSkip);
+        onComplete();
     };
 
     // Keyboard shortcuts
@@ -232,61 +238,52 @@ export default function DiagnosticModal({ subject, onComplete, onSkip }: Diagnos
                 {/* Content */}
                 <div className={styles.content}>
                     <AnimatePresence mode="wait">
-                        {/* Intro Screen */}
-                        {phase === 'intro' && (
+                        {/* Countdown Screen */}
+                        {phase === 'countdown' && !error && (
                             <motion.div
-                                key="intro"
+                                key="countdown"
+                                className={styles.countdownScreen}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                            >
+                                <motion.div
+                                    key={countdown}
+                                    className={styles.countdownNumber}
+                                    initial={{ scale: 0.5, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 1.5, opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    {countdown > 0 ? countdown : '⚡'}
+                                </motion.div>
+                                <p className={styles.countdownLabel}>
+                                    {countdown > 0 ? 'Quick knowledge check...' : 'GO!'}
+                                </p>
+                                <button
+                                    onClick={onSkip}
+                                    className={styles.skipLink}
+                                >
+                                    Skip diagnostic
+                                </button>
+                            </motion.div>
+                        )}
+
+                        {/* Error State */}
+                        {phase === 'countdown' && error && (
+                            <motion.div
+                                key="error"
                                 className={styles.introScreen}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                             >
-                                <span className={styles.introIcon}>🎯</span>
-                                <h3 className={styles.introTitle}>Quick Knowledge Check</h3>
-                                <p className={styles.introDescription}>
-                                    We'll customize your 2-hour learning path by understanding what you already know.
-                                    Answer quickly - this takes just 2 minutes!
-                                </p>
-
-                                <div className={styles.introHighlights}>
-                                    <div className={styles.introHighlight}>
-                                        <span className={styles.introHighlightValue}>20</span>
-                                        <span className={styles.introHighlightLabel}>Questions</span>
-                                    </div>
-                                    <div className={styles.introHighlight}>
-                                        <span className={styles.introHighlightValue}>6s</span>
-                                        <span className={styles.introHighlightLabel}>Per Question</span>
-                                    </div>
-                                    <div className={styles.introHighlight}>
-                                        <span className={styles.introHighlightValue}>2min</span>
-                                        <span className={styles.introHighlightLabel}>Total Time</span>
-                                    </div>
-                                </div>
-
-                                {error && (
-                                    <div style={{ color: FEEDBACK_COLORS.incorrect, marginBottom: '1rem' }}>
-                                        {error}
-                                    </div>
-                                )}
-
-                                <button className={styles.startButton} onClick={handleStart}>
-                                    <Zap size={20} />
-                                    Start Diagnostic
+                                <span className={styles.introIcon}>⚠️</span>
+                                <h3 className={styles.introTitle}>Can't Start Diagnostic</h3>
+                                <p className={styles.introDescription}>{error}</p>
+                                <button className={styles.startButton} onClick={onSkip}>
                                     <ChevronRight size={20} />
-                                </button>
-
-                                <button
-                                    onClick={onSkip}
-                                    style={{
-                                        marginTop: '1rem',
-                                        background: 'none',
-                                        border: 'none',
-                                        color: 'var(--color-text-light)',
-                                        cursor: 'pointer',
-                                        fontSize: '0.875rem',
-                                    }}
-                                >
-                                    Skip and generate full content
+                                    Continue Without Diagnostic
                                 </button>
                             </motion.div>
                         )}
@@ -362,22 +359,6 @@ export default function DiagnosticModal({ subject, onComplete, onSkip }: Diagnos
                                         Press <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> to answer
                                     </div>
                                 )}
-                            </motion.div>
-                        )}
-
-                        {/* Analyzing Phase */}
-                        {phase === 'analyzing' && (
-                            <motion.div
-                                key="analyzing"
-                                className={styles.loadingState}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                            >
-                                <Brain size={48} style={{ color: 'var(--color-primary-amethyst)', marginBottom: '1rem' }} />
-                                <p className={styles.loadingText}>
-                                    Analyzing your knowledge gaps...
-                                </p>
                             </motion.div>
                         )}
                     </AnimatePresence>

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Archive, Sparkles, Clock, BookOpen, TrendingUp, ChevronRight, Zap } from 'lucide-react';
+import { SensaIcon, SensaShape } from '@/components/ui';
+import type { SensaShapeType } from '@/components/ui';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGenerationStore } from '@/store/generation-store';
 import { useUIStore } from '@/store/ui-store';
@@ -14,7 +16,7 @@ const SUBJECT_CATEGORIES = [
   {
     id: 'cloud',
     name: 'Cloud & DevOps',
-    icon: '☁️',
+    shapeType: 'nebula' as SensaShapeType,
     color: CATEGORY_COLORS.cloud,
     subjects: [
       { name: 'AWS Solutions Architect', difficulty: 'Advanced', hours: 40 },
@@ -27,7 +29,7 @@ const SUBJECT_CATEGORIES = [
   {
     id: 'data',
     name: 'Data & AI',
-    icon: '🧠',
+    shapeType: 'synapse' as SensaShapeType,
     color: CATEGORY_COLORS.data,
     subjects: [
       { name: 'Machine Learning Fundamentals', difficulty: 'Intermediate', hours: 35 },
@@ -40,7 +42,7 @@ const SUBJECT_CATEGORIES = [
   {
     id: 'dev',
     name: 'Development',
-    icon: '💻',
+    shapeType: 'construct' as SensaShapeType,
     color: CATEGORY_COLORS.dev,
     subjects: [
       { name: 'React & TypeScript', difficulty: 'Intermediate', hours: 30 },
@@ -52,35 +54,37 @@ const SUBJECT_CATEGORIES = [
   },
   {
     id: 'security',
-    name: 'Security',
-    icon: '🔐',
+    name: 'Cybersecurity',
+    shapeType: 'bastion' as SensaShapeType,
     color: CATEGORY_COLORS.security,
     subjects: [
-      { name: 'CompTIA Security+', difficulty: 'Intermediate', hours: 40 },
-      { name: 'Ethical Hacking', difficulty: 'Advanced', hours: 45 },
-      { name: 'CISSP', difficulty: 'Expert', hours: 60 },
-      { name: 'Network Security', difficulty: 'Intermediate', hours: 30 },
+      { name: 'CompTIA Security+', difficulty: 'Intermediate', hours: 30 },
+      { name: 'Network Security', difficulty: 'Advanced', hours: 35 },
+      { name: 'Ethical Hacking', difficulty: 'Advanced', hours: 40 },
+      { name: 'CISSP Fundamentals', difficulty: 'Expert', hours: 60 },
+      { name: 'Penetration Testing', difficulty: 'Advanced', hours: 45 },
     ],
   },
   {
     id: 'business',
-    name: 'Business & PM',
-    icon: '💼',
+    name: 'Business',
+    shapeType: 'prism' as SensaShapeType,
     color: CATEGORY_COLORS.business,
     subjects: [
-      { name: 'PMP Certification', difficulty: 'Advanced', hours: 50 },
+      { name: 'PMP Certification', difficulty: 'Advanced', hours: 40 },
       { name: 'Agile & Scrum', difficulty: 'Beginner', hours: 15 },
-      { name: 'Product Management', difficulty: 'Intermediate', hours: 30 },
       { name: 'Business Analysis', difficulty: 'Intermediate', hours: 25 },
+      { name: 'Product Management', difficulty: 'Intermediate', hours: 30 },
+      { name: 'Financial Analysis', difficulty: 'Advanced', hours: 35 },
     ],
-  },
+  }
 ];
 
-const DIFFICULTY_CONFIG = {
-  Beginner: { color: DIFFICULTY_COLORS.Beginner, icon: '🌱', label: '~15-20 hrs' },
-  Intermediate: { color: DIFFICULTY_COLORS.Intermediate, icon: '💪', label: '~25-35 hrs' },
-  Advanced: { color: DIFFICULTY_COLORS.Advanced, icon: '🚀', label: '~40-50 hrs' },
-  Expert: { color: DIFFICULTY_COLORS.Expert, icon: '🏆', label: '~60+ hrs' },
+const DIFFICULTY_LEVELS = {
+  Beginner: { color: DIFFICULTY_COLORS.Beginner, shapeType: 'seed' as SensaShapeType, label: '~15-20 hrs' },
+  Intermediate: { color: DIFFICULTY_COLORS.Intermediate, shapeType: 'sprout' as SensaShapeType, label: '~25-35 hrs' },
+  Advanced: { color: DIFFICULTY_COLORS.Advanced, shapeType: 'bloom' as SensaShapeType, label: '~40-50 hrs' },
+  Expert: { color: DIFFICULTY_COLORS.Expert, shapeType: 'crown' as SensaShapeType, label: '~60+ hrs' },
 };
 
 export default function Home() {
@@ -142,14 +146,14 @@ export default function Home() {
   const handleDiagnosticSkip = () => {
     setShowDiagnostic(false);
     if (pendingSubject) {
-      navigate(`/generate/${encodeURIComponent(pendingSubject)}`);
+      navigate(`/ generate / ${encodeURIComponent(pendingSubject)} `);
     }
   };
 
   const handleResultsContinue = () => {
     setShowDiagnosticResults(false);
     if (pendingSubject) {
-      navigate(`/generate/${encodeURIComponent(pendingSubject)}`);
+      navigate(`/ generate / ${encodeURIComponent(pendingSubject)} `);
     }
   };
 
@@ -188,7 +192,7 @@ export default function Home() {
             <div className={styles.progressBar}>
               <div
                 className={styles.progressFill}
-                style={{ width: `${progressPercent}%` }}
+                style={{ width: `${progressPercent}% ` }}
               />
             </div>
             <button
@@ -240,11 +244,16 @@ export default function Home() {
                           <span
                             className={styles.difficultyBadge}
                             style={{
-                              background: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color + '20',
-                              color: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color
+                              background: DIFFICULTY_LEVELS[s.difficulty as keyof typeof DIFFICULTY_LEVELS]?.color + '20',
+                              color: DIFFICULTY_LEVELS[s.difficulty as keyof typeof DIFFICULTY_LEVELS]?.color
                             }}
                           >
-                            {DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.icon} {s.difficulty}
+                            <SensaShape 
+                              type={DIFFICULTY_LEVELS[s.difficulty as keyof typeof DIFFICULTY_LEVELS]?.shapeType} 
+                              size="sm" 
+                              animate={false}
+                            />
+                            {s.difficulty}
                           </span>
                           <span className={styles.hoursBadge}>
                             <Clock size={12} /> {s.hours}h
@@ -282,11 +291,11 @@ export default function Home() {
               {SUBJECT_CATEGORIES.map(cat => (
                 <button
                   key={cat.id}
-                  className={`${styles.categoryTab} ${selectedCategory === cat.id ? styles.categoryTabActive : ''}`}
+                  className={`${styles.categoryTab} ${selectedCategory === cat.id ? styles.categoryTabActive : ''} `}
                   onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
                   style={{ '--cat-color': cat.color } as React.CSSProperties}
                 >
-                  <span>{cat.icon}</span>
+                  <SensaShape type={cat.shapeType} size="md" />
                   <span>{cat.name}</span>
                 </button>
               ))}
@@ -314,11 +323,16 @@ export default function Home() {
                         <span
                           className={styles.difficultyBadge}
                           style={{
-                            background: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color + '20',
-                            color: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color
+                            background: DIFFICULTY_LEVELS[s.difficulty as keyof typeof DIFFICULTY_LEVELS]?.color + '20',
+                            color: DIFFICULTY_LEVELS[s.difficulty as keyof typeof DIFFICULTY_LEVELS]?.color
                           }}
                         >
-                          {DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.icon} {s.difficulty}
+                          <SensaShape 
+                            type={DIFFICULTY_LEVELS[s.difficulty as keyof typeof DIFFICULTY_LEVELS]?.shapeType} 
+                            size="sm" 
+                            animate={false}
+                          />
+                          {s.difficulty}
                         </span>
                         <span className={styles.hoursBadge}>
                           <Clock size={12} /> ~{s.hours} hrs
@@ -329,6 +343,22 @@ export default function Home() {
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+
+          {/* Difficulty Legend */}
+          <div className={styles.legend}>
+            <div className={styles.legendTitle}>Difficulty Levels</div>
+            <div className={styles.legendGrid}>
+              {Object.entries(DIFFICULTY_LEVELS).map(([level, config]) => (
+                <div key={level} className={styles.legendItem}>
+                  <span className={styles.legendIcon} style={{ color: config.color }}>
+                    <SensaShape type={config.shapeType} size="sm" />
+                  </span>
+                  <span className={styles.legendLabel}>{level}</span>
+                  <span className={styles.legendHours}>{config.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {recentSubjects.length > 0 && (

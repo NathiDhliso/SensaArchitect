@@ -2,6 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { MemoryPalace, PalaceProgress, PlacedConcept, PalaceBuilding, PalaceRoute, RouteBuilding } from '@/lib/types/palace';
 import { getRouteById } from '@/constants/palace-routes';
+import { capturePanorama } from '@/lib/panorama';
+
+interface PlacementOverride {
+    headingOffset: number;
+    pitch: number;
+}
+
+interface PanoramaMarker {
+    yaw: number;
+    pitch: number;
+}
 
 interface PalaceState {
     // Current palace
@@ -10,6 +21,12 @@ interface PalaceState {
 
     // Custom routes created by user
     customRoutes: PalaceRoute[];
+
+    // Placement position overrides: palaceId -> buildingId -> slotId -> override
+    placementOverrides: Record<string, Record<string, Record<string, PlacementOverride>>>;
+
+    // Panorama marker positions: palaceId -> buildingId -> conceptId -> marker
+    panoramaMarkers: Record<string, Record<string, Record<string, PanoramaMarker>>>;
 
     // Progress
     progress: Record<string, PalaceProgress>; // palaceId -> progress
@@ -25,6 +42,14 @@ interface PalaceState {
     // Quiz actions
     recordAnswer: (conceptId: string, correct: boolean) => void;
     updateStreak: () => void;
+
+    // Placement editing
+    updatePlacementPosition: (buildingId: string, slotId: string, headingOffset: number, pitch: number) => void;
+    getPlacementOverride: (buildingId: string, slotId: string) => PlacementOverride | null;
+
+    // Panorama marker editing
+    updatePanoramaMarker: (buildingId: string, conceptId: string, yaw: number, pitch: number) => void;
+    getPanoramaMarkers: (buildingId: string) => Record<string, PanoramaMarker>;
 }
 
 interface StageData {
@@ -49,6 +74,8 @@ export const usePalaceStore = create<PalaceState>()(
             currentPalace: null,
             currentBuildingIndex: 0,
             customRoutes: [],
+            placementOverrides: {},
+            panoramaMarkers: {},
             progress: {},
 
             createPalace: (subjectId, routeId, stages) => {
@@ -160,6 +187,22 @@ export const usePalaceStore = create<PalaceState>()(
                     customRoutes: [...state.customRoutes, customRoute],
                     progress: { ...state.progress, [palaceId]: newProgress },
                 }));
+
+                customBuildings.forEach(building => {
+                    if (building.panoId) {
+                        console.log('Capturing panorama for building:', building.id, 'panoId:', building.panoId);
+                        capturePanorama(
+                            building.panoId,
+                            palaceId,
+                            building.id,
+                            building.coordinates
+                        )
+                            .then(result => console.log('Panorama capture result:', building.id, result))
+                            .catch(err => console.error('Failed to capture panorama:', building.id, err));
+                    } else {
+                        console.warn('No panoId for building:', building.id);
+                    }
+                });
 
                 return palace;
             },
@@ -273,6 +316,77 @@ export const usePalaceStore = create<PalaceState>()(
                         },
                     };
                 });
+            },
+
+            updatePlacementPosition: (buildingId, slotId, headingOffset, pitch) => {
+                const palace = get().currentPalace;
+                if (!palace) return;
+
+                set(state => {
+                    const palaceOverrides = state.placementOverrides[palace.id] || {};
+                    const buildingOverrides = palaceOverrides[buildingId] || {};
+                    
+                    return {
+                        placementOverrides: {
+                            ...state.placementOverrides,
+                            [palace.id]: {
+                                ...palaceOverrides,
+                                [buildingId]: {
+                                    ...buildingOverrides,
+                                    [slotId]: { headingOffset, pitch },
+                                },
+                            },
+                        },
+                    };
+                });
+            },
+
+            getPlacementOverride: (buildingId, slotId) => {
+                const state = get();
+                const palace = state.currentPalace;
+                if (!palace) return null;
+
+                const palaceOverrides = state.placementOverrides[palace.id];
+                if (!palaceOverrides) return null;
+
+                const buildingOverrides = palaceOverrides[buildingId];
+                if (!buildingOverrides) return null;
+
+                return buildingOverrides[slotId] || null;
+            },
+
+            updatePanoramaMarker: (buildingId, conceptId, yaw, pitch) => {
+                const palace = get().currentPalace;
+                if (!palace) return;
+
+                set(state => {
+                    const palaceMarkers = state.panoramaMarkers[palace.id] || {};
+                    const buildingMarkers = palaceMarkers[buildingId] || {};
+                    
+                    return {
+                        panoramaMarkers: {
+                            ...state.panoramaMarkers,
+                            [palace.id]: {
+                                ...palaceMarkers,
+                                [buildingId]: {
+                                    ...buildingMarkers,
+                                    [conceptId]: { yaw, pitch },
+                                },
+                            },
+                        },
+                    };
+                });
+            },
+
+            getPanoramaMarkers: (buildingId) => {
+                const state = get();
+                const palace = state.currentPalace;
+                if (!palace) return {};
+
+                const palaceMarkers = state.panoramaMarkers[palace.id];
+                if (!palaceMarkers) return {};
+
+                return palaceMarkers[buildingId] || {};
             },
         }),
         {

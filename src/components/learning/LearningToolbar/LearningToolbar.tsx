@@ -2,7 +2,8 @@
  * LearningToolbar Component
  * 
  * Toolbar with learning utilities: Focus Timer, Progress Analytics, Quiz.
- * Now integrated with focus-session store for unified session display.
+ * When a focus session is active, the timer button is hidden since
+ * UnifiedSessionBar handles session display.
  */
 
 import { useState } from 'react';
@@ -16,30 +17,11 @@ import styles from './LearningToolbar.module.css';
 
 export function LearningToolbar() {
     const { progress } = useLearningStore();
-    const {
-        isSessionActive,
-        sessionType,
-        getFormattedTimeRemaining
-    } = useFocusSessionStore();
+    const { isSessionActive } = useFocusSessionStore();
 
     const [showTimer, setShowTimer] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [showQuiz, setShowQuiz] = useState(false);
-
-    const handleTimerClick = () => {
-        setShowTimer(true);
-    };
-
-    // Determine button state based on session
-    const getTimerButtonClass = () => {
-        if (!isSessionActive) return '';
-        return sessionType === 'focus' ? styles.active : styles.warning;
-    };
-
-    const getTimerButtonText = () => {
-        if (!isSessionActive) return 'Focus';
-        return getFormattedTimeRemaining();
-    };
 
     return (
         <>
@@ -51,16 +33,23 @@ export function LearningToolbar() {
                     </div>
                 )}
 
-                <div className={styles.toolbarDivider} />
+                {/* Only show divider and timer button when session is NOT active */}
+                {!isSessionActive && (
+                    <>
+                        {progress.conceptsLearnedToday > 0 && (
+                            <div className={styles.toolbarDivider} />
+                        )}
 
-                <button
-                    className={`${styles.toolbarButton} ${getTimerButtonClass()}`}
-                    onClick={handleTimerClick}
-                    title="Focus Timer"
-                >
-                    <Timer size={14} />
-                    {getTimerButtonText()}
-                </button>
+                        <button
+                            className={styles.toolbarButton}
+                            onClick={() => setShowTimer(true)}
+                            title="Start Focus Session"
+                        >
+                            <Timer size={14} />
+                            Focus
+                        </button>
+                    </>
+                )}
 
                 <button
                     className={`${styles.toolbarButton} ${styles.statsButton}`}
