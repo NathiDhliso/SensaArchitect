@@ -5,13 +5,13 @@ export const PASS_NAMES = [
   'Quality Validation',
 ] as const;
 
-export const RECENT_SUBJECTS = [
-  'Azure Administrator',
-  'MCAT Biology',
-  'CPA Tax Accounting',
-  'AWS Solutions Architect',
-  'Contract Law Fundamentals',
-  'Nursing Pharmacology',
+export const EXAMPLE_SUBJECTS = [
+  'Data Science Fundamentals',
+  'Project Management',
+  'Financial Analysis',
+  'Software Development',
+  'Healthcare Administration',
+  'Business Strategy',
 ] as const;
 
 export const MAX_DROPDOWN_OPTIONS = 7;

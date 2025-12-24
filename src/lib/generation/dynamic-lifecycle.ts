@@ -104,38 +104,6 @@ No exceptions. These verbs replace any default lifecycle phases.
 }
 
 export function getDefaultLifecycle(subject: string): DynamicLifecycle {
-  const lower = subject.toLowerCase();
-  
-  if (lower.includes('power bi') || lower.includes('pl-300') || lower.includes('data analyst')) {
-    return {
-      domain: 'Data Analytics',
-      roleScope: 'Data Analyst',
-      phase1: 'PREPARE',
-      phase2: 'MODEL',
-      phase3: 'DELIVER',
-      phase1Description: 'Connect and transform data sources',
-      phase2Description: 'Build relationships and calculations',
-      phase3Description: 'Visualize and share insights',
-      justification: 'Data analysts prepare data, model relationships, and deliver visual insights.',
-      excludedActions: ['architect infrastructure', 'manage servers', 'write production code'],
-    };
-  }
-  
-  if (lower.includes('azure') || lower.includes('az-') || lower.includes('cloud admin')) {
-    return {
-      domain: 'IT/Cloud',
-      roleScope: 'Cloud Administrator',
-      phase1: 'PROVISION',
-      phase2: 'CONFIGURE',
-      phase3: 'MONITOR',
-      phase1Description: 'Deploy and allocate resources',
-      phase2Description: 'Set up and customize settings',
-      phase3Description: 'Track and optimize performance',
-      justification: 'Cloud administrators provision resources, configure them, and monitor operations.',
-      excludedActions: ['architect solutions', 'write application code', 'design infrastructure'],
-    };
-  }
-  
   return {
     domain: 'General',
     roleScope: 'Professional',
@@ -145,7 +113,7 @@ export function getDefaultLifecycle(subject: string): DynamicLifecycle {
     phase1Description: 'Establish prerequisites and setup',
     phase2Description: 'Execute core activities',
     phase3Description: 'Validate and verify outcomes',
-    justification: 'Generic lifecycle following setup, execution, and validation pattern.',
+    justification: `Generic lifecycle for ${subject} following setup, execution, and validation pattern.`,
     excludedActions: [],
   };
 }

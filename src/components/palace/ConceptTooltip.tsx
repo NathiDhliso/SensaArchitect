@@ -9,6 +9,10 @@ interface ConceptTooltipProps {
 }
 
 export default function ConceptTooltip({ marker, onClose, onViewDetails }: ConceptTooltipProps) {
+  const phase1Label = marker.lifecycleLabels?.phase1 || 'Phase 1';
+  const phase2Label = marker.lifecycleLabels?.phase2 || 'Phase 2';
+  const phase3Label = marker.lifecycleLabels?.phase3 || 'Phase 3';
+
   return (
     <div className={styles.tooltipOverlay}>
       <div className={styles.tooltip}>
@@ -21,11 +25,11 @@ export default function ConceptTooltip({ marker, onClose, onViewDetails }: Conce
         <div className={styles.lifecycleGrid}>
           <div className={styles.phaseCard}>
             <div className={styles.phaseHeader}>
-              <Zap size={14} className={styles.provisionIcon} />
-              <span>Provision</span>
+              <Zap size={14} className={styles.phase1Icon} />
+              <span>{phase1Label}</span>
             </div>
             <ul className={styles.phaseList}>
-              {marker.lifecycle.provision.map((item, i) => (
+              {marker.lifecycle.phase1.map((item, i) => (
                 <li key={i}>{item}</li>
               ))}
             </ul>
@@ -33,11 +37,11 @@ export default function ConceptTooltip({ marker, onClose, onViewDetails }: Conce
 
           <div className={styles.phaseCard}>
             <div className={styles.phaseHeader}>
-              <Settings size={14} className={styles.configureIcon} />
-              <span>Configure</span>
+              <Settings size={14} className={styles.phase2Icon} />
+              <span>{phase2Label}</span>
             </div>
             <ul className={styles.phaseList}>
-              {marker.lifecycle.configure.map((item, i) => (
+              {marker.lifecycle.phase2.map((item, i) => (
                 <li key={i}>{item}</li>
               ))}
             </ul>
@@ -45,11 +49,11 @@ export default function ConceptTooltip({ marker, onClose, onViewDetails }: Conce
 
           <div className={styles.phaseCard}>
             <div className={styles.phaseHeader}>
-              <Activity size={14} className={styles.monitorIcon} />
-              <span>Monitor</span>
+              <Activity size={14} className={styles.phase3Icon} />
+              <span>{phase3Label}</span>
             </div>
             <ul className={styles.phaseList}>
-              {marker.lifecycle.monitor.map((item, i) => (
+              {marker.lifecycle.phase3.map((item, i) => (
                 <li key={i}>{item}</li>
               ))}
             </ul>

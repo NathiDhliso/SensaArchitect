@@ -48,11 +48,11 @@ export interface PlacedConcept {
     conceptName: string;
     slotId: string;
     lifecycle: {
-        provision: string[];
-        configure: string[];
-        monitor: string[];
+        phase1: string[];
+        phase2: string[];
+        phase3: string[];
     };
-    mastery: number; // 0-1
+    mastery: number;
 }
 
 export interface PalaceProgress {

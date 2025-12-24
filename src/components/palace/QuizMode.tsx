@@ -41,18 +41,17 @@ export default function QuizMode({ onClose }: QuizModeProps) {
 
         const allQuestions: QuizQuestion[] = [];
 
-        currentPalace.buildings.forEach(building => {
-            building.concepts.forEach(concept => {
-                const scenarioTemplate = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
+        currentPalace.buildings.forEach((building, bIdx) => {
+            building.concepts.forEach((concept, cIdx) => {
+                const scenarioIndex = (bIdx + cIdx) % SCENARIOS.length;
+                const scenarioTemplate = SCENARIOS[scenarioIndex];
                 const scenario = scenarioTemplate.replace('{concept}', concept.conceptName);
 
                 const otherConcepts = allConcepts.filter(c => c.conceptId !== concept.conceptId);
                 const numDistractors = Math.min(3, otherConcepts.length);
-                const distractors = otherConcepts
-                    .sort(() => Math.random() - 0.5)
-                    .slice(0, numDistractors);
+                const distractors = otherConcepts.slice(0, numDistractors);
 
-                const options = [concept, ...distractors].sort(() => Math.random() - 0.5);
+                const options = [concept, ...distractors];
 
                 allQuestions.push({
                     scenario,
@@ -60,7 +59,7 @@ export default function QuizMode({ onClose }: QuizModeProps) {
                     correctConcept: concept,
                     options,
                     building: building.stageName,
-                    explanation: concept.lifecycle.provision[0] ||
+                    explanation: concept.lifecycle.phase1[0] ||
                         `${concept.conceptName} is the right choice for this scenario.`,
                 });
             });

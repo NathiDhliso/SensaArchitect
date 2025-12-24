@@ -77,9 +77,9 @@ function parseDomainAnalysis(content: string): ParsedDomainAnalysis {
     domain: domainMatch?.[1]?.trim() || 'Unknown',
     professionalRole: roleMatch?.[1]?.trim() || 'Unknown',
     lifecycle: {
-      phase1: lifecycleMatch?.[1] || 'PROVISION',
-      phase2: lifecycleMatch?.[2] || 'CONFIGURE',
-      phase3: lifecycleMatch?.[3] || 'MONITOR',
+      phase1: lifecycleMatch?.[1] || 'FOUNDATION',
+      phase2: lifecycleMatch?.[2] || 'ACTION',
+      phase3: lifecycleMatch?.[3] || 'VERIFICATION',
     },
     sourceVerification: sourceMatch?.[1]?.trim() || '',
     recentUpdates,
@@ -115,40 +115,38 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
   const phase3Match = block.match(phase3Pattern);
 
   // Extract sections dynamically based on detected phase markers
-  let provisionSection = '';
-  let configureSection = '';
-  let monitorSection = '';
+  let phase1Section = '';
+  let phase2Section = '';
+  let phase3Section = '';
 
   if (phase1Match && phase2Match) {
-    provisionSection = extractSection(block, phase1Match[0], phase2Match[0]);
+    phase1Section = extractSection(block, phase1Match[0], phase2Match[0]);
   } else if (phase1Match) {
-    // Fallback: try common markers
-    provisionSection = extractSection(block, phase1Match[0], '•') ||
+    phase1Section = extractSection(block, phase1Match[0], '•') ||
       extractSection(block, phase1Match[0], '○');
   }
 
   if (phase2Match && phase3Match) {
-    configureSection = extractSection(block, phase2Match[0], phase3Match[0]);
+    phase2Section = extractSection(block, phase2Match[0], phase3Match[0]);
   } else if (phase2Match) {
-    configureSection = extractSection(block, phase2Match[0], '○') ||
+    phase2Section = extractSection(block, phase2Match[0], '○') ||
       extractSection(block, phase2Match[0], '##');
   }
 
   if (phase3Match) {
-    monitorSection = extractSection(block, phase3Match[0], '##') ||
+    phase3Section = extractSection(block, phase3Match[0], '##') ||
       extractSection(block, phase3Match[0], '```');
   }
 
-  // Fallback: if dynamic extraction failed, try the old hardcoded markers for backward compatibility
-  if (!provisionSection && !configureSection && !monitorSection) {
-    provisionSection = extractSection(block, '- PROVISION:', '• CONFIGURE:');
-    configureSection = extractSection(block, '• CONFIGURE:', '○ MONITOR:');
-    monitorSection = extractSection(block, '○ MONITOR:', '##');
+  if (!phase1Section && !phase2Section && !phase3Section) {
+    phase1Section = extractSection(block, `- ${lifecycle.phase1}:`, `• ${lifecycle.phase2}:`);
+    phase2Section = extractSection(block, `• ${lifecycle.phase2}:`, `○ ${lifecycle.phase3}:`);
+    phase3Section = extractSection(block, `○ ${lifecycle.phase3}:`, '##');
   }
 
-  const prereqMatch = provisionSection.match(/Prerequisite:\s*(.+?)(?=Selection:|Execution:|$)/is);
-  const selectionMatch = provisionSection.match(/Selection:([\s\S]*?)(?=Execution:|$)/i);
-  const executionMatch = provisionSection.match(/Execution:\s*(.+?)$/is);
+  const prereqMatch = phase1Section.match(/Prerequisite:\s*(.+?)(?=Selection:|Execution:|$)/is);
+  const selectionMatch = phase1Section.match(/Selection:([\s\S]*?)(?=Execution:|$)/i);
+  const executionMatch = phase1Section.match(/Execution:\s*(.+?)$/is);
 
   const selectionItems: string[] = [];
   if (selectionMatch) {
@@ -158,12 +156,12 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
     }
   }
 
-  const configureItems: string[] = [];
-  const configLines = configureSection.match(/[•*]\s*\*\*(.+?)\*\*:?\s*(.+?)(?=\n|$)/g);
+  const phase2Items: string[] = [];
+  const configLines = phase2Section.match(/[•*]\s*\*\*(.+?)\*\*:?\s*(.+?)(?=\n|$)/g);
   if (configLines) {
     configLines.forEach(line => {
       const cleaned = line.replace(/^[•*]\s*/, '').replace(/\*\*/g, '').trim();
-      configureItems.push(cleaned);
+      phase2Items.push(cleaned);
     });
   }
 
@@ -187,9 +185,9 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
 
   const logicalConnectionMatch = block.match(/\*\*\[Logical Connection\]:\*\*\s*(.+?)(?=\n|$)/i);
 
-  const toolMatch = monitorSection.match(/Tool:\s*(.+?)(?=\n|Metrics:|$)/i);
-  const metricsMatch = monitorSection.match(/Metrics:\s*(.+?)(?=\n|Threshold|$)/i);
-  const thresholdMatch = monitorSection.match(/Threshold[s]?:\s*(.+?)$/is);
+  const toolMatch = phase3Section.match(/Tool:\s*(.+?)(?=\n|Metrics:|$)/i);
+  const metricsMatch = phase3Section.match(/Metrics:\s*(.+?)(?=\n|Threshold|$)/i);
+  const thresholdMatch = phase3Section.match(/Threshold[s]?:\s*(.+?)$/is);
 
   const metrics: string[] = [];
   if (metricsMatch) {
@@ -202,13 +200,13 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
     order,
     stageId,
     logicalConnection: logicalConnectionMatch?.[1]?.trim(),
-    provision: {
+    phase1: {
       prerequisite: prereqMatch?.[1]?.trim() || '',
       selection: selectionItems,
       execution: executionMatch?.[1]?.trim() || '',
     },
-    configure: configureItems,
-    monitor: {
+    phase2: phase2Items,
+    phase3: {
       tool: toolMatch?.[1]?.trim() || '',
       metrics,
       thresholds: thresholdMatch?.[1]?.trim() || '',
@@ -222,7 +220,11 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
 function parseConcepts(content: string, lifecycle: LifecyclePhases): ParsedConcept[] {
   const chartSection = extractSection(content, 'MASTER HIERARCHICAL CHART', 'VISUAL MENTAL ANCHORS');
 
-  const conceptBlocks = chartSection.split(/(?=^##\s*\d+\.)/m).filter(b => b.trim());
+  // Strip code block markers (```) that wrap concept definitions
+  // The content may have concepts inside markdown code blocks which prevents regex matching
+  const cleanedSection = chartSection.replace(/```/g, '');
+
+  const conceptBlocks = cleanedSection.split(/(?=^##\s*\d+\.)/m).filter(b => b.trim());
 
   const concepts: ParsedConcept[] = [];
   let order = 1;

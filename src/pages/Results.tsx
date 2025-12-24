@@ -168,16 +168,16 @@ export default function Results() {
           id: concept.id,
           name: concept.name,
           lifecycle: {
-            provision: [
-              concept.provision.prerequisite,
-              ...concept.provision.selection,
-              concept.provision.execution,
+            phase1: [
+              concept.phase1.prerequisite,
+              ...concept.phase1.selection,
+              concept.phase1.execution,
             ].filter(Boolean),
-            configure: concept.configure || [],
-            monitor: [
-              concept.monitor.tool,
-              ...concept.monitor.metrics,
-              concept.monitor.thresholds,
+            phase2: concept.phase2 || [],
+            phase3: [
+              concept.phase3.tool,
+              ...concept.phase3.metrics,
+              concept.phase3.thresholds,
             ].filter(Boolean),
           },
         })),
@@ -214,16 +214,16 @@ export default function Results() {
           id: concept.id,
           name: concept.name,
           lifecycle: {
-            provision: [
-              concept.provision.prerequisite,
-              ...concept.provision.selection,
-              concept.provision.execution,
+            phase1: [
+              concept.phase1.prerequisite,
+              ...concept.phase1.selection,
+              concept.phase1.execution,
             ].filter(Boolean),
-            configure: concept.configure || [],
-            monitor: [
-              concept.monitor.tool,
-              ...concept.monitor.metrics,
-              concept.monitor.thresholds,
+            phase2: concept.phase2 || [],
+            phase3: [
+              concept.phase3.tool,
+              ...concept.phase3.metrics,
+              concept.phase3.thresholds,
             ].filter(Boolean),
           },
         })),

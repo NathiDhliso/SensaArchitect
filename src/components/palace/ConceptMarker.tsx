@@ -40,10 +40,10 @@ export default function ConceptMarker({ marker, isActive, onClick, scale = 1, hi
           <div className={styles.lifecycleSection}>
             <div className={styles.phase}>
               <span className={styles.phaseIcon}><Zap size={12} /></span>
-              <span className={styles.phaseLabel}>Provision</span>
+              <span className={styles.phaseLabel}>{marker.lifecycleLabels?.phase1 || 'Phase 1'}</span>
             </div>
             <ul className={styles.phaseList}>
-              {marker.lifecycle.provision.slice(0, 2).map((item, i) => (
+              {marker.lifecycle.phase1.slice(0, 2).map((item, i) => (
                 <li key={i}>{item}</li>
               ))}
             </ul>
@@ -52,10 +52,10 @@ export default function ConceptMarker({ marker, isActive, onClick, scale = 1, hi
           <div className={styles.lifecycleSection}>
             <div className={styles.phase}>
               <span className={styles.phaseIcon}><Activity size={12} /></span>
-              <span className={styles.phaseLabel}>Configure</span>
+              <span className={styles.phaseLabel}>{marker.lifecycleLabels?.phase2 || 'Phase 2'}</span>
             </div>
             <ul className={styles.phaseList}>
-              {marker.lifecycle.configure.slice(0, 2).map((item, i) => (
+              {marker.lifecycle.phase2.slice(0, 2).map((item, i) => (
                 <li key={i}>{item}</li>
               ))}
             </ul>

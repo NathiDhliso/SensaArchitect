@@ -1,5 +1,4 @@
 import type { Pass1Result, ValidationResult } from '@/lib/types';
-import { LIFECYCLE_REGISTRY } from '@/constants/lifecycle-registry';
 
 export function calculateProgress(content: string, totalConcepts: number): number {
   const conceptsGenerated = (content.match(/CORE CONCEPT \d+:/g) || []).length;
@@ -77,29 +76,6 @@ export function validatePass1Result(data: unknown): data is Pass1Result {
   );
 }
 
-export function correctLifecycleToRegistry(pass1Data: Pass1Result): Pass1Result {
-  const registryLifecycle = LIFECYCLE_REGISTRY[pass1Data.domain as keyof typeof LIFECYCLE_REGISTRY];
-  if (!registryLifecycle) {
-    return pass1Data;
-  }
-
-  if (
-    pass1Data.lifecycle.phase1 !== registryLifecycle.phase1 ||
-    pass1Data.lifecycle.phase2 !== registryLifecycle.phase2 ||
-    pass1Data.lifecycle.phase3 !== registryLifecycle.phase3
-  ) {
-    return {
-      ...pass1Data,
-      lifecycle: {
-        phase1: registryLifecycle.phase1,
-        phase2: registryLifecycle.phase2,
-        phase3: registryLifecycle.phase3,
-      },
-    };
-  }
-
-  return pass1Data;
-}
 
 export function createEmptyValidation(): ValidationResult {
   return {

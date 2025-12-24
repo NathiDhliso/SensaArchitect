@@ -37,9 +37,9 @@ interface ConceptData {
     id: string;
     name: string;
     lifecycle: {
-        provision: string[];
-        configure: string[];
-        monitor: string[];
+        phase1: string[];
+        phase2: string[];
+        phase3: string[];
     };
 }
 

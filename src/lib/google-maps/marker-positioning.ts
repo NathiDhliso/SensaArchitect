@@ -10,11 +10,16 @@ export interface MarkerPosition {
   pitch: number;
   visible: boolean;
   lifecycle: {
-    provision: string[];
-    configure: string[];
-    monitor: string[];
+    phase1: string[];
+    phase2: string[];
+    phase3: string[];
   };
   slotLocation?: string;
+  lifecycleLabels?: {
+    phase1: string;
+    phase2: string;
+    phase3: string;
+  };
 }
 
 export interface PositionConfig {

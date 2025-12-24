@@ -4,13 +4,13 @@ export interface ParsedConcept {
   order: number;
   stageId: string;
   logicalConnection?: string;
-  provision: {
+  phase1: {
     prerequisite: string;
     selection: string[];
     execution: string;
   };
-  configure: string[];
-  monitor: {
+  phase2: string[];
+  phase3: {
     tool: string;
     metrics: string[];
     thresholds: string;

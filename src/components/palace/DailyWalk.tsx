@@ -14,11 +14,17 @@ export default function DailyWalk({ onStartWalk }: DailyWalkProps) {
     const palaceProgress = progress[currentPalace.id];
     const streak = palaceProgress?.streak || 0;
 
-    // Calculate what buildings to walk today
     const totalBuildings = currentPalace.buildings.length;
-    const today = new Date().getDay(); // 0-6
-    const startBuilding = today % totalBuildings;
-    const endBuilding = Math.min(startBuilding + 2, totalBuildings - 1);
+    const buildingsPerWalk = Math.min(3, totalBuildings);
+    const today = new Date().getDay();
+    const startBuilding = (today * buildingsPerWalk) % totalBuildings;
+    const endBuilding = totalBuildings > 1 
+        ? (startBuilding + buildingsPerWalk - 1) % totalBuildings 
+        : 0;
+    const displayStart = startBuilding + 1;
+    const displayEnd = endBuilding >= startBuilding 
+        ? endBuilding + 1 
+        : totalBuildings;
 
     // Count concepts in these buildings
     const conceptCount = currentPalace.buildings
@@ -54,7 +60,7 @@ export default function DailyWalk({ onStartWalk }: DailyWalkProps) {
             </div>
 
             <button className={styles.startWalkButton} onClick={onStartWalk}>
-                Start Walk (Buildings {startBuilding + 1} → {endBuilding + 1})
+                Start Walk (Buildings {displayStart} → {displayEnd})
             </button>
         </div>
     );

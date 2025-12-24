@@ -54,16 +54,14 @@ function getConceptIcon(conceptName: string, mentalAnchors: ParsedMentalAnchor[]
 }
 
 function generateHookSentence(concept: ParsedConcept, metaphor: string): string {
-  
-  if (concept.provision.prerequisite) {
-    return `${metaphor} - ${concept.name} provides the foundation for secure operations.`;
+  if (concept.phase1.prerequisite) {
+    return `${metaphor} - ${concept.name} provides the foundation for effective operations.`;
   }
-  
   return `Every system needs a ${metaphor.toLowerCase()}. ${concept.name} makes it possible.`;
 }
 
 function extractPrerequisites(concept: ParsedConcept, allConcepts: ParsedConcept[]): string[] {
-  const prereqText = concept.provision.prerequisite.toLowerCase();
+  const prereqText = concept.phase1.prerequisite.toLowerCase();
   const prerequisites: string[] = [];
   
   for (const other of allConcepts) {
@@ -222,9 +220,9 @@ export function transformToLearningConcepts(
       .filter(([, sId]) => sId === stageId)
       .findIndex(([cId]) => cId === parsedConcept.id);
     
-    const howToUse = parsedConcept.configure.slice(0, 3);
-    if (howToUse.length === 0 && parsedConcept.provision.execution) {
-      howToUse.push(parsedConcept.provision.execution);
+    const howToUse = parsedConcept.phase2.slice(0, 3);
+    if (howToUse.length === 0 && parsedConcept.phase1.execution) {
+      howToUse.push(parsedConcept.phase1.execution);
     }
     
     const technicalDetails = [
@@ -233,40 +231,40 @@ export function transformToLearningConcepts(
       ...parsedConcept.examFocus,
     ].join(' ');
     
-    const provisionSteps: string[] = [];
-    if (parsedConcept.provision.prerequisite) {
-      provisionSteps.push(`Prerequisite: ${parsedConcept.provision.prerequisite}`);
+    const phase1Steps: string[] = [];
+    if (parsedConcept.phase1.prerequisite) {
+      phase1Steps.push(`Prerequisite: ${parsedConcept.phase1.prerequisite}`);
     }
-    if (parsedConcept.provision.selection.length > 0) {
-      provisionSteps.push(...parsedConcept.provision.selection);
+    if (parsedConcept.phase1.selection.length > 0) {
+      phase1Steps.push(...parsedConcept.phase1.selection);
     }
-    if (parsedConcept.provision.execution) {
-      provisionSteps.push(parsedConcept.provision.execution);
+    if (parsedConcept.phase1.execution) {
+      phase1Steps.push(parsedConcept.phase1.execution);
     }
     
-    const monitorSteps: string[] = [];
-    if (parsedConcept.monitor.tool) {
-      monitorSteps.push(`Tool: ${parsedConcept.monitor.tool}`);
+    const phase3Steps: string[] = [];
+    if (parsedConcept.phase3.tool) {
+      phase3Steps.push(`Tool: ${parsedConcept.phase3.tool}`);
     }
-    if (parsedConcept.monitor.metrics.length > 0) {
-      monitorSteps.push(`Metrics: ${parsedConcept.monitor.metrics.join(', ')}`);
+    if (parsedConcept.phase3.metrics.length > 0) {
+      phase3Steps.push(`Metrics: ${parsedConcept.phase3.metrics.join(', ')}`);
     }
-    if (parsedConcept.monitor.thresholds) {
-      monitorSteps.push(`Thresholds: ${parsedConcept.monitor.thresholds}`);
+    if (parsedConcept.phase3.thresholds) {
+      phase3Steps.push(`Thresholds: ${parsedConcept.phase3.thresholds}`);
     }
     
     const lifecycle: ConceptLifecycle = {
       phase1: {
-        title: lifecycleLabels.phase1 || 'PROVISION',
-        steps: provisionSteps.length > 0 ? provisionSteps : ['Set up prerequisites', 'Select appropriate tier', 'Execute deployment'],
+        title: lifecycleLabels.phase1 || 'FOUNDATION',
+        steps: phase1Steps.length > 0 ? phase1Steps : ['Establish prerequisites', 'Select approach', 'Begin execution'],
       },
       phase2: {
-        title: lifecycleLabels.phase2 || 'CONFIGURE',
-        steps: parsedConcept.configure.length > 0 ? parsedConcept.configure : ['Configure settings', 'Set up access', 'Apply policies'],
+        title: lifecycleLabels.phase2 || 'ACTION',
+        steps: parsedConcept.phase2.length > 0 ? parsedConcept.phase2 : ['Apply core operations', 'Implement key steps', 'Execute primary actions'],
       },
       phase3: {
-        title: lifecycleLabels.phase3 || 'MONITOR',
-        steps: monitorSteps.length > 0 ? monitorSteps : ['Set up monitoring', 'Configure alerts', 'Review metrics'],
+        title: lifecycleLabels.phase3 || 'VERIFICATION',
+        steps: phase3Steps.length > 0 ? phase3Steps : ['Validate outcomes', 'Review results', 'Confirm completion'],
       },
     };
     

@@ -80,15 +80,15 @@
   color: var(--color-text-medium);
 }
 
-.provisionIcon {
+.phase1Icon {
   color: var(--color-info);
 }
 
-.configureIcon {
+.phase2Icon {
   color: var(--color-secondary-amber);
 }
 
-.monitorIcon {
+.phase3Icon {
   color: var(--color-success);
 }
 

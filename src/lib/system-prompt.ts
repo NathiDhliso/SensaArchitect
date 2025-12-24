@@ -18,19 +18,15 @@ Browse the web for the most recent official syllabus or standard (e.g., "Microso
 
 ## STEP 2: DEFINE THE LIFECYCLE
 
-Identify the 3-step operational cycle based on the subject type:
+Analyze the subject and derive a logical 3-phase operational cycle that authentically represents how professionals work with this content.
 
-* **IT/Cloud:** PROVISION → CONFIGURE → MONITOR
-* **Coding/Dev:** DEFINE → IMPLEMENT → DEBUG
-* **Accountancy/Finance:** RECOGNIZE (Identify/Classify) → MEASURE (Calculate/Adjust) → DISCLOSE (Report/Audit)
-* **Medicine/Nursing:** ASSESS/DIAGNOSE → TREAT/INTERVENE → MONITOR/EVALUATE
-* **Law (Procedural):** PLEADING (File) → DISCOVERY (Fact Finding) → TRIAL (Adjudication)
-* **Law (Transactional):** FORMATION (Offer/Accept) → PERFORMANCE (Execution) → REMEDY (Breach)
-* **Science/Research:** HYPOTHESIZE (Question) → EXPERIMENT (Test) → ANALYZE (Conclude)
-* **Project Management:** INITIATE (Charter) → EXECUTE (Deliver) → CLOSE (Review)
-* **Education/Training:** INTRODUCE (Foundation) → PRACTICE (Application) → ASSESS (Evaluation)
+**Requirements:**
+* Each phase must be a single ACTION VERB in CAPS that is specific to the subject domain
+* Phase 1 = Foundation/Setup/Preparation phase (what enables the work)
+* Phase 2 = Core Action/Implementation/Execution phase (the primary activity)
+* Phase 3 = Verification/Monitoring/Evaluation phase (validation and outcomes)
 
-**Instruction:** Choose the cycle that fits the subject best. If the subject doesn't match any standard pattern, derive a logical 3-phase cycle following the pattern: [Foundation Phase] → [Action Phase] → [Verification Phase], and justify your choice briefly before creating the chart. You must use these three exact verbs (or your custom three) as the sub-sections for every single Core Concept.
+**Instruction:** Create a custom 3-phase cycle following the pattern: [Foundation Phase] → [Action Phase] → [Verification Phase]. Consider what practitioners actually DO in this field. Justify your choice briefly before creating the chart. You must use these three exact verbs as the sub-sections for every single Core Concept.
 
 ---
 

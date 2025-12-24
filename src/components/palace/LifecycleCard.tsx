@@ -7,9 +7,17 @@ import styles from './LifecycleCard.module.css';
 interface LifecycleCardProps {
     concept: PlacedConcept;
     slot: PlacementSlot | undefined;
+    lifecycleLabels?: {
+        phase1: string;
+        phase2: string;
+        phase3: string;
+    };
 }
 
-export default function LifecycleCard({ concept, slot }: LifecycleCardProps) {
+export default function LifecycleCard({ concept, slot, lifecycleLabels }: LifecycleCardProps) {
+    const phase1Label = lifecycleLabels?.phase1 || 'PHASE 1';
+    const phase2Label = lifecycleLabels?.phase2 || 'PHASE 2';
+    const phase3Label = lifecycleLabels?.phase3 || 'PHASE 3';
     const [expanded, setExpanded] = useState(false);
 
     const getMasteryClass = () => {
@@ -43,48 +51,45 @@ export default function LifecycleCard({ concept, slot }: LifecycleCardProps) {
 
             {expanded && (
                 <div className={styles.expandedContent}>
-                    {/* Provision */}
-                    {concept.lifecycle.provision.length > 0 && (
+                    {concept.lifecycle.phase1.length > 0 && (
                         <div className={styles.lifecycleSection}>
                             <div className={styles.lifecycleHeader}>
-                                <span className={`${styles.lifecycleLabel} ${styles.provisionLabel}`}>
-                                    PROVISION
+                                <span className={`${styles.lifecycleLabel} ${styles.phase1Label}`}>
+                                    {phase1Label}
                                 </span>
                             </div>
                             <div className={styles.lifecycleItems}>
-                                {concept.lifecycle.provision.map((item, i) => (
+                                {concept.lifecycle.phase1.map((item, i) => (
                                     <div key={i} className={styles.lifecycleItem}>{item}</div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {/* Configure */}
-                    {concept.lifecycle.configure.length > 0 && (
+                    {concept.lifecycle.phase2.length > 0 && (
                         <div className={styles.lifecycleSection}>
                             <div className={styles.lifecycleHeader}>
-                                <span className={`${styles.lifecycleLabel} ${styles.configureLabel}`}>
-                                    CONFIGURE
+                                <span className={`${styles.lifecycleLabel} ${styles.phase2Label}`}>
+                                    {phase2Label}
                                 </span>
                             </div>
                             <div className={styles.lifecycleItems}>
-                                {concept.lifecycle.configure.map((item, i) => (
+                                {concept.lifecycle.phase2.map((item, i) => (
                                     <div key={i} className={styles.lifecycleItem}>{item}</div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {/* Monitor */}
-                    {concept.lifecycle.monitor.length > 0 && (
+                    {concept.lifecycle.phase3.length > 0 && (
                         <div className={styles.lifecycleSection}>
                             <div className={styles.lifecycleHeader}>
-                                <span className={`${styles.lifecycleLabel} ${styles.monitorLabel}`}>
-                                    MONITOR
+                                <span className={`${styles.lifecycleLabel} ${styles.phase3Label}`}>
+                                    {phase3Label}
                                 </span>
                             </div>
                             <div className={styles.lifecycleItems}>
-                                {concept.lifecycle.monitor.map((item, i) => (
+                                {concept.lifecycle.phase3.map((item, i) => (
                                     <div key={i} className={styles.lifecycleItem}>{item}</div>
                                 ))}
                             </div>

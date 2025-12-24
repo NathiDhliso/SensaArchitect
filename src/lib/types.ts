@@ -4,18 +4,6 @@ export type LifecyclePhases = {
   phase3: string;
 };
 
-export type UniversalLifecycle = {
-  phase1: string;
-  phase2: string;
-  phase3: string;
-  roleScope: string;
-  excludedActions: string[];
-  positiveFraming?: {
-    instead_of: string;
-    say: string;
-  };
-};
-
 export type DynamicLifecycle = {
   phase1: string;
   phase2: string;
@@ -28,15 +16,6 @@ export type DynamicLifecycle = {
   phase2Description: string;
   phase3Description: string;
 };
-
-export type DomainType =
-  | 'IT/Cloud'
-  | 'Coding/Dev'
-  | 'Law'
-  | 'Medicine'
-  | 'Accountancy'
-  | 'Project Management'
-  | 'Education';
 
 export type Pass1Result = {
   domain: string;

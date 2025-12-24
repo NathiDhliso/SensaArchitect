@@ -68,9 +68,9 @@ export default function GuidedTour({
         <h3 className={styles.conceptName}>{currentMarker.conceptName}</h3>
         <div className={styles.lifecyclePreview}>
           <div className={styles.phasePreview}>
-            <span className={styles.phaseLabel}>Provision</span>
+            <span className={styles.phaseLabel}>{currentMarker.lifecycleLabels?.phase1 || 'Phase 1'}</span>
             <span className={styles.phaseItem}>
-              {currentMarker.lifecycle.provision[0] || 'N/A'}
+              {currentMarker.lifecycle.phase1[0] || 'N/A'}
             </span>
           </div>
         </div>
