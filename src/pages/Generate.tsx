@@ -4,6 +4,7 @@ import { CheckCircle2, Circle, Loader2, ArrowLeft, AlertTriangle, RefreshCw } fr
 import { generateChartIteratively } from '@/lib/generation/multi-pass-generator';
 import { useGenerationStore } from '@/store/generation-store';
 import { PASS_NAMES } from '@/constants/ui-constants';
+import { DiagnosticModal, DiagnosticResults } from '@/components/diagnostic';
 import type { PassStatus, Pass1Result, ValidationResult } from '@/lib/types';
 import styles from './Generate.module.css';
 
@@ -35,11 +36,17 @@ export default function Generate() {
     clearCheckpoint,
     saveCheckpoint,
     updateGenerationProgress,
+    diagnosticResult,
+    clearDiagnosticResult,
   } = useGenerationStore();
 
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [showDiagnosticResults, setShowDiagnosticResults] = useState(false);
+  const [diagnosticCompleted, setDiagnosticCompleted] = useState(false);
   const hasStartedRef = useRef(false);
+  const diagnosticShownRef = useRef(false);
 
   // Shared callback function to handle progress updates
   const createProgressCallback = useCallback(() => {
@@ -163,6 +170,21 @@ export default function Generate() {
       });
   }, [bedrockConfig, createProgressCallback, startGeneration, addRecentSubject, completeGeneration, clearCheckpoint, setError, navigate]);
 
+  // Show diagnostic modal after Pass 1 completes (when we have actual concepts)
+  useEffect(() => {
+    if (
+      passes[0] === 'complete' && 
+      pass1Data?.concepts?.length && 
+      !diagnosticShownRef.current && 
+      !diagnosticCompleted &&
+      !diagnosticResult // Don't show if already have results (e.g., from resume)
+    ) {
+      diagnosticShownRef.current = true;
+      clearDiagnosticResult();
+      setShowDiagnostic(true);
+    }
+  }, [passes, pass1Data, diagnosticCompleted, diagnosticResult, clearDiagnosticResult]);
+
   useEffect(() => {
     if (!subject || !bedrockConfig || hasStartedRef.current) return;
 
@@ -180,6 +202,22 @@ export default function Generate() {
       abortController?.abort();
     };
   }, [subject, bedrockConfig, canResumeFromCheckpoint, startGenerationProcess, abortController]);
+
+  // Handlers for diagnostic flow
+  const handleDiagnosticComplete = () => {
+    setShowDiagnostic(false);
+    setShowDiagnosticResults(true);
+  };
+
+  const handleDiagnosticSkip = () => {
+    setShowDiagnostic(false);
+    setDiagnosticCompleted(true);
+  };
+
+  const handleDiagnosticResultsContinue = () => {
+    setShowDiagnosticResults(false);
+    setDiagnosticCompleted(true);
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -442,6 +480,19 @@ export default function Generate() {
           </div>
         </div>
       </div>
+
+      {/* Diagnostic Modals - shown after Pass 1 completes with concepts */}
+      {showDiagnostic && subject && (
+        <DiagnosticModal
+          subject={decodeURIComponent(subject)}
+          onComplete={handleDiagnosticComplete}
+          onSkip={handleDiagnosticSkip}
+        />
+      )}
+
+      {showDiagnosticResults && diagnosticResult && (
+        <DiagnosticResults onContinue={handleDiagnosticResultsContinue} />
+      )}
     </div>
   );
 }

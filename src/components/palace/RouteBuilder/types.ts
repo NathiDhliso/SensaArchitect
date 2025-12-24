@@ -123,5 +123,3 @@ export const PLACEMENT_SLOTS = [
     { id: 'back', location: 'Back Area', visualAnchor: 'rear section', position: 'bottom' as const },
     { id: 'roof', location: 'Roof/Top', visualAnchor: 'rooftop feature', position: 'top' as const },
 ];
-
-export type WizardStep = 'name' | 'locations' | 'preview';

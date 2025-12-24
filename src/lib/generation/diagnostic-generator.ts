@@ -34,14 +34,39 @@ OUTPUT FORMAT (JSON array):
 
 /**
  * Generate diagnostic questions for a subject using Claude
+ * When concepts are provided (from Pass 1), questions are based on actual curriculum
  */
 export async function generateDiagnosticQuestions(
     subject: string,
-    config: BedrockConfig
+    config: BedrockConfig,
+    concepts?: string[] // Optional concepts from Pass 1
 ): Promise<DiagnosticQuestion[]> {
     const { beginner, intermediate, advanced } = DIAGNOSTIC_CONFIG.DISTRIBUTION;
 
-    const prompt = `Generate exactly ${DIAGNOSTIC_CONFIG.QUESTION_COUNT} diagnostic questions for the subject: "${subject}"
+    // Build prompt based on whether we have concepts from Pass 1
+    let prompt: string;
+    
+    if (concepts && concepts.length > 0) {
+        // Use actual concepts from the generated learning system
+        prompt = `Generate exactly ${DIAGNOSTIC_CONFIG.QUESTION_COUNT} diagnostic questions for: "${subject}"
+
+THESE ARE THE ACTUAL CURRICULUM CONCEPTS (from the learning system):
+${concepts.map((c, i) => `${i + 1}. ${c}`).join('\n')}
+
+Distribution:
+- ${beginner} beginner questions (basic terminology)
+- ${intermediate} intermediate questions (concept relationships)
+- ${advanced} advanced questions (application scenarios)
+
+IMPORTANT: 
+- Each question MUST relate to one of the concepts listed above
+- Use the exact concept name in the "conceptName" field
+- Create conceptId by slugifying the concept name (lowercase, hyphens)
+
+Return ONLY the JSON array, no other text.`;
+    } else {
+        // Fallback to generic subject questions
+        prompt = `Generate exactly ${DIAGNOSTIC_CONFIG.QUESTION_COUNT} diagnostic questions for the subject: "${subject}"
 
 Distribution:
 - ${beginner} beginner questions (basic terminology and concepts)
@@ -50,6 +75,7 @@ Distribution:
 
 Ensure questions cover diverse topics within the subject domain.
 Return ONLY the JSON array, no other text.`;
+    }
 
     const client = getBedrockClient(config);
     const messages = [{ role: 'user' as const, content: prompt }];

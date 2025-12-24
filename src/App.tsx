@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { SettingsPanel } from './components/settings';
+import { loadPanoramaManifest } from './lib/panorama';
 
 const Home = lazy(() => import('./pages/Home'));
 const Generate = lazy(() => import('./pages/Generate'));
@@ -22,6 +23,11 @@ function LoadingFallback() {
 }
 
 function App() {
+  // Load pre-captured panorama manifest on app startup
+  useEffect(() => {
+    loadPanoramaManifest();
+  }, []);
+
   return (
     <BrowserRouter>
       <Suspense fallback={<LoadingFallback />}>

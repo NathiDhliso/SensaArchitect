@@ -8,11 +8,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Zap, ChevronRight, Check, X, ArrowLeft } from 'lucide-react';
+import { Clock, Check, X, ArrowLeft } from 'lucide-react';
 import { useGenerationStore } from '@/store/generation-store';
 import { useLearningStore } from '@/store/learning-store';
 import { generateSprintQuestions, calculateSprintResult } from '@/lib/generation/sprint-generator';
 import { UI_TIMINGS, SPRINT_CONFIG } from '@/constants/ui-constants';
+import { formatTime, getTimerUrgency } from '@/lib/utils';
 import type { SprintQuestion, SprintAnswer } from '@/lib/types/sprint';
 import styles from './Sprint.module.css';
 
@@ -177,26 +178,11 @@ export default function Sprint() {
         return () => clearInterval(interval);
     }, [phase, handleAnswer]);
 
-    // Format time display
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
+    const timerUrgency = getTimerUrgency(totalTimeRemaining, 180, 60);
+    const getTimerClass = () => timerUrgency === 'critical' ? styles.critical : timerUrgency === 'warning' ? styles.warning : '';
 
-    // Get timer class
-    const getTimerClass = () => {
-        if (totalTimeRemaining <= 60) return styles.critical;
-        if (totalTimeRemaining <= 180) return styles.warning;
-        return '';
-    };
-
-    // Get question timer class
-    const getQuestionTimerClass = () => {
-        if (questionTimeRemaining <= 2) return styles.critical;
-        if (questionTimeRemaining <= 4) return styles.warning;
-        return '';
-    };
+    const questionUrgency = getTimerUrgency(questionTimeRemaining, 4, 2);
+    const getQuestionTimerClass = () => questionUrgency === 'critical' ? styles.critical : questionUrgency === 'warning' ? styles.warning : '';
 
     // Get accuracy
     const correctCount = answers.filter(a => a.correct).length;

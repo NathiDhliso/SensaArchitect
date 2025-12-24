@@ -7,11 +7,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Zap, Brain, ChevronRight } from 'lucide-react';
+import { Clock, ChevronRight } from 'lucide-react';
 import { useGenerationStore } from '@/store/generation-store';
 import { generateDiagnosticQuestions, calculateDiagnosticResult, getConceptsToSkip } from '@/lib/generation/diagnostic-generator';
 import { UI_TIMINGS, DIAGNOSTIC_CONFIG } from '@/constants/ui-constants';
-import { FEEDBACK_COLORS } from '@/constants/theme-colors';
+import { formatTime, getTimerUrgency } from '@/lib/utils';
 import type { DiagnosticQuestion, DiagnosticAnswer } from '@/lib/types/diagnostic';
 import styles from './DiagnosticModal.module.css';
 
@@ -24,7 +24,7 @@ interface DiagnosticModalProps {
 type ModalPhase = 'countdown' | 'loading' | 'quiz' | 'feedback';
 
 export default function DiagnosticModal({ subject, onComplete, onSkip }: DiagnosticModalProps) {
-    const { bedrockConfig, setDiagnosticResult } = useGenerationStore();
+    const { bedrockConfig, setDiagnosticResult, pass1Data } = useGenerationStore();
 
     // Phase state
     const [phase, setPhase] = useState<ModalPhase>('countdown');
@@ -65,7 +65,9 @@ export default function DiagnosticModal({ subject, onComplete, onSkip }: Diagnos
 
         // Start loading when countdown hits 0
         setPhase('loading');
-        generateDiagnosticQuestions(subject, bedrockConfig)
+        // Pass concepts from Pass 1 if available for more targeted questions
+        const concepts = pass1Data?.concepts;
+        generateDiagnosticQuestions(subject, bedrockConfig, concepts)
             .then(generatedQuestions => {
                 setQuestions(generatedQuestions);
                 setPhase('quiz');
@@ -75,7 +77,7 @@ export default function DiagnosticModal({ subject, onComplete, onSkip }: Diagnos
                 setError(err instanceof Error ? err.message : 'Failed to generate questions');
                 onSkip(); // Go straight to content generation on error
             });
-    }, [phase, countdown, bedrockConfig, subject, onSkip]);
+    }, [phase, countdown, bedrockConfig, subject, pass1Data, onSkip]);
 
     // Handle answer selection
     const handleAnswer = useCallback((optionIndex: number) => {
@@ -176,26 +178,11 @@ export default function DiagnosticModal({ subject, onComplete, onSkip }: Diagnos
         return () => clearInterval(interval);
     }, [phase, handleAnswer]);
 
-    // Format time display
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
+    const timerUrgency = getTimerUrgency(totalTimeRemaining, 60, 30);
+    const getTimerClass = () => timerUrgency === 'critical' ? styles.critical : timerUrgency === 'warning' ? styles.urgent : '';
 
-    // Get timer urgency class
-    const getTimerClass = () => {
-        if (totalTimeRemaining <= 30) return styles.critical;
-        if (totalTimeRemaining <= 60) return styles.urgent;
-        return '';
-    };
-
-    // Get question timer class
-    const getQuestionTimerClass = () => {
-        if (questionTimeRemaining <= 2) return styles.critical;
-        if (questionTimeRemaining <= 4) return styles.warning;
-        return '';
-    };
+    const questionUrgency = getTimerUrgency(questionTimeRemaining, 4, 2);
+    const getQuestionTimerClass = () => questionUrgency === 'critical' ? styles.critical : questionUrgency === 'warning' ? styles.warning : '';
 
     return (
         <div className={styles.overlay}>

@@ -32,11 +32,11 @@ interface PalaceState {
     progress: Record<string, PalaceProgress>; // palaceId -> progress
 
     // Actions
-    createPalace: (subjectId: string, routeId: string, stages: StageData[]) => MemoryPalace;
-    createCustomPalace: (subjectId: string, routeName: string, customBuildings: RouteBuilding[], stages: StageData[]) => MemoryPalace;
+    createPalace: (subjectId: string, routeId: string, stages: StageData[], lifecycleLabels?: { phase1: string; phase2: string; phase3: string }) => MemoryPalace;
+    createCustomPalace: (subjectId: string, routeName: string, customBuildings: RouteBuilding[], stages: StageData[], lifecycleLabels?: { phase1: string; phase2: string; phase3: string }) => MemoryPalace;
     saveCustomRoute: (routeName: string, buildings: RouteBuilding[]) => PalaceRoute;
     setCurrentBuilding: (index: number) => void;
-    loadPalace: (palaceId: string) => void;
+    loadPalace: () => void;
     clearPalace: () => void;
 
     // Quiz actions
@@ -78,7 +78,7 @@ export const usePalaceStore = create<PalaceState>()(
             panoramaMarkers: {},
             progress: {},
 
-            createPalace: (subjectId, routeId, stages) => {
+            createPalace: (subjectId, routeId, stages, lifecycleLabels) => {
                 const route = getRouteById(routeId);
                 if (!route) throw new Error(`Route ${routeId} not found`);
 
@@ -111,6 +111,7 @@ export const usePalaceStore = create<PalaceState>()(
                     routeId,
                     buildings,
                     createdAt: new Date().toISOString(),
+                    lifecycleLabels,
                 };
 
                 // Initialize progress
@@ -128,10 +129,13 @@ export const usePalaceStore = create<PalaceState>()(
                     progress: { ...state.progress, [palaceId]: newProgress },
                 }));
 
+                // Note: Pre-built routes use live Street View (Google tile server blocks CORS)
+                // Panorama capture only works for custom routes where user confirms in StreetViewPreview
+
                 return palace;
             },
 
-            createCustomPalace: (subjectId, routeName, customBuildings, stages) => {
+            createCustomPalace: (subjectId, routeName, customBuildings, stages, lifecycleLabels) => {
                 const routeId = `custom-${Date.now()}`;
                 const palaceId = `${subjectId}-${routeId}`;
 
@@ -162,6 +166,7 @@ export const usePalaceStore = create<PalaceState>()(
                     routeId,
                     buildings,
                     createdAt: new Date().toISOString(),
+                    lifecycleLabels,
                 };
 
                 // Initialize progress
@@ -190,17 +195,12 @@ export const usePalaceStore = create<PalaceState>()(
 
                 customBuildings.forEach(building => {
                     if (building.panoId) {
-                        console.log('Capturing panorama for building:', building.id, 'panoId:', building.panoId);
                         capturePanorama(
                             building.panoId,
                             palaceId,
                             building.id,
                             building.coordinates
-                        )
-                            .then(result => console.log('Panorama capture result:', building.id, result))
-                            .catch(err => console.error('Failed to capture panorama:', building.id, err));
-                    } else {
-                        console.warn('No panoId for building:', building.id);
+                        ).catch(err => console.error('Failed to capture panorama:', err));
                     }
                 });
 

@@ -14,6 +14,7 @@ import {
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import type { RouteBuilding } from '@/lib/types/palace';
 import { MAP_COLORS } from '@/constants/theme-colors';
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES } from '@/constants/app-config';
 import {
     type LocationInput,
     LOCATION_TEMPLATES,
@@ -28,9 +29,6 @@ export interface RouteBuilderProps {
     onClose: () => void;
     onSave: (routeName: string, buildings: RouteBuilding[]) => void;
 }
-
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-const GOOGLE_MAPS_LIBRARIES: ("places" | "geometry")[] = ['places', 'geometry'];
 
 const createEmptyLocation = (id: string): LocationInput => ({
     id,

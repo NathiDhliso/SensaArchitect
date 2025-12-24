@@ -178,7 +178,14 @@ export default function Results() {
       };
     });
 
-    createPalace(displaySubject || 'study', 'tech-campus', stages);
+    // Pass lifecycle labels from the generation results
+    const lifecycleLabels = displayPass1Data.lifecycle ? {
+      phase1: displayPass1Data.lifecycle.phase1,
+      phase2: displayPass1Data.lifecycle.phase2,
+      phase3: displayPass1Data.lifecycle.phase3,
+    } : undefined;
+
+    createPalace(displaySubject || 'study', 'tech-campus', stages, lifecycleLabels);
     navigate('/palace');
   };
 

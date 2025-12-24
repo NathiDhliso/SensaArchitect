@@ -9,6 +9,12 @@ export interface MemoryPalace {
     routeId: string;
     buildings: PalaceBuilding[];
     createdAt: string;
+    /** Dynamic lifecycle labels for this subject */
+    lifecycleLabels?: {
+        phase1: string;
+        phase2: string;
+        phase3: string;
+    };
 }
 
 export interface PalaceRoute {

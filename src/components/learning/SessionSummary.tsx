@@ -9,6 +9,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Coffee, Play, Clock, BookOpen, Zap, CheckCircle2, Circle, TrendingUp } from 'lucide-react';
 import { useFocusSessionStore } from '@/store/focus-session-store';
+import { formatDuration, formatPace } from '@/lib/utils';
 import styles from './SessionSummary.module.css';
 
 export function SessionSummary() {
@@ -26,28 +27,6 @@ export function SessionSummary() {
     if (!showSessionSummary || !lastSessionSummary) return null;
 
     const summary = lastSessionSummary;
-
-    // Format duration as mm:ss
-    const formatDuration = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        if (mins >= 60) {
-            const hrs = Math.floor(mins / 60);
-            const remainMins = mins % 60;
-            return `${hrs}h ${remainMins}m`;
-        }
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    // Format pace as m:ss
-    const formatPace = (seconds: number) => {
-        if (seconds === 0) return '--:--';
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    // Get pace rating emoji and label
     const getPaceDisplay = (rating: string) => {
         switch (rating) {
             case 'optimal': return { emoji: '🟢', label: 'Optimal' };

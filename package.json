@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "capture-panoramas": "node scripts/capture-panoramas.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.716.0",
@@ -48,6 +49,7 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^3.7.2",
+    "canvas": "^3.2.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

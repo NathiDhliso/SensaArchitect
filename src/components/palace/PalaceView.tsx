@@ -35,11 +35,11 @@ import QuizMode from './QuizMode';
 import ProgressPanel from './ProgressPanel';
 import { PlacementGuide } from './PlacementGuide';
 import { PanoramaPalaceView } from './PanoramaViewer';
-import { hasPanorama } from '@/lib/panorama';
+import { StaticPanoramaView } from './PanoramaViewer';
+import { hasPanorama, getPrebuiltPanoramaUrl } from '@/lib/panorama';
 import { UI_TIMINGS } from '@/constants/ui-constants';
+import { GOOGLE_MAPS_API_KEY } from '@/constants/app-config';
 import styles from './PalaceView.module.css';
-
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 export default function PalaceView() {
     const navigate = useNavigate();
@@ -65,6 +65,7 @@ export default function PalaceView() {
     const [editMode, setEditMode] = useState(false);
     const [hasPanoramaImage, setHasPanoramaImage] = useState(false);
     const [panoramaCheckCount, setPanoramaCheckCount] = useState(0);
+    const [prebuiltPanoramaUrl, setPrebuiltPanoramaUrl] = useState<string | null>(null);
 
     // Compute route and building info first (needed by effects below)
     const route = currentPalace 
@@ -84,7 +85,24 @@ export default function PalaceView() {
         }
     }, [currentPalace]);
 
-    // Check for panorama with retry logic (panorama capture is async)
+    // Check for pre-built panorama images (from public/panoramas folder)
+    useEffect(() => {
+        if (!currentPalace || !routeBuilding) {
+            setPrebuiltPanoramaUrl(null);
+            return;
+        }
+
+        // Check if pre-built route has a static panorama
+        const isPrebuiltRoute = !currentPalace.routeId.startsWith('custom-');
+        if (isPrebuiltRoute) {
+            const url = getPrebuiltPanoramaUrl(currentPalace.routeId, routeBuilding.id);
+            setPrebuiltPanoramaUrl(url);
+        } else {
+            setPrebuiltPanoramaUrl(null);
+        }
+    }, [currentPalace?.routeId, routeBuilding?.id]);
+
+    // Check for panorama in IndexedDB (for custom routes)
     useEffect(() => {
         let retryTimeout: ReturnType<typeof setTimeout>;
         
@@ -93,13 +111,18 @@ export default function PalaceView() {
                 setHasPanoramaImage(false);
                 return;
             }
-            console.log('Checking panorama for:', currentPalace.id, routeBuilding.id);
+            
+            // Only check IndexedDB for custom routes
+            const isCustomRoute = currentPalace.routeId.startsWith('custom-');
+            if (!isCustomRoute) {
+                setHasPanoramaImage(false);
+                return;
+            }
+            
             const exists = await hasPanorama(currentPalace.id, routeBuilding.id);
-            console.log('Panorama exists:', exists);
             setHasPanoramaImage(exists);
             
-            // If not found and we haven't retried much, retry after a delay
-            // (panorama capture happens async after palace creation)
+            // Retry logic for async capture
             if (!exists && panoramaCheckCount < 5) {
                 retryTimeout = setTimeout(() => {
                     setPanoramaCheckCount(c => c + 1);
@@ -111,7 +134,7 @@ export default function PalaceView() {
         return () => {
             if (retryTimeout) clearTimeout(retryTimeout);
         };
-    }, [currentPalace?.id, routeBuilding?.id, panoramaCheckCount]);
+    }, [currentPalace?.id, currentPalace?.routeId, routeBuilding?.id, panoramaCheckCount]);
 
     const handleOpenStreetView = useCallback(() => {
         if (!routeBuilding) return;
@@ -166,7 +189,8 @@ export default function PalaceView() {
     }, [updateMarkerPositions]);
 
     useEffect(() => {
-        if (!streetViewEnabled || !routeBuilding || !streetViewRef.current) return;
+        // Skip live Street View if we have a captured panorama image
+        if (hasPanoramaImage || !streetViewEnabled || !routeBuilding || !streetViewRef.current) return;
 
         const initStreetView = async () => {
             setIsLoading(true);
@@ -243,7 +267,7 @@ export default function PalaceView() {
                 google.maps.event.clearListeners(panoramaRef.current, 'position_changed');
             }
         };
-    }, [routeBuilding, streetViewEnabled, updateMarkerPositions]);
+    }, [routeBuilding, streetViewEnabled, updateMarkerPositions, hasPanoramaImage]);
 
     const handleMarkerClick = (conceptId: string, heading: number) => {
         setActiveConcept(conceptId);
@@ -498,7 +522,25 @@ export default function PalaceView() {
                 <div className={styles.streetViewPanel}>
                     <DailyWalk onStartWalk={handleStartWalk} />
 
-                    {hasPanoramaImage && currentPalace && routeBuilding && currentBuilding ? (
+                    {/* Priority 1: Pre-built panorama from public folder */}
+                    {prebuiltPanoramaUrl && currentBuilding && routeBuilding ? (
+                        <div className={styles.streetViewWrapper}>
+                            <StaticPanoramaView
+                                imageUrl={prebuiltPanoramaUrl}
+                                routeBuildingId={routeBuilding.id}
+                                concepts={currentBuilding.concepts.map(c => ({
+                                    conceptId: c.conceptId,
+                                    conceptName: c.conceptName,
+                                    slotId: c.slotId,
+                                }))}
+                                onMarkerClick={(conceptId) => {
+                                    setActiveConcept(conceptId);
+                                    setShowTooltip(true);
+                                }}
+                            />
+                        </div>
+                    ) : /* Priority 2: Custom route panorama from IndexedDB */
+                    hasPanoramaImage && currentPalace && routeBuilding && currentBuilding ? (
                         <div className={styles.streetViewWrapper}>
                             <PanoramaPalaceView
                                 palaceId={currentPalace.id}
@@ -514,7 +556,8 @@ export default function PalaceView() {
                                 }}
                             />
                         </div>
-                    ) : streetViewEnabled ? (
+                    ) : /* Priority 3: Live Google Street View */
+                    streetViewEnabled ? (
                         <div 
                             ref={fullscreenRef}
                             className={`${styles.streetViewWrapper} ${isFullscreen ? styles.fullscreenMode : ''}`}
@@ -616,6 +659,11 @@ export default function PalaceView() {
                     <div className={styles.placementHeader}>
                         <MapPin size={16} />
                         <h2>Placement Map</h2>
+                        {currentPalace?.lifecycleLabels && (
+                            <span className={styles.lifecycleVerbs}>
+                                {currentPalace.lifecycleLabels.phase1} → {currentPalace.lifecycleLabels.phase2} → {currentPalace.lifecycleLabels.phase3}
+                            </span>
+                        )}
                     </div>
 
                     <div className={styles.placementList}>
@@ -626,6 +674,7 @@ export default function PalaceView() {
                                     key={concept.conceptId}
                                     concept={concept}
                                     slot={slot}
+                                    lifecycleLabels={currentPalace?.lifecycleLabels}
                                 />
                             );
                         })}
