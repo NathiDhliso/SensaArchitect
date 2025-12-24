@@ -36,20 +36,24 @@ Create a Single Code Block containing a structured outline. You must follow thes
 
 **VISUAL RULES:**
 1. Use hierarchical bullet points with consistent indentation (2-4 spaces per level).
-2. Use clear visual hierarchy: # for main sections, ## for Core Concepts, - for Phase 1, • for Phase 2, ○ for Phase 3.
-3. Quality Standard: The format used for the first concept must be identical to the format used for the last concept. Maintain consistent detail level throughout.
-4. **NARRATIVE CONTINUITY:** For every Core Concept (except the first), include a brief "Logical Connection" sentence at the start explaining how this concept relates to or builds upon the immediately preceding concept. Format: **[Logical Connection]:** followed by the connection statement.
+2. Use clear visual hierarchy: # for main sections, ## for Core Concepts
+3. **PHASE MARKERS (Critical for Parser):** Use bracketed tags for lifecycle phases that NEVER change format:
+   - \`[LIFECYCLE_PHASE_1]\` for Phase 1 content (e.g., [PROVISION], [LEARN], [ASSESS])
+   - \`[LIFECYCLE_PHASE_2]\` for Phase 2 content (e.g., [CONFIGURE], [APPLY], [DIAGNOSE])
+   - \`[LIFECYCLE_PHASE_3]\` for Phase 3 content (e.g., [MONITOR], [VERIFY], [DOCUMENT])
+4. Quality Standard: The format used for Concept 1 MUST be IDENTICAL to Concept 37. Copy-paste the structure template for each concept.
+5. **NARRATIVE CONTINUITY:** For every Core Concept (except the first), include a brief "Logical Connection" sentence at the start explaining how this concept relates to or builds upon the immediately preceding concept. Format: **[Logical Connection]:** followed by the connection statement.
 
 **CONTENT DENSITY & POSITIVE FRAMING RULES:**
 
-* **Foundation Level (Phase 1): The "Blueprint Pattern"**
+* **Foundation Level (Phase 1): The "Blueprint Pattern"** — Use \`[LIFECYCLE_PHASE_1]\` marker
    - **Hook Sentence**: A compelling 10-15 word sentence that makes the learner want to know more
    - **Micro-Metaphor**: A 3-5 word physical analogy (e.g., "The traffic cop at the intersection", "The security guard at the door")
    - Prerequisite: (What enables this? Use format: "[ConceptName]" for internal dependencies, "[None]" if first concept or no dependencies)
    - Selection: (Which type/approach best serves the goal? Include specific capabilities/thresholds where known)
    - Execution: (The specific Tool/Form/Process/Document to begin)
 
-* **Configuration Level (Phase 2): The "Capability Pattern"**
+* **Configuration Level (Phase 2): The "Capability Pattern"** — Use \`[LIFECYCLE_PHASE_2]\` marker
    • Use specific action verbs: "Enable", "Configure", "Define", "Establish", "Set", "Apply"
    • Mark important comparisons using **[Critical Distinction]:** followed by the two concepts and their key difference in capabilities
    • Include design boundaries and prerequisites using POSITIVE framing:
@@ -69,13 +73,25 @@ Create a Single Code Block containing a structured outline. You must follow thes
 | "Cannot delete" | "[Design Boundary]: Protected by design (remove protection via [method] when needed)" |
 | "Does not inherit" | "[Design Boundary]: Applied directly to each resource (use policy for automated assignment)" |
 
-* **Verification Level (Phase 3): The "Evidence Pattern"**
+* **Verification Level (Phase 3): The "Evidence Pattern"** — Use \`[LIFECYCLE_PHASE_3]\` marker
    ○ Name the exact tool, document, metric, test, or procedure (e.g., "Westlaw Citator", "Blood Gas Analysis", "Azure Monitor Logs", "IRS Form 8879")
    ○ Do not invent tool/document names
    ○ Include specific metrics, deadlines, or thresholds to monitor where relevant
    ○ Frame as "what to observe" rather than "what to watch out for"
 
 * **Verification Protocol:** If a specific design boundary, limit, statutory cite, or tool name is unknown, state **[Verify in Docs]** or **[Check Official Source]**. Do not fabricate data to fill the space.
+
+**FORMAT CONSISTENCY CHECKPOINT:**
+⚠️ Every 10 concepts, verify your phase markers match this exact pattern:
+\`\`\`
+## [N]. [Concept Name]
+[LIFECYCLE_PHASE_1]
+  ...content...
+[LIFECYCLE_PHASE_2]
+  ...content...
+[LIFECYCLE_PHASE_3]
+  ...content...
+\`\`\`
 
 ---
 

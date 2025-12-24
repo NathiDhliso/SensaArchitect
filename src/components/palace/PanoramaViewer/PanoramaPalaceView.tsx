@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Edit3, Save, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Edit3, Save, Loader2, Maximize, Minimize, X, Zap } from 'lucide-react';
 import { usePalaceStore } from '@/store/palace-store';
 import { getPanoramaAsDataUrl } from '@/lib/panorama';
 import type { MarkerPlacement } from '@/lib/panorama';
+import type { PlacedConcept } from '@/lib/types/palace';
 import PanoramaViewer from './PanoramaViewer';
 import styles from './PanoramaPalaceView.module.css';
 
@@ -14,6 +15,13 @@ interface PanoramaPalaceViewProps {
         conceptName: string;
         slotId: string;
     }>;
+    /** Full concept data for showing details in fullscreen */
+    fullConceptData?: PlacedConcept[];
+    lifecycleLabels?: {
+        phase1: string;
+        phase2: string;
+        phase3: string;
+    };
     onMarkerClick?: (conceptId: string) => void;
 }
 
@@ -21,9 +29,13 @@ export default function PanoramaPalaceView({
     palaceId,
     routeBuildingId,
     concepts,
+    fullConceptData,
+    lifecycleLabels,
     onMarkerClick,
 }: PanoramaPalaceViewProps) {
     const { updatePanoramaMarker, getPanoramaMarkers } = usePalaceStore();
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const [panoramaUrl, setPanoramaUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -92,6 +104,24 @@ export default function PanoramaPalaceView({
         setEditMode(prev => !prev);
     }, []);
 
+    const toggleFullscreen = useCallback(() => {
+        if (!containerRef.current) return;
+        
+        if (!document.fullscreenElement) {
+            containerRef.current.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
+    }, []);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
+
     if (isLoading) {
         return (
             <div className={styles.loadingContainer}>
@@ -110,7 +140,7 @@ export default function PanoramaPalaceView({
     }
 
     return (
-        <div className={styles.container}>
+        <div ref={containerRef} className={`${styles.container} ${isFullscreen ? styles.fullscreenMode : ''}`}>
             <PanoramaViewer
                 imageUrl={panoramaUrl}
                 markers={markers}
@@ -129,7 +159,75 @@ export default function PanoramaPalaceView({
                     {editMode ? <Save size={16} /> : <Edit3 size={16} />}
                     {editMode ? 'Done' : 'Edit'}
                 </button>
+                <button
+                    className={styles.controlBtn}
+                    onClick={toggleFullscreen}
+                    title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                >
+                    {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                    {isFullscreen ? 'Exit' : 'Fullscreen'}
+                </button>
             </div>
+            
+            {/* Fullscreen Concept Detail Panel */}
+            {isFullscreen && activeMarkerId && fullConceptData && (() => {
+                const activeConcept = fullConceptData.find(c => c.conceptId === activeMarkerId);
+                if (!activeConcept) return null;
+                return (
+                    <div className={styles.fullscreenDetailPanel}>
+                        <div className={styles.fullscreenDetailHeader}>
+                            <h3>{activeConcept.conceptName}</h3>
+                            <button 
+                                className={styles.closeDetailBtn}
+                                onClick={() => setActiveMarkerId(null)}
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className={styles.fullscreenDetailContent}>
+                            {activeConcept.lifecycle.phase1.length > 0 && (
+                                <div className={styles.fullscreenPhase}>
+                                    <div className={styles.fullscreenPhaseHeader}>
+                                        <Zap size={14} />
+                                        <span>{lifecycleLabels?.phase1 || 'PHASE 1'}</span>
+                                    </div>
+                                    <div className={styles.fullscreenPhaseItems}>
+                                        {activeConcept.lifecycle.phase1.map((item, i) => (
+                                            <div key={i} className={styles.fullscreenPhaseItem}>{item}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {activeConcept.lifecycle.phase2.length > 0 && (
+                                <div className={styles.fullscreenPhase}>
+                                    <div className={styles.fullscreenPhaseHeader}>
+                                        <Zap size={14} />
+                                        <span>{lifecycleLabels?.phase2 || 'PHASE 2'}</span>
+                                    </div>
+                                    <div className={styles.fullscreenPhaseItems}>
+                                        {activeConcept.lifecycle.phase2.map((item, i) => (
+                                            <div key={i} className={styles.fullscreenPhaseItem}>{item}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {activeConcept.lifecycle.phase3.length > 0 && (
+                                <div className={styles.fullscreenPhase}>
+                                    <div className={styles.fullscreenPhaseHeader}>
+                                        <Zap size={14} />
+                                        <span>{lifecycleLabels?.phase3 || 'PHASE 3'}</span>
+                                    </div>
+                                    <div className={styles.fullscreenPhaseItems}>
+                                        {activeConcept.lifecycle.phase3.map((item, i) => (
+                                            <div key={i} className={styles.fullscreenPhaseItem}>{item}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }

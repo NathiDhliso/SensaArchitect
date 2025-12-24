@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle2, Circle, Loader2, ArrowLeft, AlertTriangle, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, ArrowLeft, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
 import { generateChartIteratively } from '@/lib/generation/multi-pass-generator';
 import { useGenerationStore } from '@/store/generation-store';
 import { PASS_NAMES } from '@/constants/ui-constants';
@@ -170,14 +170,17 @@ export default function Generate() {
       });
   }, [bedrockConfig, createProgressCallback, startGeneration, addRecentSubject, completeGeneration, clearCheckpoint, setError, navigate]);
 
-  // Show diagnostic modal after Pass 1 completes (when we have actual concepts)
+  // Show diagnostic modal after all passes complete
   useEffect(() => {
     if (
-      passes[0] === 'complete' && 
+      passes[1] === 'complete' && 
+      passes[2] === 'complete' && 
+      passes[3] === 'complete' && 
+      passes[4] === 'complete' && 
       pass1Data?.concepts?.length && 
       !diagnosticShownRef.current && 
       !diagnosticCompleted &&
-      !diagnosticResult // Don't show if already have results (e.g., from resume)
+      !diagnosticResult
     ) {
       diagnosticShownRef.current = true;
       clearDiagnosticResult();
@@ -217,6 +220,11 @@ export default function Generate() {
   const handleDiagnosticResultsContinue = () => {
     setShowDiagnosticResults(false);
     setDiagnosticCompleted(true);
+  };
+
+  const handleManualDiagnosticTrigger = () => {
+    clearDiagnosticResult();
+    setShowDiagnostic(true);
   };
 
   const getStatusIcon = (status: string) => {
@@ -468,6 +476,21 @@ export default function Generate() {
           )}
 
           <div className={styles.actions}>
+            {passes[1] === 'complete' && 
+             passes[2] === 'complete' && 
+             passes[3] === 'complete' && 
+             passes[4] === 'complete' && 
+             !diagnosticCompleted && 
+             !showDiagnostic && 
+             !showDiagnosticResults && (
+              <button
+                onClick={handleManualDiagnosticTrigger}
+                className={styles.diagnosticButton}
+              >
+                <Zap size={18} />
+                Take Quick Diagnostic
+              </button>
+            )}
             <button
               onClick={() => {
                 abortController?.abort();

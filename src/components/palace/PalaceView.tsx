@@ -567,6 +567,8 @@ export default function PalaceView() {
                                     conceptName: c.conceptName,
                                     slotId: c.slotId,
                                 }))}
+                                fullConceptData={currentBuilding.concepts}
+                                lifecycleLabels={currentPalace?.lifecycleLabels}
                                 onMarkerClick={(conceptId) => {
                                     setActiveConcept(conceptId);
                                     setShowTooltip(true);
@@ -584,6 +586,8 @@ export default function PalaceView() {
                                     conceptName: c.conceptName,
                                     slotId: c.slotId,
                                 }))}
+                                fullConceptData={currentBuilding.concepts}
+                                lifecycleLabels={currentPalace?.lifecycleLabels}
                                 onMarkerClick={(conceptId) => {
                                     setActiveConcept(conceptId);
                                     setShowTooltip(true);

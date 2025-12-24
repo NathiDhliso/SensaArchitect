@@ -156,18 +156,37 @@ export function performLocalValidation(content: string, pass1Data: Pass1Result):
   const completeness = Math.round(Math.max(conceptRatio, lengthRatio * 0.9) * 100);
 
   // Check for lifecycle marker consistency
-  const phase1Pattern = new RegExp(`-\\s*${escapeRegex(pass1Data.lifecycle.phase1)}:?`, 'gi');
-  const phase2Pattern = new RegExp(`•\\s*${escapeRegex(pass1Data.lifecycle.phase2)}:?`, 'gi');
-  const phase3Pattern = new RegExp(`○\\s*${escapeRegex(pass1Data.lifecycle.phase3)}:?`, 'gi');
+  // Support multiple format variations due to AI format drift:
+  // 1. Original: - PROVISION: / • CONFIGURE: / ○ MONITOR:
+  // 2. Tag-based: [PROVISION] / [CONFIGURE] / [MONITOR]
+  // 3. Bold drift: **PROVISION:** / **- PROVISION:** / **─ PROVISION:**
+  // 4. Plain: PROVISION: at line start
+  const escPhase1 = escapeRegex(pass1Data.lifecycle.phase1);
+  const escPhase2 = escapeRegex(pass1Data.lifecycle.phase2);
+  const escPhase3 = escapeRegex(pass1Data.lifecycle.phase3);
+  
+  // Expanded patterns to catch format drift variations
+  const phase1Pattern = new RegExp(
+    `(?:\\[${escPhase1}\\]|\\*\\*[─•-]?\\s*${escPhase1}:?\\*\\*|[─•-]\\s*${escPhase1}:?|^${escPhase1}:)`,
+    'gim'
+  );
+  const phase2Pattern = new RegExp(
+    `(?:\\[${escPhase2}\\]|\\*\\*[─•]*\\s*${escPhase2}:?\\*\\*|[─•]\\s*${escPhase2}:?|^${escPhase2}:)`,
+    'gim'
+  );
+  const phase3Pattern = new RegExp(
+    `(?:\\[${escPhase3}\\]|\\*\\*[○]*\\s*${escPhase3}:?\\*\\*|[○]\\s*${escPhase3}:?|^${escPhase3}:)`,
+    'gim'
+  );
 
   const phase1Count = (content.match(phase1Pattern) || []).length;
   const phase2Count = (content.match(phase2Pattern) || []).length;
   const phase3Count = (content.match(phase3Pattern) || []).length;
 
-  // Also check for alternate markers (- • ○ followed by phase name)
-  const altPhase1 = (content.match(new RegExp(`^\\s*-\\s*.+$`, 'gm')) || []).length;
-  const altPhase2 = (content.match(new RegExp(`^\\s*•\\s*.+$`, 'gm')) || []).length;
-  const altPhase3 = (content.match(new RegExp(`^\\s*○\\s*.+$`, 'gm')) || []).length;
+  // Also check for alternate bullet markers (any bullet style followed by phase name)
+  const altPhase1 = (content.match(new RegExp(`^\\s*[-─•]\\s*.*${escPhase1}`, 'gim')) || []).length;
+  const altPhase2 = (content.match(new RegExp(`^\\s*[─•]\\s*.*${escPhase2}`, 'gim')) || []).length;
+  const altPhase3 = (content.match(new RegExp(`^\\s*[○]\\s*.*${escPhase3}`, 'gim')) || []).length;
 
   // Calculate lifecycle consistency based on balanced presence of all phases
   const totalPhaseMarkers = phase1Count + phase2Count + phase3Count;

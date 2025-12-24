@@ -105,10 +105,28 @@ function parseConceptBlock(block: string, order: number, stageId: string, lifecy
   const id = slugify(name);
 
   // Use dynamic lifecycle phases from the parsed domain analysis
-  // Support multiple marker formats: "- PHASE:", "PHASE:", "- PHASE", etc.
-  const phase1Pattern = new RegExp(`[-•]\\s*${lifecycle.phase1}:?`, 'i');
-  const phase2Pattern = new RegExp(`[•]\\s*${lifecycle.phase2}:?`, 'i');
-  const phase3Pattern = new RegExp(`[○]\\s*${lifecycle.phase3}:?`, 'i');
+  // Support multiple marker formats to handle AI format drift:
+  // - Original: "- PHASE:", "• PHASE:", "○ PHASE:"
+  // - Tag-based: "[PHASE]", "**[PHASE]:**"
+  // - Bold drift: "**PHASE:**", "**─ PHASE:**", "**• PHASE:**"
+  // - Plain: "PHASE:", "PHASE"
+  const escPhase1 = lifecycle.phase1.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escPhase2 = lifecycle.phase2.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escPhase3 = lifecycle.phase3.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // Comprehensive patterns for each phase (ordered by specificity)
+  const phase1Pattern = new RegExp(
+    `(?:\\[${escPhase1}\\]|\\*\\*\\[?[─•-]?\\s*${escPhase1}\\]?:?\\*\\*|[─•-]\\s*${escPhase1}:?|${escPhase1}:)`,
+    'i'
+  );
+  const phase2Pattern = new RegExp(
+    `(?:\\[${escPhase2}\\]|\\*\\*\\[?[─•]?\\s*${escPhase2}\\]?:?\\*\\*|[•]\\s*${escPhase2}:?|${escPhase2}:)`,
+    'i'
+  );
+  const phase3Pattern = new RegExp(
+    `(?:\\[${escPhase3}\\]|\\*\\*\\[?[─○]?\\s*${escPhase3}\\]?:?\\*\\*|[○]\\s*${escPhase3}:?|${escPhase3}:)`,
+    'i'
+  );
 
   // Find the start positions of each phase
   const phase1Match = block.match(phase1Pattern);
