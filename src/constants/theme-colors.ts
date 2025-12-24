@@ -1,0 +1,119 @@
+/**
+ * Centralized Theme Colors
+ * 
+ * This file provides programmatic access to the CSS color palette
+ * for use in JavaScript/TypeScript when CSS variables aren't accessible
+ * (e.g., canvas drawing, third-party libraries, inline dynamic styles).
+ * 
+ * IMPORTANT: These should match the CSS variables in index.css
+ * When updating colors, update both files.
+ */
+
+// ============================================
+// PRIMARY COLORS
+// ============================================
+export const COLORS = {
+    // Primary palette
+    primary: {
+        amethyst: '#6B46C1',
+        coral: '#F97316',
+        plum: '#7C2D92',
+    },
+
+    // Secondary palette
+    secondary: {
+        amber: '#F59E0B',
+        rose: '#EC4899',
+        sage: '#10B981',
+    },
+
+    // Accent colors (for dynamic usage)
+    accent: {
+        light: '#8b5cf6',
+        default: '#6B46C1',
+        hover: '#553c9a',
+        alt: '#F97316',
+        altHover: '#ea580c',
+    },
+
+    // Semantic colors
+    success: '#22c55e',
+    warning: '#f59e0b',
+    error: '#ef4444',
+    info: '#3b82f6',
+
+    // Text colors
+    text: {
+        dark: '#1f2937',
+        medium: '#4b5563',
+        light: '#6b7280',
+        muted: '#94a3b8',
+    },
+} as const;
+
+// ============================================
+// CATEGORY COLORS (for Home.tsx categories)
+// ============================================
+export const CATEGORY_COLORS = {
+    cloud: COLORS.info,           // #3b82f6 - blue
+    data: COLORS.accent.light,    // #8b5cf6 - purple
+    dev: COLORS.secondary.sage,   // #10b981 - green
+    security: COLORS.error,       // #ef4444 - red
+    business: COLORS.secondary.amber, // #f59e0b - amber
+} as const;
+
+// ============================================
+// DIFFICULTY COLORS (for Home.tsx difficulty badges)
+// ============================================
+export const DIFFICULTY_COLORS = {
+    Beginner: COLORS.success,      // #22c55e - green
+    Intermediate: COLORS.warning,  // #f59e0b - amber
+    Advanced: COLORS.error,        // #ef4444 - red
+    Expert: COLORS.accent.light,   // #8b5cf6 - purple
+} as const;
+
+// ============================================
+// CONFETTI COLORS (for CelebrationModal.tsx)
+// ============================================
+export const CONFETTI_COLORS = [
+    COLORS.secondary.amber,  // #fbbf24 -> using amber
+    COLORS.info,             // #3b82f6
+    COLORS.success,          // #22c55e
+    COLORS.secondary.rose,   // #f43f5e -> using rose
+    COLORS.accent.light,     // #8b5cf6
+    '#06b6d4',               // cyan (not in main palette, keeping for variety)
+] as const;
+
+// ============================================
+// MAP/MARKER COLORS (for RouteBuilder.tsx)
+// ============================================
+export const MAP_COLORS = {
+    markerText: COLORS.text.dark,     // #1f2937
+    polylineStroke: COLORS.secondary.amber, // #F59E0B
+} as const;
+
+// ============================================
+// ICON COLORS (for QuizMode.tsx feedback icons)
+// ============================================
+export const FEEDBACK_COLORS = {
+    correct: COLORS.success,  // #22c55e
+    incorrect: COLORS.error,  // #ef4444
+} as const;
+
+// ============================================
+// HELPER: Get CSS variable value at runtime
+// ============================================
+export function getCSSVariable(name: string): string {
+    if (typeof document === 'undefined') return '';
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// ============================================
+// HELPER: Generate rgba from hex
+// ============================================
+export function hexToRgba(hex: string, alpha: number): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}

@@ -2,12 +2,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Download, Copy, CheckCircle2, BookOpen, Save, FolderDown, Map, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
-import { useLearningStore } from '@/store/learning-store';
 import { usePalaceStore } from '@/store/palace-store';
-import { parseGeneratedContent, transformGeneratedContent } from '@/lib/content-adapter';
+import { parseGeneratedContent } from '@/lib/content-adapter';
+import { useParseAndLoadContent } from '@/lib/content-loader';
 import { storageManager } from '@/lib/storage';
 import type { SavedResult } from '@/lib/storage';
-import { QUALITY_THRESHOLDS } from '@/constants/ui-constants';
+import { QUALITY_THRESHOLDS, UI_TIMINGS } from '@/constants/ui-constants';
 import { RouteBuilder } from '@/components/palace';
 import type { RouteBuilding } from '@/lib/types/palace';
 import styles from './Results.module.css';
@@ -45,13 +45,13 @@ export default function Results() {
     lifecycle: loadedResult.pass1Data.lifecycle
   } : null);
   const displaySubject = currentSubject || loadedResult?.subject || null;
-  const { loadCustomContent } = useLearningStore();
+  const parseAndLoad = useParseAndLoadContent();
 
   const handleCopy = async () => {
     if (displayDocument) {
       await navigator.clipboard.writeText(displayDocument);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), UI_TIMINGS.TOAST_SHORT);
     }
   };
 
@@ -73,21 +73,15 @@ export default function Results() {
     if (!displayDocument) return;
 
     setLoadingLearn(true);
-    try {
-      const parseResult = parseGeneratedContent(displayDocument);
-      if (!parseResult.success) {
-        console.error('Failed to parse content:', parseResult.error);
-        alert(`Failed to load content: ${parseResult.error}`);
-        setLoadingLearn(false);
-        return;
-      }
-      const transformed = transformGeneratedContent(parseResult.data);
-      loadCustomContent(transformed);
-      navigate('/learn');
-    } catch (error) {
-      console.error('Failed to parse content for learning:', error);
+    const result = parseAndLoad(displayDocument);
+
+    if (!result.success) {
+      alert(`Failed to load content: ${result.error}`);
       setLoadingLearn(false);
+      return;
     }
+
+    navigate('/learn');
   };
 
   const handleSaveResult = async () => {

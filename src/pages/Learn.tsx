@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Map } from 'lucide-react';
 import { JourneyMap, ConceptCard, CelebrationModal, LearningToolbar } from '@/components/learning';
 import { useLearningStore } from '@/store/learning-store';
+import { UI_TIMINGS } from '@/constants/ui-constants';
 import styles from './Learn.module.css';
 
 export default function Learn() {
@@ -37,7 +38,7 @@ export default function Learn() {
   useEffect(() => {
     if (currentConcept && progress.completedConcepts.length > 0) {
       const showTimer = setTimeout(() => setShowWelcomeToast(true), 0);
-      const hideTimer = setTimeout(() => setShowWelcomeToast(false), 5000);
+      const hideTimer = setTimeout(() => setShowWelcomeToast(false), UI_TIMINGS.TOAST_LONG);
       return () => {
         clearTimeout(showTimer);
         clearTimeout(hideTimer);

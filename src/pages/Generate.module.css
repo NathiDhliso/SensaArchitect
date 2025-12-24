@@ -121,7 +121,7 @@
 
 .retryButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  box-shadow: var(--shadow-glow-error);
 }
 
 .homeButton {
@@ -481,7 +481,7 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.5rem;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  background: linear-gradient(135deg, var(--overlay-accent-10) 0%, var(--overlay-accent-5) 100%);
   border-radius: 1rem;
   font-size: 0.7rem;
   font-weight: 600;
@@ -497,8 +497,15 @@
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .conceptsGrid {
@@ -521,13 +528,20 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .conceptChip.generating {
   border-color: var(--color-accent);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  background: linear-gradient(135deg, var(--overlay-accent-10) 0%, var(--overlay-accent-5) 100%);
 }
 
 .conceptIcon {

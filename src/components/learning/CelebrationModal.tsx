@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Share2, Check } from 'lucide-react';
 import { LEARNING_CONCEPTS } from '@/constants/learning-content';
+import { CONFETTI_COLORS } from '@/constants/theme-colors';
+import { UI_TIMINGS } from '@/constants/ui-constants';
 import type { CelebrationData } from '@/lib/types/learning';
 import styles from './CelebrationModal.module.css';
 
@@ -9,8 +11,6 @@ interface CelebrationModalProps {
   onContinue: () => void;
   onTakeBreak: () => void;
 }
-
-const CONFETTI_COLORS = ['#fbbf24', '#3b82f6', '#22c55e', '#f43f5e', '#8b5cf6', '#06b6d4'];
 
 const seededRandom = (seed: number) => {
   const x = Math.sin(seed) * 10000;
@@ -58,7 +58,7 @@ export default function CelebrationModal({ data, onContinue, onTakeBreak }: Cele
           text: shareText,
         });
         setShared(true);
-        setTimeout(() => setShared(false), 2000);
+        setTimeout(() => setShared(false), UI_TIMINGS.TOAST_SHORT);
         return;
       } catch {
         // User cancelled or share failed, fall through to clipboard
@@ -69,7 +69,7 @@ export default function CelebrationModal({ data, onContinue, onTakeBreak }: Cele
     try {
       await navigator.clipboard.writeText(shareText);
       setShared(true);
-      setTimeout(() => setShared(false), 2000);
+      setTimeout(() => setShared(false), UI_TIMINGS.TOAST_SHORT);
     } catch {
       // Clipboard failed silently
     }

@@ -266,7 +266,7 @@
 
 .saveButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  box-shadow: var(--shadow-glow-sage-hover);
 }
 
 .saveButton:disabled {
@@ -287,12 +287,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+  box-shadow: var(--shadow-glow-amber);
 }
 
 .palaceButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  box-shadow: var(--shadow-glow-amber-hover);
 }
 
 .palaceButtons {

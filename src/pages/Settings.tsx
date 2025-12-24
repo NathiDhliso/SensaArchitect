@@ -23,6 +23,7 @@ import { usePersonalizationStore, type FamiliarSystem } from '@/store/personaliz
 import { useLearningStore } from '@/store/learning-store';
 import { useGenerationStore } from '@/store/generation-store';
 import { usePalaceStore } from '@/store/palace-store';
+import { UI_TIMINGS } from '@/constants/ui-constants';
 import type { BedrockConfig } from '@/lib/generation/claude-client';
 import styles from './Settings.module.css';
 
@@ -88,7 +89,7 @@ export default function Settings() {
       };
       setBedrockConfig(config);
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), UI_TIMINGS.TOAST_SHORT);
     }
   };
 
@@ -115,7 +116,7 @@ export default function Settings() {
       setConfirmClear(null);
     } else {
       setConfirmClear(type);
-      setTimeout(() => setConfirmClear(null), 3000);
+      setTimeout(() => setConfirmClear(null), UI_TIMINGS.TOAST_MEDIUM);
     }
   };
 

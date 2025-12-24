@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { X, CheckCircle, XCircle } from 'lucide-react';
 import { usePalaceStore } from '@/store/palace-store';
+import { FEEDBACK_COLORS } from '@/constants/theme-colors';
 import type { PlacedConcept } from '@/lib/types/palace';
 import styles from './EnhancedFeatures.module.css';
 
@@ -74,7 +75,7 @@ export default function QuizMode({ onClose }: QuizModeProps) {
     }, [currentPalace, allConcepts]);
 
     if (!currentPalace || questions.length === 0) {
-        const message = !currentPalace 
+        const message = !currentPalace
             ? 'No Memory Palace active. Create one from the Results page.'
             : allConcepts.length === 0
                 ? 'No concepts in your palace. Recreate it from the Results page.'
@@ -151,8 +152,8 @@ export default function QuizMode({ onClose }: QuizModeProps) {
                                 disabled={showFeedback}
                             >
                                 <span className={styles.optionIndicator}>
-                                    {showFeedback && isCorrectOption && <CheckCircle size={16} color="#22c55e" />}
-                                    {showFeedback && isSelected && !isCorrectOption && <XCircle size={16} color="#ef4444" />}
+                                    {showFeedback && isCorrectOption && <CheckCircle size={16} color={FEEDBACK_COLORS.correct} />}
+                                    {showFeedback && isSelected && !isCorrectOption && <XCircle size={16} color={FEEDBACK_COLORS.incorrect} />}
                                 </span>
                                 <span className={styles.optionText}>{option.conceptName}</span>
                             </button>

@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGenerationStore } from '@/store/generation-store';
 import { useUIStore } from '@/store/ui-store';
 import { useLearningStore } from '@/store/learning-store';
+import { CATEGORY_COLORS, DIFFICULTY_COLORS } from '@/constants/theme-colors';
+import { UI_TIMINGS } from '@/constants/ui-constants';
 import styles from './Home.module.css';
 
 const SUBJECT_CATEGORIES = [
@@ -12,7 +14,7 @@ const SUBJECT_CATEGORIES = [
     id: 'cloud',
     name: 'Cloud & DevOps',
     icon: '☁️',
-    color: '#3b82f6',
+    color: CATEGORY_COLORS.cloud,
     subjects: [
       { name: 'AWS Solutions Architect', difficulty: 'Advanced', hours: 40 },
       { name: 'Azure Administrator', difficulty: 'Intermediate', hours: 35 },
@@ -25,7 +27,7 @@ const SUBJECT_CATEGORIES = [
     id: 'data',
     name: 'Data & AI',
     icon: '🧠',
-    color: '#8b5cf6',
+    color: CATEGORY_COLORS.data,
     subjects: [
       { name: 'Machine Learning Fundamentals', difficulty: 'Intermediate', hours: 35 },
       { name: 'Python for Data Science', difficulty: 'Beginner', hours: 20 },
@@ -38,7 +40,7 @@ const SUBJECT_CATEGORIES = [
     id: 'dev',
     name: 'Development',
     icon: '💻',
-    color: '#10b981',
+    color: CATEGORY_COLORS.dev,
     subjects: [
       { name: 'React & TypeScript', difficulty: 'Intermediate', hours: 30 },
       { name: 'Node.js Backend', difficulty: 'Intermediate', hours: 25 },
@@ -51,7 +53,7 @@ const SUBJECT_CATEGORIES = [
     id: 'security',
     name: 'Security',
     icon: '🔐',
-    color: '#ef4444',
+    color: CATEGORY_COLORS.security,
     subjects: [
       { name: 'CompTIA Security+', difficulty: 'Intermediate', hours: 40 },
       { name: 'Ethical Hacking', difficulty: 'Advanced', hours: 45 },
@@ -63,7 +65,7 @@ const SUBJECT_CATEGORIES = [
     id: 'business',
     name: 'Business & PM',
     icon: '💼',
-    color: '#f59e0b',
+    color: CATEGORY_COLORS.business,
     subjects: [
       { name: 'PMP Certification', difficulty: 'Advanced', hours: 50 },
       { name: 'Agile & Scrum', difficulty: 'Beginner', hours: 15 },
@@ -74,10 +76,10 @@ const SUBJECT_CATEGORIES = [
 ];
 
 const DIFFICULTY_CONFIG = {
-  Beginner: { color: '#22c55e', icon: '🌱', label: '~15-20 hrs' },
-  Intermediate: { color: '#f59e0b', icon: '💪', label: '~25-35 hrs' },
-  Advanced: { color: '#ef4444', icon: '🚀', label: '~40-50 hrs' },
-  Expert: { color: '#8b5cf6', icon: '🏆', label: '~60+ hrs' },
+  Beginner: { color: DIFFICULTY_COLORS.Beginner, icon: '🌱', label: '~15-20 hrs' },
+  Intermediate: { color: DIFFICULTY_COLORS.Intermediate, icon: '💪', label: '~25-35 hrs' },
+  Advanced: { color: DIFFICULTY_COLORS.Advanced, icon: '🚀', label: '~40-50 hrs' },
+  Expert: { color: DIFFICULTY_COLORS.Expert, icon: '🏆', label: '~60+ hrs' },
 };
 
 export default function Home() {
@@ -91,15 +93,15 @@ export default function Home() {
 
   const concepts = getConcepts();
   const hasProgress = concepts.length > 0 && progress.completedConcepts.length > 0;
-  const progressPercent = concepts.length > 0 
-    ? Math.round((progress.completedConcepts.length / concepts.length) * 100) 
+  const progressPercent = concepts.length > 0
+    ? Math.round((progress.completedConcepts.length / concepts.length) * 100)
     : 0;
 
   const filteredSuggestions = useMemo(() => {
     if (!subject.trim()) return [];
     const query = subject.toLowerCase();
     const matches: Array<{ name: string; difficulty: string; hours: number; category: string }> = [];
-    
+
     SUBJECT_CATEGORIES.forEach(cat => {
       cat.subjects.forEach(s => {
         if (s.name.toLowerCase().includes(query)) {
@@ -107,7 +109,7 @@ export default function Home() {
         }
       });
     });
-    
+
     return matches.slice(0, 5);
   }, [subject]);
 
@@ -123,8 +125,8 @@ export default function Home() {
     setShowSuggestions(false);
   };
 
-  const selectedCategoryData = selectedCategory 
-    ? SUBJECT_CATEGORIES.find(c => c.id === selectedCategory) 
+  const selectedCategoryData = selectedCategory
+    ? SUBJECT_CATEGORIES.find(c => c.id === selectedCategory)
     : null;
 
   return (
@@ -138,7 +140,7 @@ export default function Home() {
         </div>
 
         {hasProgress && (
-          <motion.div 
+          <motion.div
             className={styles.progressCard}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -151,12 +153,12 @@ export default function Home() {
               </div>
             </div>
             <div className={styles.progressBar}>
-              <div 
-                className={styles.progressFill} 
-                style={{ width: `${progressPercent}%` }} 
+              <div
+                className={styles.progressFill}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <button 
+            <button
               className={styles.continueButton}
               onClick={() => navigate('/learn')}
             >
@@ -178,14 +180,14 @@ export default function Home() {
                   setShowSuggestions(true);
                 }}
                 onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), UI_TIMINGS.BLUR_DELAY)}
                 onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                 placeholder="e.g., AWS Solutions Architect, Python, PMP..."
                 className={styles.input}
               />
               <AnimatePresence>
                 {showSuggestions && filteredSuggestions.length > 0 && (
-                  <motion.div 
+                  <motion.div
                     className={styles.suggestionsDropdown}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -202,11 +204,11 @@ export default function Home() {
                           <span>{s.name}</span>
                         </div>
                         <div className={styles.suggestionMeta}>
-                          <span 
+                          <span
                             className={styles.difficultyBadge}
-                            style={{ 
+                            style={{
                               background: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color + '20',
-                              color: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color 
+                              color: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color
                             }}
                           >
                             {DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.icon} {s.difficulty}
@@ -259,7 +261,7 @@ export default function Home() {
 
             <AnimatePresence>
               {selectedCategoryData && (
-                <motion.div 
+                <motion.div
                   className={styles.categorySubjects}
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
@@ -276,11 +278,11 @@ export default function Home() {
                     >
                       <div className={styles.subjectName}>{s.name}</div>
                       <div className={styles.subjectMeta}>
-                        <span 
+                        <span
                           className={styles.difficultyBadge}
-                          style={{ 
+                          style={{
                             background: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color + '20',
-                            color: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color 
+                            color: DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.color
                           }}
                         >
                           {DIFFICULTY_CONFIG[s.difficulty as keyof typeof DIFFICULTY_CONFIG]?.icon} {s.difficulty}

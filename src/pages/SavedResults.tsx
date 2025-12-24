@@ -4,8 +4,8 @@ import { ArrowLeft, Trash2, Download, BookOpen, Cloud, HardDrive, Upload, Search
 import { storageManager, importFromFile } from '@/lib/storage';
 import { localFileStorage } from '@/lib/storage';
 import type { SavedResult } from '@/lib/storage';
-import { useLearningStore } from '@/store/learning-store';
-import { parseGeneratedContent, transformGeneratedContent } from '@/lib/content-adapter';
+import { useParseAndLoadContent } from '@/lib/content-loader';
+import { UI_TIMINGS } from '@/constants/ui-constants';
 import styles from './SavedResults.module.css';
 
 export default function SavedResults() {
@@ -18,7 +18,7 @@ export default function SavedResults() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'subject' | 'quality'>('date');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { loadCustomContent } = useLearningStore();
+  const parseAndLoad = useParseAndLoadContent();
 
   useEffect(() => {
     loadResults();
@@ -38,7 +38,7 @@ export default function SavedResults() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this result?')) return;
-    
+
     setDeletingId(id);
     try {
       await storageManager.deleteResult(id);
@@ -55,20 +55,14 @@ export default function SavedResults() {
   };
 
   const handleStartLearning = (result: SavedResult) => {
-    try {
-      const parseResult = parseGeneratedContent(result.fullDocument);
-      if (!parseResult.success) {
-        console.error('Failed to parse content:', parseResult.error);
-        alert(`Failed to load content: ${parseResult.error}`);
-        return;
-      }
-      const transformed = transformGeneratedContent(parseResult.data);
-      loadCustomContent(transformed);
-      navigate('/learn');
-    } catch (error) {
-      console.error('Failed to load content for learning:', error);
-      alert('An unexpected error occurred while loading the content');
+    const parseResult = parseAndLoad(result.fullDocument);
+
+    if (!parseResult.success) {
+      alert(`Failed to load content: ${parseResult.error}`);
+      return;
     }
+
+    navigate('/learn');
   };
 
   const handleImportClick = () => {
@@ -77,16 +71,16 @@ export default function SavedResults() {
 
   const filteredResults = useMemo(() => {
     let filtered = results;
-    
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(r => 
+      filtered = filtered.filter(r =>
         r.subject.toLowerCase().includes(query) ||
         r.pass1Data.domain.toLowerCase().includes(query) ||
         r.pass1Data.roleScope.toLowerCase().includes(query)
       );
     }
-    
+
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'date':
@@ -99,7 +93,7 @@ export default function SavedResults() {
           return 0;
       }
     });
-    
+
     return filtered;
   }, [results, searchQuery, sortBy]);
 
@@ -112,13 +106,13 @@ export default function SavedResults() {
 
     try {
       const importResult = await importFromFile(file);
-      
+
       if (importResult.success && importResult.result) {
         await storageManager.saveResult(importResult.result);
         await loadResults();
       } else {
         setImportError(importResult.error || 'Failed to import file');
-        setTimeout(() => setImportError(null), 5000);
+        setTimeout(() => setImportError(null), UI_TIMINGS.TOAST_LONG);
       }
     } catch {
       setImportError('Failed to import file');
@@ -165,7 +159,7 @@ export default function SavedResults() {
             </p>
           </div>
           <div className={styles.headerActions}>
-            <button 
+            <button
               onClick={handleImportClick}
               className={styles.importButton}
               disabled={importing}
@@ -213,9 +207,9 @@ export default function SavedResults() {
                 className={styles.searchInput}
               />
             </div>
-            
-            <select 
-              value={sortBy} 
+
+            <select
+              value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'date' | 'subject' | 'quality')}
               className={styles.sortSelect}
             >

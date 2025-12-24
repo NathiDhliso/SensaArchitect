@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import type { RouteBuilding } from '@/lib/types/palace';
+import { MAP_COLORS } from '@/constants/theme-colors';
 import {
     type LocationInput,
     type WizardStep,
@@ -222,10 +223,9 @@ export function RouteBuilder({ isOpen, onClose, onSave }: RouteBuilderProps) {
             {(['name', 'locations', 'preview'] as WizardStep[]).map((step, idx) => (
                 <div key={step} className={styles.progressStep}>
                     <div
-                        className={`${styles.progressDot} ${
-                            currentStep === step ? styles.active :
+                        className={`${styles.progressDot} ${currentStep === step ? styles.active :
                             isStepCompleted(step) ? styles.completed : styles.inactive
-                        }`}
+                            }`}
                     >
                         {isStepCompleted(step) ? <Check size={14} /> : idx + 1}
                         {idx < 2 && (
@@ -306,9 +306,8 @@ export function RouteBuilder({ isOpen, onClose, onSave }: RouteBuilderProps) {
                     {locations.map((loc, index) => (
                         <motion.div
                             key={loc.id}
-                            className={`${styles.locationItem} ${
-                                loc.error ? styles.hasError : loc.coordinates ? styles.isValid : ''
-                            }`}
+                            className={`${styles.locationItem} ${loc.error ? styles.hasError : loc.coordinates ? styles.isValid : ''
+                                }`}
                             layout
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -444,7 +443,7 @@ export function RouteBuilder({ isOpen, onClose, onSave }: RouteBuilderProps) {
                                 position={loc.coordinates!}
                                 label={{
                                     text: String(idx + 1),
-                                    color: '#1f2937',
+                                    color: MAP_COLORS.markerText,
                                     fontWeight: 'bold',
                                 }}
                             />
@@ -453,7 +452,7 @@ export function RouteBuilder({ isOpen, onClose, onSave }: RouteBuilderProps) {
                             <Polyline
                                 path={validLocations.map(loc => loc.coordinates!)}
                                 options={{
-                                    strokeColor: '#F59E0B',
+                                    strokeColor: MAP_COLORS.polylineStroke,
                                     strokeOpacity: 0.8,
                                     strokeWeight: 3,
                                     geodesic: true,
