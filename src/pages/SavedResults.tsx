@@ -116,7 +116,7 @@ export default function SavedResults() {
       }
     } catch {
       setImportError('Failed to import file');
-      setTimeout(() => setImportError(null), 5000);
+      setTimeout(() => setImportError(null), UI_TIMINGS.TOAST_LONG);
     } finally {
       setImporting(false);
       if (fileInputRef.current) {

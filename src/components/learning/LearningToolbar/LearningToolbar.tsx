@@ -1,6 +1,14 @@
-import { useState, useEffect } from 'react';
+/**
+ * LearningToolbar Component
+ * 
+ * Toolbar with learning utilities: Focus Timer, Progress Analytics, Quiz.
+ * Now integrated with focus-session store for unified session display.
+ */
+
+import { useState } from 'react';
 import { Timer, BarChart3, Brain, Flame } from 'lucide-react';
 import { useLearningStore } from '@/store/learning-store';
+import { useFocusSessionStore } from '@/store/focus-session-store';
 import { FocusTimer } from './FocusTimer';
 import { ProgressAnalytics } from './ProgressAnalytics';
 import { QuickQuiz } from './QuickQuiz';
@@ -8,34 +16,29 @@ import styles from './LearningToolbar.module.css';
 
 export function LearningToolbar() {
     const { progress } = useLearningStore();
+    const {
+        isSessionActive,
+        sessionType,
+        getFormattedTimeRemaining
+    } = useFocusSessionStore();
+
     const [showTimer, setShowTimer] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [showQuiz, setShowQuiz] = useState(false);
-    const [sessionTime, setSessionTime] = useState(0);
-    const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-    useEffect(() => {
-        if (!isTimerRunning) return;
-
-        const interval = setInterval(() => {
-            setSessionTime(prev => prev + 1);
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [isTimerRunning]);
-
-    const formatSessionTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    const handleTimerClick = () => {
+        setShowTimer(true);
     };
 
-    const handleTimerToggle = () => {
-        if (isTimerRunning) {
-            setIsTimerRunning(false);
-        } else {
-            setShowTimer(true);
-        }
+    // Determine button state based on session
+    const getTimerButtonClass = () => {
+        if (!isSessionActive) return '';
+        return sessionType === 'focus' ? styles.active : styles.warning;
+    };
+
+    const getTimerButtonText = () => {
+        if (!isSessionActive) return 'Focus';
+        return getFormattedTimeRemaining();
     };
 
     return (
@@ -51,12 +54,12 @@ export function LearningToolbar() {
                 <div className={styles.toolbarDivider} />
 
                 <button
-                    className={`${styles.toolbarButton} ${isTimerRunning ? styles.active : ''}`}
-                    onClick={handleTimerToggle}
+                    className={`${styles.toolbarButton} ${getTimerButtonClass()}`}
+                    onClick={handleTimerClick}
                     title="Focus Timer"
                 >
                     <Timer size={14} />
-                    {isTimerRunning ? formatSessionTime(sessionTime) : 'Focus'}
+                    {getTimerButtonText()}
                 </button>
 
                 <button
@@ -83,20 +86,17 @@ export function LearningToolbar() {
                 </button>
             </div>
 
-            <FocusTimer 
-                isOpen={showTimer} 
-                onClose={() => {
-                    setShowTimer(false);
-                    setIsTimerRunning(true);
-                }} 
+            <FocusTimer
+                isOpen={showTimer}
+                onClose={() => setShowTimer(false)}
             />
-            <ProgressAnalytics 
-                isOpen={showAnalytics} 
-                onClose={() => setShowAnalytics(false)} 
+            <ProgressAnalytics
+                isOpen={showAnalytics}
+                onClose={() => setShowAnalytics(false)}
             />
-            <QuickQuiz 
-                isOpen={showQuiz} 
-                onClose={() => setShowQuiz(false)} 
+            <QuickQuiz
+                isOpen={showQuiz}
+                onClose={() => setShowQuiz(false)}
             />
         </>
     );

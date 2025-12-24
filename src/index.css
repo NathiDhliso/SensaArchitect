@@ -112,6 +112,7 @@
   --overlay-amber-20: rgba(245, 158, 11, 0.2);
   --overlay-white-10: rgba(255, 255, 255, 0.1);
   --overlay-black-40: rgba(0, 0, 0, 0.4);
+  --overlay-black-60: rgba(0, 0, 0, 0.6);
 
   /* ========== CRUMPLED PAPER EFFECT ========== */
   --shadow-crumpled:
@@ -249,6 +250,29 @@
 body {
   min-height: 100vh;
   background: var(--gradient-paper);
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url('/assets/crumpled-texture.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+  filter: contrast(1.2) brightness(1.1);
+}
+
+:root.dark body::before,
+:root[data-theme="dark"] body::before {
+  mix-blend-mode: screen;
+  opacity: 0.12;
+  filter: invert(1) contrast(1.4);
 }
 
 #root {
@@ -263,26 +287,7 @@ body {
    ============================================ */
 
 .paper-texture-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: url('/assets/crumpled-texture.jpg');
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.5;
-}
-
-:root:not(.dark) .paper-texture-overlay {
-  mix-blend-mode: multiply;
-  filter: contrast(1.2) brightness(1.1);
-}
-
-.dark .paper-texture-overlay {
-  mix-blend-mode: screen;
-  opacity: 0.15;
-  filter: invert(1) contrast(1.5);
+  display: none;
 }
 
 .crumpled-background {

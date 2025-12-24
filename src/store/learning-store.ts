@@ -16,6 +16,17 @@ type CustomContent = {
   metadata: ContentMetadata | null;
 };
 
+// Cognitive load tracking
+type CognitiveMetrics = {
+  currentLoad: number;           // 0-100 scale
+  consecutiveCorrect: number;    // Fast/correct streaks
+  consecutiveErrors: number;     // Wrong/slow streaks
+  avgResponseTimeMs: number;     // Rolling average
+  lastInteractionTime: number;   // Timestamp
+  conceptsThisSession: number;   // Concepts viewed this session
+  needsReset: boolean;           // Triggers neural reset modal
+};
+
 type LearningState = {
   progress: UserProgress;
   showCelebration: boolean;
@@ -25,6 +36,8 @@ type LearningState = {
   sessionTimer: ReturnType<typeof setInterval> | null;
   sprintResult: SprintResult | null;
   isSprintReady: boolean;
+  cognitiveMetrics: CognitiveMetrics;
+  showNeuralReset: boolean;
 };
 
 type LearningActions = {
@@ -49,6 +62,12 @@ type LearningActions = {
   setSprintResult: (result: SprintResult) => void;
   clearSprintResult: () => void;
   setSprintReady: (ready: boolean) => void;
+  // Cognitive load actions
+  recordInteraction: (correct: boolean, responseTimeMs: number) => void;
+  triggerNeuralReset: () => void;
+  dismissNeuralReset: () => void;
+  resetCognitiveLoad: () => void;
+  getCognitiveLoadLevel: () => 'low' | 'optimal' | 'high' | 'overload';
 };
 
 const getInitialProgress = (stages: LearningStage[], concepts: LearningConcept[]): UserProgress => {
@@ -78,6 +97,16 @@ export const useLearningStore = create<LearningState & LearningActions>()(
       sessionTimer: null,
       sprintResult: null,
       isSprintReady: false,
+      showNeuralReset: false,
+      cognitiveMetrics: {
+        currentLoad: 30,  // Start at 30% (light load)
+        consecutiveCorrect: 0,
+        consecutiveErrors: 0,
+        avgResponseTimeMs: 0,
+        lastInteractionTime: Date.now(),
+        conceptsThisSession: 0,
+        needsReset: false,
+      },
 
       getStages: () => {
         const state = get();
@@ -406,6 +435,100 @@ export const useLearningStore = create<LearningState & LearningActions>()(
       clearSprintResult: () => set({ sprintResult: null }),
 
       setSprintReady: (ready) => set({ isSprintReady: ready }),
+
+      // Cognitive load actions
+      recordInteraction: (correct, responseTimeMs) => {
+        const state = get();
+        const metrics = state.cognitiveMetrics;
+
+        // Update streaks
+        const newConsecutiveCorrect = correct ? metrics.consecutiveCorrect + 1 : 0;
+        const newConsecutiveErrors = !correct ? metrics.consecutiveErrors + 1 : 0;
+
+        // Rolling average response time (weighted)
+        const newAvgTime = metrics.avgResponseTimeMs === 0
+          ? responseTimeMs
+          : Math.round(metrics.avgResponseTimeMs * 0.7 + responseTimeMs * 0.3);
+
+        // Calculate cognitive load
+        let loadDelta = 0;
+
+        // Fast correct answers reduce load
+        if (correct && responseTimeMs < 4000) {
+          loadDelta = -5;
+        }
+        // Slow correct answers slightly reduce load
+        else if (correct) {
+          loadDelta = -2;
+        }
+        // Errors increase load significantly
+        else {
+          loadDelta = 15;
+        }
+
+        // Consecutive errors compound the load
+        if (newConsecutiveErrors >= 3) {
+          loadDelta += 10;
+        }
+
+        // Time between interactions affects load
+        const timeSinceLastMs = Date.now() - metrics.lastInteractionTime;
+        if (timeSinceLastMs > 300000) {  // 5+ minutes
+          loadDelta += 5;  // Slight increase for cold restart
+        }
+
+        const newLoad = Math.min(100, Math.max(0, metrics.currentLoad + loadDelta));
+        const needsReset = newLoad >= 85 || newConsecutiveErrors >= 5;
+
+        set({
+          cognitiveMetrics: {
+            currentLoad: newLoad,
+            consecutiveCorrect: newConsecutiveCorrect,
+            consecutiveErrors: newConsecutiveErrors,
+            avgResponseTimeMs: newAvgTime,
+            lastInteractionTime: Date.now(),
+            conceptsThisSession: metrics.conceptsThisSession + 1,
+            needsReset,
+          },
+          showNeuralReset: needsReset,
+        });
+      },
+
+      triggerNeuralReset: () => set({ showNeuralReset: true }),
+
+      dismissNeuralReset: () => {
+        const state = get();
+        set({
+          showNeuralReset: false,
+          cognitiveMetrics: {
+            ...state.cognitiveMetrics,
+            currentLoad: Math.max(30, state.cognitiveMetrics.currentLoad - 30),
+            consecutiveErrors: 0,
+            needsReset: false,
+          },
+        });
+      },
+
+      resetCognitiveLoad: () => set({
+        cognitiveMetrics: {
+          currentLoad: 30,
+          consecutiveCorrect: 0,
+          consecutiveErrors: 0,
+          avgResponseTimeMs: 0,
+          lastInteractionTime: Date.now(),
+          conceptsThisSession: 0,
+          needsReset: false,
+        },
+        showNeuralReset: false,
+      }),
+
+      getCognitiveLoadLevel: () => {
+        const { currentLoad } = get().cognitiveMetrics;
+        if (currentLoad < 30) return 'low';
+        if (currentLoad < 60) return 'optimal';
+        if (currentLoad < 85) return 'high';
+        return 'overload';
+      },
     }),
     {
       name: 'sensa-learning-progress',

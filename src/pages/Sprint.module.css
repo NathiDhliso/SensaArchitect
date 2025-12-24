@@ -1,6 +1,6 @@
 .container {
     min-height: 100vh;
-    background: var(--color-bg-primary);
+    background: transparent;
     display: flex;
     flex-direction: column;
 }
@@ -172,12 +172,12 @@
 }
 
 .answerButton.no {
-    background: rgba(239, 68, 68, 0.05);
+    background: var(--color-error-bg);
     color: var(--color-error);
 }
 
 .answerButton.no:hover {
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--overlay-primary-10);
     border-color: var(--color-error);
     transform: translateY(-2px);
 }

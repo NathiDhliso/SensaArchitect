@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background: var(--gradient-surface);
+  background: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;

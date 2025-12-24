@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, Lightbulb } from 'lucide-react';
 import { useLearningStore } from '@/store/learning-store';
+import SpeedReaderBar from '@/components/ui/SpeedReaderBar';
 import styles from './ConceptCard.module.css';
 
 interface ConceptCardProps {
@@ -38,6 +39,15 @@ export default function ConceptCard({ conceptId, onComplete }: ConceptCardProps)
             <Check size={16} />
           </div>
         )}
+      </div>
+
+      {/* Speed Reader Timer - encourages 2-minute pace */}
+      <div className={styles.speedReaderSection}>
+        <SpeedReaderBar
+          conceptId={conceptId}
+          targetTimeSeconds={120}
+          paused={isCompleted}
+        />
       </div>
 
       <p className={styles.hookSentence}>{concept.hookSentence}</p>

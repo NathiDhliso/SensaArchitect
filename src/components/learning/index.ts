@@ -2,3 +2,8 @@ export { default as JourneyMap } from './JourneyMap';
 export { default as ConceptCard } from './ConceptCard';
 export { default as CelebrationModal } from './CelebrationModal';
 export { LearningToolbar, FocusTimer, ProgressAnalytics, QuickQuiz } from './LearningToolbar';
+export { default as CognitiveGauge } from './CognitiveGauge';
+export { default as NeuralResetModal } from './NeuralResetModal';
+export { default as ConfusionDrill } from './ConfusionDrill';
+export { UnifiedSessionBar } from './UnifiedSessionBar';
+export { SessionSummary } from './SessionSummary';

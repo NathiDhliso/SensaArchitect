@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background: var(--gradient-surface);
+  background: transparent;
   padding: 1.5rem;
 }
 
@@ -73,7 +73,7 @@
 .searchInput:focus {
   outline: none;
   border-color: var(--color-accent-light);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 0 3px var(--overlay-accent-10);
 }
 
 .sortSelect {
@@ -94,7 +94,7 @@
 .sortSelect:focus {
   outline: none;
   border-color: var(--color-accent-light);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 0 3px var(--overlay-accent-10);
 }
 
 .header {
@@ -327,7 +327,7 @@
 }
 
 .cloudBadge {
-  background: rgba(139, 92, 246, 0.15);
+  background: var(--overlay-accent-15);
   color: var(--color-accent-light);
 }
 

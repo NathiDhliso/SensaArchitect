@@ -1,7 +1,7 @@
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--overlay-black-40);
     backdrop-filter: blur(4px);
     z-index: 350;
     animation: fadeIn 0.2s ease-out;
@@ -182,7 +182,7 @@
 }
 
 .optionActive {
-    background: rgba(107, 70, 193, 0.1);
+    background: var(--overlay-primary-10);
     border-color: var(--color-primary-amethyst);
     color: var(--color-primary-amethyst);
 }

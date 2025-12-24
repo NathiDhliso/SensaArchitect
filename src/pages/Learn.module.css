@@ -2,8 +2,25 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-primary);
+  background: transparent;
   overflow: hidden;
+}
+
+/* Session bar container - appears at top when focus session active */
+.sessionBarContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  pointer-events: none;
+}
+
+.sessionBarContainer>* {
+  pointer-events: auto;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .header {
@@ -22,7 +39,7 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-white-10);
   border: none;
   border-radius: 0.5rem;
   color: var(--color-text-light);
@@ -50,6 +67,13 @@
   font-size: 1rem;
   color: var(--color-text-dark);
   font-weight: 500;
+}
+
+.headerCenter {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  max-width: 280px;
 }
 
 .welcomeToast {
@@ -106,7 +130,7 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.75rem;
-  background: rgba(245, 158, 11, 0.2);
+  background: var(--overlay-amber-20);
   border-radius: 1rem;
   font-size: 0.8rem;
   color: var(--color-secondary-amber);
@@ -131,6 +155,26 @@
 .palaceButton:hover {
   background: var(--color-accent-alt-hover);
   transform: translateY(-1px);
+}
+
+.helpButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.helpButton:hover {
+  background: var(--color-bg-primary);
+  color: var(--color-primary-amethyst);
+  border-color: var(--color-primary-amethyst);
 }
 
 .mainLayout {
@@ -240,5 +284,138 @@
 
   .scaffoldPanel {
     max-height: 40vh;
+  }
+}
+
+/* Header actions container */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+/* Sprint button in header */
+.sprintButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.sprintButton:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow-primary-hover);
+}
+
+.sprintButtonText {
+  display: inline;
+}
+
+@media (max-width: 600px) {
+  .sprintButtonText {
+    display: none;
+  }
+
+  .sprintButton {
+    padding: 0.5rem;
+  }
+}
+
+/* Sprint Ready Banner */
+.sprintReadyBanner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, var(--overlay-primary-15) 0%, var(--overlay-accent-10) 100%);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--color-border);
+  padding: 1rem 1.5rem;
+  z-index: 100;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sprintReadyContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.sprintReadyIcon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.sprintReadyText {
+  flex: 1;
+}
+
+.sprintReadyText strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--color-text-dark);
+  margin-bottom: 0.125rem;
+}
+
+.sprintReadyText p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+}
+
+.sprintReadyButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-glow-primary);
+  flex-shrink: 0;
+}
+
+.sprintReadyButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow-primary-hover);
+}
+
+@media (max-width: 600px) {
+  .sprintReadyContent {
+    flex-wrap: wrap;
+  }
+
+  .sprintReadyButton {
+    width: 100%;
+    justify-content: center;
   }
 }

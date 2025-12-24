@@ -1,0 +1,240 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-black-40);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal {
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    margin: 1rem;
+    background: var(--color-bg-primary);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-xl);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, var(--overlay-primary-15) 0%, var(--overlay-sage-10) 100%);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.headerIcon {
+    font-size: 1.75rem;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+    margin: 0;
+}
+
+.closeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: transparent;
+    border: none;
+    border-radius: 0.5rem;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+    background: var(--color-surface);
+    color: var(--color-text-dark);
+}
+
+/* Content */
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* Section */
+.section {
+    margin-bottom: 1.5rem;
+}
+
+.section:last-child {
+    margin-bottom: 0;
+}
+
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin: 0 0 0.75rem;
+}
+
+.sectionIcon {
+    width: 20px;
+    height: 20px;
+    color: var(--color-primary-amethyst);
+}
+
+/* Tips list */
+.tipsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--color-surface);
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border);
+}
+
+.tipIcon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.tipContent {
+    flex: 1;
+}
+
+.tipTitle {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin-bottom: 0.125rem;
+}
+
+.tipDesc {
+    font-size: 0.8125rem;
+    color: var(--color-text-light);
+    line-height: 1.4;
+}
+
+/* Keyboard shortcuts */
+.shortcutsList {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.shortcut {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-surface);
+    border-radius: 0.5rem;
+}
+
+.key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--color-bg-neutral-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-family: monospace;
+}
+
+.shortcutLabel {
+    font-size: 0.8125rem;
+    color: var(--color-text-medium);
+}
+
+/* Flow chart */
+.flowChart {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 1rem;
+    background: var(--color-surface);
+    border-radius: 0.75rem;
+}
+
+.flowStep {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-primary);
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border);
+}
+
+.flowIcon {
+    font-size: 1.25rem;
+}
+
+.flowLabel {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--color-text-medium);
+    text-align: center;
+}
+
+.flowArrow {
+    color: var(--color-text-muted);
+    font-size: 1rem;
+}
+
+@media (max-width: 600px) {
+    .shortcutsList {
+        grid-template-columns: 1fr;
+    }
+
+    .flowChart {
+        flex-direction: column;
+    }
+
+    .flowArrow {
+        transform: rotate(90deg);
+    }
+}

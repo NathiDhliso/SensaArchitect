@@ -113,7 +113,7 @@ export default function Results() {
 
       if (result.success) {
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        setTimeout(() => setSaved(false), UI_TIMINGS.TOAST_MEDIUM);
       }
     } catch (error) {
       console.error('Failed to save result:', error);

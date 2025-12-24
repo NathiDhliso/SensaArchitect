@@ -1,5 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+/**
+ * FocusTimer Component
+ * 
+ * A modal timer for Pomodoro-style focus sessions.
+ * Now integrated with the focus-session store for unified session tracking.
+ */
+
+import { useEffect } from 'react';
 import { X, Play, Pause, RotateCcw, Coffee } from 'lucide-react';
+import { useFocusSessionStore } from '@/store/focus-session-store';
+import { FOCUS_SESSION_CONFIG } from '@/constants/ui-constants';
 import styles from './LearningToolbar.module.css';
 
 interface FocusTimerProps {
@@ -7,79 +16,79 @@ interface FocusTimerProps {
     onClose: () => void;
 }
 
-const DEFAULT_FOCUS_MINUTES = 25;
-const DEFAULT_BREAK_MINUTES = 5;
-
 export function FocusTimer({ isOpen, onClose }: FocusTimerProps) {
-    const [focusMinutes, setFocusMinutes] = useState(DEFAULT_FOCUS_MINUTES);
-    const [breakMinutes, setBreakMinutes] = useState(DEFAULT_BREAK_MINUTES);
-    const [timeLeft, setTimeLeft] = useState(focusMinutes * 60);
-    const [isRunning, setIsRunning] = useState(false);
-    const [isBreak, setIsBreak] = useState(false);
-    const [sessionsCompleted, setSessionsCompleted] = useState(0);
+    const {
+        isSessionActive,
+        isPaused,
+        sessionType,
+        focusDurationMinutes,
+        breakDurationMinutes,
+        totalSessionsCompleted,
+        getFormattedTimeRemaining,
+        getProgressPercent,
+        startFocusSession,
+        pauseSession,
+        resumeSession,
+        startBreak,
+        setFocusDuration,
+        setBreakDuration,
+    } = useFocusSessionStore();
 
-    const totalSeconds = isBreak ? breakMinutes * 60 : focusMinutes * 60;
-    const progress = ((totalSeconds - timeLeft) / totalSeconds) * 100;
+    const isBreak = sessionType === 'break';
+    const isRunning = isSessionActive && !isPaused;
+
+    // Calculate circle progress
     const circumference = 2 * Math.PI * 90;
+    const progress = getProgressPercent();
     const strokeDashoffset = circumference - (progress / 100) * circumference;
 
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    const handleStart = () => setIsRunning(true);
-    const handlePause = () => setIsRunning(false);
-
-    const handleReset = useCallback(() => {
-        setIsRunning(false);
-        setTimeLeft(isBreak ? breakMinutes * 60 : focusMinutes * 60);
-    }, [isBreak, breakMinutes, focusMinutes]);
-
-    const switchMode = useCallback(() => {
-        if (!isBreak) {
-            setSessionsCompleted(prev => prev + 1);
-        }
-        setIsBreak(!isBreak);
-        setTimeLeft(isBreak ? focusMinutes * 60 : breakMinutes * 60);
-        setIsRunning(false);
-    }, [isBreak, focusMinutes, breakMinutes]);
-
-    useEffect(() => {
-        if (!isRunning || timeLeft <= 0) return;
-
-        const interval = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev <= 1) {
-                    clearInterval(interval);
-                    if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification(isBreak ? 'Break over!' : 'Focus session complete!', {
-                            body: isBreak ? 'Time to focus again!' : 'Great work! Take a break.',
-                            icon: '🍅'
-                        });
-                    }
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [isRunning, isBreak, timeLeft]);
-
-    useEffect(() => {
-        if (timeLeft === 0) {
-            const timer = setTimeout(() => switchMode(), 0);
-            return () => clearTimeout(timer);
-        }
-    }, [timeLeft, switchMode]);
-
+    // Request notification permission on mount
     useEffect(() => {
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
     }, []);
+
+    // Handle start button - starts session and closes modal
+    const handleStart = () => {
+        if (!isSessionActive) {
+            startFocusSession();
+        } else {
+            resumeSession();
+        }
+        onClose(); // Close modal when session starts - session bar takes over
+    };
+
+    const handlePause = () => {
+        pauseSession();
+    };
+
+    const handleReset = () => {
+        // Reset by setting duration again
+        if (isBreak) {
+            setBreakDuration(breakDurationMinutes);
+        } else {
+            setFocusDuration(focusDurationMinutes);
+        }
+    };
+
+    const handleSwitchMode = () => {
+        if (isBreak) {
+            startFocusSession();
+        } else {
+            startBreak();
+        }
+    };
+
+    const handleFocusMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = parseInt(e.target.value) || FOCUS_SESSION_CONFIG.DEFAULT_FOCUS_MINUTES;
+        setFocusDuration(val);
+    };
+
+    const handleBreakMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = parseInt(e.target.value) || FOCUS_SESSION_CONFIG.DEFAULT_BREAK_MINUTES;
+        setBreakDuration(val);
+    };
 
     if (!isOpen) return null;
 
@@ -111,7 +120,9 @@ export function FocusTimer({ isOpen, onClose }: FocusTimerProps) {
                                 />
                             </svg>
                             <div className={styles.timerTime}>
-                                <span className={styles.timerTimeValue}>{formatTime(timeLeft)}</span>
+                                <span className={styles.timerTimeValue}>
+                                    {isSessionActive ? getFormattedTimeRemaining() : formatInitialTime()}
+                                </span>
                                 <span className={styles.timerTimeLabel}>
                                     {isBreak ? 'Break' : 'Focus'}
                                 </span>
@@ -134,7 +145,7 @@ export function FocusTimer({ isOpen, onClose }: FocusTimerProps) {
                             </button>
                             <button
                                 className={styles.timerControlButton}
-                                onClick={switchMode}
+                                onClick={handleSwitchMode}
                                 title={isBreak ? 'Start Focus' : 'Take Break'}
                             >
                                 <Coffee size={20} />
@@ -149,14 +160,8 @@ export function FocusTimer({ isOpen, onClose }: FocusTimerProps) {
                                         type="number"
                                         min="1"
                                         max="60"
-                                        value={focusMinutes}
-                                        onChange={e => {
-                                            const val = parseInt(e.target.value) || DEFAULT_FOCUS_MINUTES;
-                                            setFocusMinutes(val);
-                                            if (!isBreak && !isRunning) {
-                                                setTimeLeft(val * 60);
-                                            }
-                                        }}
+                                        value={focusDurationMinutes}
+                                        onChange={handleFocusMinutesChange}
                                         className={styles.timerSettingInput}
                                         disabled={isRunning}
                                     />
@@ -170,14 +175,8 @@ export function FocusTimer({ isOpen, onClose }: FocusTimerProps) {
                                         type="number"
                                         min="1"
                                         max="30"
-                                        value={breakMinutes}
-                                        onChange={e => {
-                                            const val = parseInt(e.target.value) || DEFAULT_BREAK_MINUTES;
-                                            setBreakMinutes(val);
-                                            if (isBreak && !isRunning) {
-                                                setTimeLeft(val * 60);
-                                            }
-                                        }}
+                                        value={breakDurationMinutes}
+                                        onChange={handleBreakMinutesChange}
                                         className={styles.timerSettingInput}
                                         disabled={isRunning}
                                     />
@@ -187,7 +186,7 @@ export function FocusTimer({ isOpen, onClose }: FocusTimerProps) {
                             <div className={styles.timerSetting}>
                                 <span className={styles.timerSettingLabel}>Sessions</span>
                                 <div className={styles.timerSettingValue}>
-                                    <strong>{sessionsCompleted}</strong>
+                                    <strong>{totalSessionsCompleted}</strong>
                                 </div>
                             </div>
                         </div>
@@ -196,4 +195,12 @@ export function FocusTimer({ isOpen, onClose }: FocusTimerProps) {
             </div>
         </div>
     );
+
+    // Helper to format initial time before session starts
+    function formatInitialTime() {
+        const seconds = isBreak ? breakDurationMinutes * 60 : focusDurationMinutes * 60;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
 }

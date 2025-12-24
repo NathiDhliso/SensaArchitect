@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background: var(--gradient-surface);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -561,7 +561,7 @@
   gap: 0.75rem;
   margin-top: 1rem;
   padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+  background: linear-gradient(135deg, var(--overlay-sage-10) 0%, var(--overlay-sage-5) 100%);
   border: 1px solid var(--color-success-border);
   border-radius: 0.5rem;
 }

@@ -250,33 +250,85 @@ ${basePromptInfo}
 CONCEPTS TO GENERATE IN THIS BATCH:
 ${batchConcepts.map((c, i) => `${startIdx + i + 1}. ${c}`).join('\n')}
 
-OUTPUT FORMAT (with REAL technical content):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SHAPE STRUCTURE (Each concept MUST follow this 2-minute learning format)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For EACH concept, generate content using the SHAPE framework:
+
+**S - SIMPLE CORE** (15 seconds to read)
+One sentence. No jargon. A complete beginner could repeat it.
+Example: "Lambda runs your code without you managing servers - you just upload and trigger."
+
+**H - HIGH-STAKES EXAMPLE** (30 seconds to read)  
+A real company + year + dollar amount or human impact.
+Example: "In 2017, the S3 outage cost companies $150M in 4 hours - Lambda functions depending on S3 also failed, teaching engineers about regional dependencies."
+
+**A - ANALOGICAL MODEL** (45 seconds to read)
+Map to a familiar system (construction, cooking, sports, etc.) that matches the user's background.
+3-4 specific technical concepts mapped to physical elements.
+Example: "Think of Lambda like a restaurant kitchen: You're the chef (code), AWS is the kitchen equipment (infrastructure). You focus on recipes (logic), they handle the stove, fridge, and cleanup (scaling, patching, monitoring)."
+
+**P - PATTERN RECOGNITION** (20 seconds to read)
+A self-test question. "You know you've mastered this when you can answer:"
+Then provide the answer immediately below.
+Example: "Question: When would you choose Lambda over EC2? Answer: When your workload is event-driven, unpredictable, or you want zero server management."
+
+**E - ELIMINATION LOGIC** (10 seconds to read)
+"⚠️ Don't confuse [THIS] with [THAT]" - one critical distinction.
+Example: "⚠️ Don't confuse Lambda cold starts (initialization delay) with Lambda timeouts (execution limit). Cold starts are about speed; timeouts are about duration."
+
+OUTPUT FORMAT FOR EACH CONCEPT:
 \`\`\`
 ## ${startIdx + 1}. ${batchConcepts[0]}
-- ${pass1Data.lifecycle.phase1}:
-  • Prerequisite: [ACTUAL tool/license/data source name]
-  • Selection: [ACTUAL options like "Power Query vs. Import mode"]
-  • Execution: [ACTUAL menu path like "Get Data > From Table/Range"]
-• ${pass1Data.lifecycle.phase2}:
-  • [ACTUAL setting]: [ACTUAL value/formula]
-  • [ACTUAL DAX/M code or Excel function]
-  • **[Critical Distinction]:** [REAL feature A] vs [REAL feature B]
-○ ${pass1Data.lifecycle.phase3}:
-  • Tool: [ACTUAL tool name like "Performance Analyzer"]
-  • Metric: [ACTUAL metric like "Query duration < 100ms"]
-  • Validation: [ACTUAL check like "Verify cardinality in Model view"]
 
-[Continue for each concept in this batch with REAL technical terminology]
+### S - Simple Core
+[One clear sentence - anyone can understand it]
+
+### H - High-Stakes Example  
+[Real company, real year, real numbers or impact]
+
+### A - Analogical Model
+[Familiar metaphor with 3-4 concept mappings]
+
+### P - Pattern Recognition
+**Question:** [Self-test question the learner should be able to answer]
+**Answer:** [Clear, concise answer]
+
+### E - Elimination Logic
+⚠️ Don't confuse [X] with [Y]: [Key difference]
+
+---
+LIFECYCLE DETAILS:
+
+- ${pass1Data.lifecycle.phase1}:
+  • Prerequisite: [ACTUAL tool/license/data source]
+  • Selection: [ACTUAL options with real names]
+  • Execution: [ACTUAL menu path or command]
+
+• ${pass1Data.lifecycle.phase2}:
+  • [ACTUAL setting/configuration]
+  • [ACTUAL code snippet or formula]
+  • **[Design Boundary]:** [ACTUAL limitation and workaround]
+
+○ ${pass1Data.lifecycle.phase3}:
+  • Tool: [ACTUAL verification tool]
+  • Metric: [ACTUAL metric to check]
+  • Success: [ACTUAL success criteria]
+
+[Continue for remaining concepts...]
 \`\`\`
 
-QUALITY CHECK: Before outputting, verify EVERY line contains at least one:
-- Real tool/feature name from ${pass1Data.domain}
-- Real function, formula, or command
-- Real UI element or menu path
-- Real file format or data type
+QUALITY REQUIREMENTS:
+1. SHAPE sections are MANDATORY for every concept
+2. High-Stakes Examples MUST have real company names and real numbers
+3. Analogical Models MUST map 3+ technical terms to physical elements
+4. Pattern Recognition MUST be answerable in under 10 seconds
+5. No generic phrases like "configure settings" - use ACTUAL names
 
-CRITICAL: Generate ALL ${batchConcepts.length} concepts completely with DOMAIN-SPECIFIC content. No generic phrases.
+CRITICAL: Generate ALL ${batchConcepts.length} concepts with COMPLETE SHAPE structure.
 `;
+
 
     let batchText = '';
     if (abortSignal?.aborted) throw new Error('Generation cancelled by user');

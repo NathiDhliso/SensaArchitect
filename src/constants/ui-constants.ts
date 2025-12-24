@@ -91,3 +91,19 @@ export const SPRINT_CONFIG = {
   },
 } as const;
 
+/**
+ * Focus session configuration constants
+ * Used for Pomodoro-style focus timers and concept pacing
+ */
+export const FOCUS_SESSION_CONFIG = {
+  DEFAULT_FOCUS_MINUTES: 25,
+  DEFAULT_BREAK_MINUTES: 5,
+  LONG_BREAK_MINUTES: 15,
+  SESSIONS_UNTIL_LONG_BREAK: 4,
+  CONCEPT_TARGET_SECONDS: 120,  // 2 minutes optimal reading pace per concept
+  PACE_THRESHOLDS: {
+    optimal: 0.5,    // Under 50% of target = optimal
+    good: 0.85,      // Under 85% = good
+    warning: 1.0,    // At target = warning
+  },
+} as const;

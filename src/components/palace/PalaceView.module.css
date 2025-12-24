@@ -209,7 +209,7 @@
     align-items: center;
     gap: 0.375rem;
     padding: 0.5rem 0.75rem;
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay-black-40);
     color: white;
     border: none;
     border-radius: 0.375rem;
@@ -220,7 +220,7 @@
 }
 
 .controlBtn:hover {
-    background: rgba(0, 0, 0, 0.9);
+    background: var(--overlay-black-60);
 }
 
 .fullscreenMode {
@@ -366,6 +366,11 @@
     justify-content: center;
     text-align: center;
     padding: 2rem;
+    background: var(--color-surface);
+    border-radius: 1rem;
+    margin: 2rem auto;
+    max-width: 500px;
+    box-shadow: var(--shadow-lg);
 }
 
 .emptyState h2 {

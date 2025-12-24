@@ -1,7 +1,7 @@
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--overlay-black-40);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -25,7 +25,7 @@
     max-height: 85vh;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--color-border);
+    box-shadow: var(--shadow-xl), 0 0 0 1px var(--color-border);
     display: flex;
     flex-direction: column;
     animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -125,7 +125,7 @@
     background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary-plum) 100%);
     color: white;
     border: 2px solid var(--color-accent);
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+    box-shadow: 0 0 0 4px var(--overlay-accent-10);
 }
 
 .progressDot.completed {
@@ -227,7 +227,7 @@
 .input:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 0 4px var(--overlay-accent-10);
 }
 
 .input::placeholder {
@@ -276,7 +276,7 @@
 
 .templateCard.selected {
     border-color: var(--color-secondary-amber);
-    background: rgba(245, 158, 11, 0.1);
+    background: var(--overlay-amber-10);
 }
 
 .templateIcon {
@@ -387,7 +387,7 @@
 .locationInput:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 0 3px var(--overlay-accent-10);
 }
 
 .locationInput::placeholder {
@@ -433,7 +433,7 @@
 .addressInput:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 0 3px var(--overlay-accent-10);
 }
 
 .addressStatus {
@@ -493,7 +493,7 @@
 }
 
 .removeButton:hover {
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--color-error-bg);
     color: var(--color-error);
 }
 
@@ -512,7 +512,7 @@
 }
 
 .previewButton:hover {
-    background: rgba(139, 92, 246, 0.1);
+    background: var(--overlay-accent-10);
     color: var(--color-accent);
 }
 
@@ -537,7 +537,7 @@
 .addLocationButton:hover {
     border-color: var(--color-secondary-amber);
     color: var(--color-secondary-amber);
-    background: rgba(245, 158, 11, 0.05);
+    background: var(--overlay-amber-5);
 }
 
 .addLocationButton:disabled {
@@ -611,7 +611,7 @@
     align-items: center;
     gap: 1rem;
     padding: 1.25rem;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+    background: linear-gradient(135deg, var(--overlay-accent-10) 0%, var(--overlay-amber-10) 100%);
     border-radius: 0.75rem;
     border: 1px solid var(--color-border);
 }
@@ -798,7 +798,7 @@
 
 .nextButton:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    box-shadow: var(--shadow-glow-primary-hover);
 }
 
 .nextButton:disabled {
@@ -823,7 +823,7 @@
 
 .createButton:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    box-shadow: var(--shadow-glow-amber-hover);
 }
 
 .createButton:disabled {

@@ -8,7 +8,7 @@
   padding: 1rem;
   min-width: 320px;
   max-width: 400px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-lg);
   border: 1px solid var(--color-border);
   z-index: 20;
   animation: slideUp 0.3s ease;
@@ -38,7 +38,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-primary-amethyst);
-  background: rgba(107, 70, 193, 0.1);
+  background: var(--overlay-primary-10);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
 }

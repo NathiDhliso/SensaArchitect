@@ -1,0 +1,120 @@
+.container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-surface);
+    border-radius: 2rem;
+    border: 1px solid var(--color-border);
+}
+
+.label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    white-space: nowrap;
+}
+
+.icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* Gauge bar */
+.gaugeBar {
+    flex: 1;
+    min-width: 60px;
+    height: 8px;
+    background: var(--color-bg-neutral);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.gaugeFill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease-out, background-color 0.3s ease;
+}
+
+.gaugeFill.low {
+    background: var(--color-success);
+}
+
+.gaugeFill.optimal {
+    background: var(--gradient-primary);
+}
+
+.gaugeFill.high {
+    background: var(--color-secondary-amber);
+}
+
+.gaugeFill.overload {
+    background: var(--color-error);
+    animation: pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Status badge */
+.status {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    white-space: nowrap;
+}
+
+.status.low {
+    background: var(--overlay-sage-10);
+    color: var(--color-success);
+}
+
+.status.optimal {
+    background: var(--overlay-primary-10);
+    color: var(--color-primary-amethyst);
+}
+
+.status.high {
+    background: var(--overlay-amber-10);
+    color: var(--color-secondary-amber);
+}
+
+.status.overload {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+}
+
+/* Collapsed view for smaller screens */
+.compact {
+    padding: 0.375rem 0.5rem;
+}
+
+.compact .label {
+    display: none;
+}
+
+.compact .gaugeBar {
+    min-width: 40px;
+}
+
+@media (max-width: 600px) {
+    .label span {
+        display: none;
+    }
+}

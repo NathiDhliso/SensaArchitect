@@ -24,23 +24,20 @@ function LoadingFallback() {
 function App() {
   return (
     <BrowserRouter>
-      <div className="paper-texture-overlay" aria-hidden="true" />
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/generate/:subject" element={<Generate />} />
-            <Route path="/results/:id" element={<Results />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/learn" element={<Learn />} />
-            <Route path="/saved" element={<SavedResults />} />
-            <Route path="/palace" element={<Palace />} />
-            <Route path="/sprint" element={<Sprint />} />
-            <Route path="/sprint-results" element={<SprintResults />} />
-          </Routes>
-          <SettingsPanel />
-        </Suspense>
-      </div>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/generate/:subject" element={<Generate />} />
+          <Route path="/results/:id" element={<Results />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/learn" element={<Learn />} />
+          <Route path="/saved" element={<SavedResults />} />
+          <Route path="/palace" element={<Palace />} />
+          <Route path="/sprint" element={<Sprint />} />
+          <Route path="/sprint-results" element={<SprintResults />} />
+        </Routes>
+        <SettingsPanel />
+      </Suspense>
     </BrowserRouter>
   );
 }

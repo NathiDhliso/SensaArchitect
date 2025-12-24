@@ -249,7 +249,7 @@
 
 .optionButton.incorrect {
     border-color: var(--color-error);
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--color-error-bg);
 }
 
 /* Feedback Overlay */

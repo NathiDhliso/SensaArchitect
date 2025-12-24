@@ -32,6 +32,7 @@ import DailyWalk from './DailyWalk';
 import QuizMode from './QuizMode';
 import ProgressPanel from './ProgressPanel';
 import { PlacementGuide } from './PlacementGuide';
+import { UI_TIMINGS } from '@/constants/ui-constants';
 import styles from './PalaceView.module.css';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -110,7 +111,7 @@ export default function PalaceView() {
     useEffect(() => {
         const handleFullscreenChange = () => {
             setIsFullscreen(!!document.fullscreenElement);
-            setTimeout(updateMarkerPositions, 150);
+            setTimeout(updateMarkerPositions, UI_TIMINGS.MARKER_UPDATE_SLOW);
         };
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
@@ -165,7 +166,7 @@ export default function PalaceView() {
                     }
                 }
 
-                setTimeout(updateMarkerPositions, 500);
+                setTimeout(updateMarkerPositions, UI_TIMINGS.MAP_LOAD_DELAY);
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Failed to load Street View';
                 setLoadError(`${message}. Using fallback mode.`);
@@ -298,12 +299,12 @@ export default function PalaceView() {
         if (!document.fullscreenElement) {
             fullscreenRef.current.requestFullscreen().then(() => {
                 setIsFullscreen(true);
-                setTimeout(updateMarkerPositions, 100);
+                setTimeout(updateMarkerPositions, UI_TIMINGS.MARKER_UPDATE_FAST);
             }).catch(() => {});
         } else {
             document.exitFullscreen().then(() => {
                 setIsFullscreen(false);
-                setTimeout(updateMarkerPositions, 100);
+                setTimeout(updateMarkerPositions, UI_TIMINGS.MARKER_UPDATE_FAST);
             }).catch(() => {});
         }
     }, [updateMarkerPositions]);
@@ -320,6 +321,24 @@ export default function PalaceView() {
                         onClick={() => navigate('/')}
                     >
                         Go to Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!route) {
+        return (
+            <div className={styles.palaceContainer}>
+                <div className={styles.emptyState}>
+                    <Map size={64} strokeWidth={1} />
+                    <h2>Route Not Found</h2>
+                    <p>The route for this Memory Palace could not be found. Please create a new palace.</p>
+                    <button
+                        className={styles.openMapsButton}
+                        onClick={() => navigate('/results')}
+                    >
+                        Go to Results
                     </button>
                 </div>
             </div>
