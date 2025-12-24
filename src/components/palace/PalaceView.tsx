@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft,
     ChevronLeft,
@@ -34,6 +35,7 @@ import DailyWalk from './DailyWalk';
 import QuizMode from './QuizMode';
 import ProgressPanel from './ProgressPanel';
 import { PlacementGuide } from './PlacementGuide';
+import RoutePreviewCard from './RoutePreviewCard';
 import { PanoramaPalaceView } from './PanoramaViewer';
 import { StaticPanoramaView } from './PanoramaViewer';
 import { hasPanorama, getPrebuiltPanoramaUrl } from '@/lib/panorama';
@@ -47,6 +49,7 @@ export default function PalaceView() {
     const [showQuiz, setShowQuiz] = useState(false);
     const [showProgress, setShowProgress] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
+    const [showRoutePreview, setShowRoutePreview] = useState(false);
     
     const streetViewRef = useRef<HTMLDivElement>(null);
     const panoramaRef = useRef<google.maps.StreetViewPanorama | null>(null);
@@ -83,6 +86,23 @@ export default function PalaceView() {
             setShowGuide(true);
             localStorage.setItem('palace-guide-seen', 'true');
         }
+    }, [currentPalace]);
+
+    // Show Route Preview Card on first visit to this specific palace (Advance Organizer - CLT)
+    useEffect(() => {
+        if (!currentPalace) return;
+        const previewKey = `palace-preview-seen-${currentPalace.id}`;
+        const hasSeenPreview = localStorage.getItem(previewKey);
+        if (!hasSeenPreview) {
+            setShowRoutePreview(true);
+        }
+    }, [currentPalace]);
+
+    const dismissRoutePreview = useCallback(() => {
+        if (!currentPalace) return;
+        const previewKey = `palace-preview-seen-${currentPalace.id}`;
+        localStorage.setItem(previewKey, 'true');
+        setShowRoutePreview(false);
     }, [currentPalace]);
 
     // Check for pre-built panorama images (from public/panoramas folder)
@@ -463,6 +483,20 @@ export default function PalaceView() {
 
             {/* Placement Guide Overlay */}
             <PlacementGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
+
+            {/* Route Preview Card - Advance Organizer (CLT) */}
+            <AnimatePresence>
+                {showRoutePreview && currentPalace && route && (
+                    <RoutePreviewCard
+                        routeName={route.name}
+                        buildingCount={currentPalace.buildings.length}
+                        conceptCount={currentPalace.buildings.reduce(
+                            (sum, b) => sum + b.concepts.length, 0
+                        )}
+                        onStart={dismissRoutePreview}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Header */}
             <header className={styles.header}>
