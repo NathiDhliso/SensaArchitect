@@ -1,0 +1,398 @@
+/**
+ * Sprint Page
+ * 
+ * The 15-minute Automaticity Sprint - tests pattern recognition
+ * with binary yes/no questions under time pressure.
+ */
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Clock, Zap, ChevronRight, Check, X, ArrowLeft } from 'lucide-react';
+import { useGenerationStore } from '@/store/generation-store';
+import { useLearningStore } from '@/store/learning-store';
+import { generateSprintQuestions, calculateSprintResult } from '@/lib/generation/sprint-generator';
+import { UI_TIMINGS, SPRINT_CONFIG } from '@/constants/ui-constants';
+import type { SprintQuestion, SprintAnswer } from '@/lib/types/sprint';
+import styles from './Sprint.module.css';
+
+type SprintPhase = 'intro' | 'loading' | 'active' | 'feedback' | 'complete';
+
+export default function Sprint() {
+    const navigate = useNavigate();
+    const { bedrockConfig } = useGenerationStore();
+    const { getConcepts, customContent, setSprintResult } = useLearningStore();
+
+    // Phase state
+    const [phase, setPhase] = useState<SprintPhase>('intro');
+
+    // Quiz state
+    const [questions, setQuestions] = useState<SprintQuestion[]>([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [answers, setAnswers] = useState<SprintAnswer[]>([]);
+    const [lastAnswer, setLastAnswer] = useState<{ correct: boolean; explanation: string } | null>(null);
+
+    // Timer state
+    const [totalTimeRemaining, setTotalTimeRemaining] = useState<number>(SPRINT_CONFIG.TOTAL_TIME_MINUTES * 60);
+    const [questionTimeRemaining, setQuestionTimeRemaining] = useState<number>(SPRINT_CONFIG.SECONDS_PER_QUESTION);
+    const questionStartTime = useRef<number>(Date.now());
+
+    // Error state
+    const [error, setError] = useState<string | null>(null);
+
+    const currentQuestion = questions[currentIndex];
+    const concepts = getConcepts();
+    const subject = customContent?.metadata?.domain || 'General Knowledge';
+
+    // Start sprint
+    const handleStart = async () => {
+        if (!bedrockConfig) {
+            setError('AWS credentials not configured.');
+            return;
+        }
+
+        if (concepts.length === 0) {
+            setError('No concepts loaded. Complete the learning journey first.');
+            return;
+        }
+
+        setPhase('loading');
+        setError(null);
+
+        try {
+            const generatedQuestions = await generateSprintQuestions(concepts, subject, bedrockConfig);
+            setQuestions(generatedQuestions);
+            setPhase('active');
+            questionStartTime.current = Date.now();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to generate questions');
+            setPhase('intro');
+        }
+    };
+
+    // Handle answer
+    const handleAnswer = useCallback((userAnswer: boolean | null) => {
+        if (phase !== 'active' || !currentQuestion) return;
+
+        const responseTimeMs = Date.now() - questionStartTime.current;
+        const correct = userAnswer === currentQuestion.correctAnswer;
+
+        const answer: SprintAnswer = {
+            questionId: currentQuestion.id,
+            userAnswer,
+            correct,
+            responseTimeMs,
+        };
+
+        const newAnswers = [...answers, answer];
+        setAnswers(newAnswers);
+        setLastAnswer({ correct, explanation: currentQuestion.explanation });
+        setPhase('feedback');
+
+        // Show feedback briefly, then advance
+        setTimeout(() => {
+            if (currentIndex < questions.length - 1) {
+                setCurrentIndex(prev => prev + 1);
+                setQuestionTimeRemaining(SPRINT_CONFIG.SECONDS_PER_QUESTION);
+                questionStartTime.current = Date.now();
+                setLastAnswer(null);
+                setPhase('active');
+            } else {
+                finishSprint(newAnswers);
+            }
+        }, UI_TIMINGS.SPRINT_FEEDBACK_TIME);
+    }, [phase, currentQuestion, currentIndex, questions.length, answers]);
+
+    // Finish and show results
+    const finishSprint = (finalAnswers: SprintAnswer[]) => {
+        const result = calculateSprintResult(questions, finalAnswers);
+        setSprintResult(result);
+        setPhase('complete');
+
+        // Navigate to results after brief delay
+        setTimeout(() => {
+            navigate('/sprint-results');
+        }, 1000);
+    };
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (phase !== 'active') return;
+
+            if (e.key.toLowerCase() === 'y' || e.key === '1') {
+                handleAnswer(true);
+            } else if (e.key.toLowerCase() === 'n' || e.key === '2') {
+                handleAnswer(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [phase, handleAnswer]);
+
+    // Total timer countdown
+    useEffect(() => {
+        if (phase !== 'active' && phase !== 'feedback') return;
+
+        const interval = setInterval(() => {
+            setTotalTimeRemaining(prev => {
+                if (prev <= 1) {
+                    // Time's up - finish with current answers
+                    finishSprint(answers);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [phase, answers]);
+
+    // Question timer countdown
+    useEffect(() => {
+        if (phase !== 'active') return;
+
+        const interval = setInterval(() => {
+            setQuestionTimeRemaining(prev => {
+                if (prev <= 0) {
+                    // Auto-advance on timeout
+                    handleAnswer(null);
+                    return SPRINT_CONFIG.SECONDS_PER_QUESTION;
+                }
+                return prev - 0.1;
+            });
+        }, 100);
+
+        return () => clearInterval(interval);
+    }, [phase, handleAnswer]);
+
+    // Format time display
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Get timer class
+    const getTimerClass = () => {
+        if (totalTimeRemaining <= 60) return styles.critical;
+        if (totalTimeRemaining <= 180) return styles.warning;
+        return '';
+    };
+
+    // Get question timer class
+    const getQuestionTimerClass = () => {
+        if (questionTimeRemaining <= 2) return styles.critical;
+        if (questionTimeRemaining <= 4) return styles.warning;
+        return '';
+    };
+
+    // Get accuracy
+    const correctCount = answers.filter(a => a.correct).length;
+    const accuracy = answers.length > 0 ? Math.round((correctCount / answers.length) * 100) : 0;
+
+    return (
+        <div className={styles.container}>
+            {/* Header */}
+            <header className={styles.header}>
+                <div className={styles.headerTitle}>
+                    <span className={styles.headerIcon}>⚡</span>
+                    <h1 className={styles.title}>Automaticity Sprint</h1>
+                </div>
+
+                {(phase === 'active' || phase === 'feedback') && (
+                    <div className={styles.headerRight}>
+                        <div className={styles.accuracyBar}>
+                            <span className={styles.accuracyLabel}>Accuracy:</span>
+                            <span className={styles.accuracyValue}>{accuracy}%</span>
+                        </div>
+
+                        <div className={styles.progressDisplay}>
+                            <strong>{currentIndex + 1}</strong> / {questions.length}
+                        </div>
+
+                        <div className={`${styles.timerDisplay} ${getTimerClass()}`}>
+                            <Clock size={20} />
+                            {formatTime(totalTimeRemaining)}
+                        </div>
+                    </div>
+                )}
+            </header>
+
+            {/* Main content */}
+            <main className={styles.main}>
+                <AnimatePresence mode="wait">
+                    {/* Intro Screen */}
+                    {phase === 'intro' && (
+                        <motion.div
+                            key="intro"
+                            className={styles.introScreen}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                        >
+                            <span className={styles.introIcon}>🎯</span>
+                            <h2 className={styles.introTitle}>Ready for Your Sprint?</h2>
+                            <p className={styles.introDescription}>
+                                Test your pattern recognition with rapid yes/no questions.
+                                Answer quickly - 6 seconds per question!
+                            </p>
+
+                            <div className={styles.introStats}>
+                                <div className={styles.introStat}>
+                                    <div className={styles.introStatValue}>30</div>
+                                    <div className={styles.introStatLabel}>Questions</div>
+                                </div>
+                                <div className={styles.introStat}>
+                                    <div className={styles.introStatValue}>6s</div>
+                                    <div className={styles.introStatLabel}>Per Question</div>
+                                </div>
+                                <div className={styles.introStat}>
+                                    <div className={styles.introStatValue}>15m</div>
+                                    <div className={styles.introStatLabel}>Total Time</div>
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
+                                    {error}
+                                </div>
+                            )}
+
+                            <button className={styles.startButton} onClick={handleStart}>
+                                <Zap size={20} />
+                                Start Sprint
+                                <ChevronRight size={20} />
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/learn')}
+                                style={{
+                                    marginTop: '1rem',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--color-text-light)',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.25rem',
+                                }}
+                            >
+                                <ArrowLeft size={14} />
+                                Back to Learning
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {/* Loading State */}
+                    {phase === 'loading' && (
+                        <motion.div
+                            key="loading"
+                            className={styles.loadingContainer}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <div className={styles.spinner} />
+                            <p className={styles.loadingText}>Generating sprint questions...</p>
+                        </motion.div>
+                    )}
+
+                    {/* Active Quiz */}
+                    {(phase === 'active' || phase === 'feedback') && currentQuestion && (
+                        <motion.div
+                            key={`question-${currentIndex}`}
+                            className={styles.questionCard}
+                            initial={{ opacity: 0, x: 50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -50 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            {/* Category badge */}
+                            <span className={`${styles.categoryBadge} ${styles[currentQuestion.category]}`}>
+                                {currentQuestion.category}
+                            </span>
+
+                            {/* Question */}
+                            <div className={styles.questionContent}>
+                                <p className={styles.question}>{currentQuestion.question}</p>
+                            </div>
+
+                            {/* Answer buttons */}
+                            <div className={styles.answerButtons}>
+                                <button
+                                    className={`${styles.answerButton} ${styles.yes}`}
+                                    onClick={() => handleAnswer(true)}
+                                    disabled={phase === 'feedback'}
+                                >
+                                    <Check size={32} className={styles.answerIcon} />
+                                    <span>YES</span>
+                                    <span className={styles.keyboardHint}>Press Y or 1</span>
+                                </button>
+
+                                <button
+                                    className={`${styles.answerButton} ${styles.no}`}
+                                    onClick={() => handleAnswer(false)}
+                                    disabled={phase === 'feedback'}
+                                >
+                                    <X size={32} className={styles.answerIcon} />
+                                    <span>NO</span>
+                                    <span className={styles.keyboardHint}>Press N or 2</span>
+                                </button>
+                            </div>
+
+                            {/* Question timer */}
+                            {phase === 'active' && (
+                                <div className={styles.questionTimer}>
+                                    <div
+                                        className={`${styles.questionTimerFill} ${getQuestionTimerClass()}`}
+                                        style={{ width: `${(questionTimeRemaining / SPRINT_CONFIG.SECONDS_PER_QUESTION) * 100}%` }}
+                                    />
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+
+                    {/* Complete state */}
+                    {phase === 'complete' && (
+                        <motion.div
+                            key="complete"
+                            className={styles.loadingContainer}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                        >
+                            <span style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</span>
+                            <p className={styles.loadingText}>Calculating your Automaticity Score...</p>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </main>
+
+            {/* Feedback overlay */}
+            <AnimatePresence>
+                {phase === 'feedback' && lastAnswer && (
+                    <motion.div
+                        className={styles.feedbackOverlay}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <div className={styles.feedbackCard}>
+                            <span className={styles.feedbackIcon}>
+                                {lastAnswer.correct ? '✅' : '❌'}
+                            </span>
+                            <h3 className={`${styles.feedbackTitle} ${lastAnswer.correct ? styles.correct : styles.incorrect}`}>
+                                {lastAnswer.correct ? 'Correct!' : 'Not quite'}
+                            </h3>
+                            <p className={styles.feedbackExplanation}>
+                                {lastAnswer.explanation}
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}

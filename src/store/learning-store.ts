@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { UserProgress, CelebrationData, LearningStage, LearningConcept } from '@/lib/types/learning';
+import type { SprintResult } from '@/lib/types/sprint';
 
 type ContentMetadata = {
   domain: string;
@@ -22,6 +23,8 @@ type LearningState = {
   isExploreMode: boolean;
   customContent: CustomContent | null;
   sessionTimer: ReturnType<typeof setInterval> | null;
+  sprintResult: SprintResult | null;
+  isSprintReady: boolean;
 };
 
 type LearningActions = {
@@ -43,12 +46,15 @@ type LearningActions = {
   getStages: () => LearningStage[];
   getConcepts: () => LearningConcept[];
   hasCustomContent: () => boolean;
+  setSprintResult: (result: SprintResult) => void;
+  clearSprintResult: () => void;
+  setSprintReady: (ready: boolean) => void;
 };
 
 const getInitialProgress = (stages: LearningStage[], concepts: LearningConcept[]): UserProgress => {
   const firstStage = stages[0];
   const firstConcept = concepts.find(c => c.stageId === firstStage?.id && c.order === 1) || concepts[0];
-  
+
   return {
     currentStageId: firstStage?.id || '',
     currentConceptId: firstConcept?.id || '',
@@ -70,6 +76,8 @@ export const useLearningStore = create<LearningState & LearningActions>()(
       isExploreMode: false,
       customContent: null,
       sessionTimer: null,
+      sprintResult: null,
+      isSprintReady: false,
 
       getStages: () => {
         const state = get();
@@ -109,7 +117,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
         const state = get();
         const concepts = state.getConcepts();
         const stages = state.getStages();
-        
+
         const concept = concepts.find(c => c.id === conceptId);
         if (!concept) return;
 
@@ -118,14 +126,14 @@ export const useLearningStore = create<LearningState & LearningActions>()(
 
         const newCompletedConcepts = [...state.progress.completedConcepts, conceptId];
         const today = new Date().toISOString().split('T')[0];
-        const conceptsToday = state.progress.lastSessionDate === today 
-          ? state.progress.conceptsLearnedToday + 1 
+        const conceptsToday = state.progress.lastSessionDate === today
+          ? state.progress.conceptsLearnedToday + 1
           : 1;
 
         const stageConceptIds = concepts
           .filter(c => c.stageId === stage.id)
           .map(c => c.id);
-        const allStageConceptsComplete = stageConceptIds.every(id => 
+        const allStageConceptsComplete = stageConceptIds.every(id =>
           newCompletedConcepts.includes(id)
         );
 
@@ -151,7 +159,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
         });
 
         if (allStageConceptsComplete) {
-          const allStagesComplete = stages.every(s => 
+          const allStagesComplete = stages.every(s =>
             newCompletedStages.includes(s.id)
           );
 
@@ -219,7 +227,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
         if (state.sessionTimer) {
           clearInterval(state.sessionTimer);
         }
-        
+
         const timer = setInterval(() => {
           const current = get();
           if (current.progress.sessionStartTime) {
@@ -231,7 +239,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
             }));
           }
         }, 60000);
-        
+
         set({
           progress: {
             ...state.progress,
@@ -246,7 +254,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
         if (state.sessionTimer) {
           clearInterval(state.sessionTimer);
         }
-        
+
         if (!state.progress.sessionStartTime) {
           set({ sessionTimer: null });
           return;
@@ -269,11 +277,11 @@ export const useLearningStore = create<LearningState & LearningActions>()(
       getConceptStatus: (conceptId: string) => {
         const state = get();
         const concepts = state.getConcepts();
-        
+
         if (state.progress.completedConcepts.includes(conceptId)) {
           return 'completed';
         }
-        
+
         if (state.progress.currentConceptId === conceptId) {
           return 'current';
         }
@@ -291,7 +299,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
       getStageStatus: (stageId: string) => {
         const state = get();
         const stages = state.getStages();
-        
+
         if (state.progress.completedStages.includes(stageId)) {
           return 'completed';
         }
@@ -307,8 +315,8 @@ export const useLearningStore = create<LearningState & LearningActions>()(
         if (stageIndex === 0) return 'available';
 
         const previousStage = stages[stageIndex - 1];
-        return state.progress.completedStages.includes(previousStage.id) 
-          ? 'available' 
+        return state.progress.completedStages.includes(previousStage.id)
+          ? 'available'
           : 'locked';
       },
 
@@ -316,7 +324,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
         const state = get();
         const concepts = state.getConcepts();
         const stages = state.getStages();
-        
+
         const currentConcept = concepts.find(
           c => c.id === state.progress.currentConceptId
         );
@@ -327,8 +335,8 @@ export const useLearningStore = create<LearningState & LearningActions>()(
           .sort((a, b) => a.order - b.order);
 
         const nextInStage = sameStageConcepts.find(
-          c => c.order > currentConcept.order && 
-               !state.progress.completedConcepts.includes(c.id)
+          c => c.order > currentConcept.order &&
+            !state.progress.completedConcepts.includes(c.id)
         );
 
         if (nextInStage) return nextInStage.id;
@@ -336,13 +344,13 @@ export const useLearningStore = create<LearningState & LearningActions>()(
         const currentStageIndex = stages.findIndex(
           s => s.id === currentConcept.stageId
         );
-        
+
         for (let i = currentStageIndex + 1; i < stages.length; i++) {
           const nextStage = stages[i];
           const firstConcept = concepts
             .filter(c => c.stageId === nextStage.id)
             .sort((a, b) => a.order - b.order)[0];
-          
+
           if (firstConcept && !state.progress.completedConcepts.includes(firstConcept.id)) {
             return firstConcept.id;
           }
@@ -355,7 +363,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
         const state = get();
         const concepts = state.getConcepts();
         const stages = state.getStages();
-        
+
         const currentConcept = concepts.find(
           c => c.id === state.progress.currentConceptId
         );
@@ -380,7 +388,7 @@ export const useLearningStore = create<LearningState & LearningActions>()(
           const lastConcept = concepts
             .filter(c => c.stageId === prevStage.id)
             .sort((a, b) => b.order - a.order)[0];
-          
+
           if (lastConcept) return lastConcept.id;
         }
 
@@ -392,6 +400,12 @@ export const useLearningStore = create<LearningState & LearningActions>()(
         const status = state.getConceptStatus(conceptId);
         return status !== 'locked';
       },
+
+      setSprintResult: (result) => set({ sprintResult: result }),
+
+      clearSprintResult: () => set({ sprintResult: null }),
+
+      setSprintReady: (ready) => set({ isSprintReady: ready }),
     }),
     {
       name: 'sensa-learning-progress',
