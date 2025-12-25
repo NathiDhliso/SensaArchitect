@@ -160,7 +160,7 @@ export default function Learn() {
               </p>
               <button
                 className={styles.generateButton}
-                onClick={() => navigate('/generate')}
+                onClick={() => navigate('/')}
               >
                 Generate Content
               </button>
