@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Edit3, Save, Loader2, Maximize, Minimize, X, Zap } from 'lucide-react';
+import { Edit3, Save, Loader2, Maximize, Minimize, X, Zap, Settings, Activity } from 'lucide-react';
 import { usePalaceStore } from '@/store/palace-store';
 import { getPanoramaAsDataUrl } from '@/lib/panorama';
 import type { MarkerPlacement } from '@/lib/panorama';
@@ -169,61 +169,63 @@ export default function PanoramaPalaceView({
                 </button>
             </div>
             
-            {/* Fullscreen Concept Detail Panel */}
-            {isFullscreen && activeMarkerId && fullConceptData && (() => {
+            {/* Concept Detail Panel - NYC/Standard style */}
+            {activeMarkerId && fullConceptData && (() => {
                 const activeConcept = fullConceptData.find(c => c.conceptId === activeMarkerId);
                 if (!activeConcept) return null;
                 return (
-                    <div className={styles.fullscreenDetailPanel}>
-                        <div className={styles.fullscreenDetailHeader}>
-                            <h3>{activeConcept.conceptName}</h3>
+                    <div className={styles.tooltipOverlay}>
+                        <div className={styles.tooltip}>
                             <button 
-                                className={styles.closeDetailBtn}
+                                className={styles.closeButton}
                                 onClick={() => setActiveMarkerId(null)}
                             >
-                                <X size={20} />
+                                <X size={16} />
                             </button>
-                        </div>
-                        <div className={styles.fullscreenDetailContent}>
-                            {activeConcept.lifecycle.phase1.length > 0 && (
-                                <div className={styles.fullscreenPhase}>
-                                    <div className={styles.fullscreenPhaseHeader}>
-                                        <Zap size={14} />
-                                        <span>{lifecycleLabels?.phase1 || 'PHASE 1'}</span>
+                            
+                            <h3 className={styles.tooltipTitle}>{activeConcept.conceptName}</h3>
+                            
+                            <div className={styles.lifecycleGrid}>
+                                {activeConcept.lifecycle.phase1.length > 0 && (
+                                    <div className={styles.phaseCard}>
+                                        <div className={styles.phaseHeader}>
+                                            <Zap size={14} className={styles.phase1Icon} />
+                                            <span>{lifecycleLabels?.phase1 || 'Phase 1'}</span>
+                                        </div>
+                                        <ul className={styles.phaseList}>
+                                            {activeConcept.lifecycle.phase1.map((item, i) => (
+                                                <li key={i}>{item}</li>
+                                            ))}
+                                        </ul>
                                     </div>
-                                    <div className={styles.fullscreenPhaseItems}>
-                                        {activeConcept.lifecycle.phase1.map((item, i) => (
-                                            <div key={i} className={styles.fullscreenPhaseItem}>{item}</div>
-                                        ))}
+                                )}
+                                {activeConcept.lifecycle.phase2.length > 0 && (
+                                    <div className={styles.phaseCard}>
+                                        <div className={styles.phaseHeader}>
+                                            <Settings size={14} className={styles.phase2Icon} />
+                                            <span>{lifecycleLabels?.phase2 || 'Phase 2'}</span>
+                                        </div>
+                                        <ul className={styles.phaseList}>
+                                            {activeConcept.lifecycle.phase2.map((item, i) => (
+                                                <li key={i}>{item}</li>
+                                            ))}
+                                        </ul>
                                     </div>
-                                </div>
-                            )}
-                            {activeConcept.lifecycle.phase2.length > 0 && (
-                                <div className={styles.fullscreenPhase}>
-                                    <div className={styles.fullscreenPhaseHeader}>
-                                        <Zap size={14} />
-                                        <span>{lifecycleLabels?.phase2 || 'PHASE 2'}</span>
+                                )}
+                                {activeConcept.lifecycle.phase3.length > 0 && (
+                                    <div className={styles.phaseCard}>
+                                        <div className={styles.phaseHeader}>
+                                            <Activity size={14} className={styles.phase3Icon} />
+                                            <span>{lifecycleLabels?.phase3 || 'Phase 3'}</span>
+                                        </div>
+                                        <ul className={styles.phaseList}>
+                                            {activeConcept.lifecycle.phase3.map((item, i) => (
+                                                <li key={i}>{item}</li>
+                                            ))}
+                                        </ul>
                                     </div>
-                                    <div className={styles.fullscreenPhaseItems}>
-                                        {activeConcept.lifecycle.phase2.map((item, i) => (
-                                            <div key={i} className={styles.fullscreenPhaseItem}>{item}</div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            {activeConcept.lifecycle.phase3.length > 0 && (
-                                <div className={styles.fullscreenPhase}>
-                                    <div className={styles.fullscreenPhaseHeader}>
-                                        <Zap size={14} />
-                                        <span>{lifecycleLabels?.phase3 || 'PHASE 3'}</span>
-                                    </div>
-                                    <div className={styles.fullscreenPhaseItems}>
-                                        {activeConcept.lifecycle.phase3.map((item, i) => (
-                                            <div key={i} className={styles.fullscreenPhaseItem}>{item}</div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 );
