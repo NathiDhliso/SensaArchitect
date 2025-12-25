@@ -9,6 +9,7 @@ type PersonalizationState = {
   chosenRole: UserRole | null;
   familiarSystem: FamiliarSystem | null;
   preferredLearningStyle: 'visual' | 'practical' | 'theoretical' | null;
+  aphantasiaMode: boolean;
 };
 
 type PersonalizationActions = {
@@ -16,6 +17,7 @@ type PersonalizationActions = {
   resetOnboarding: () => void;
   updateRole: (role: UserRole) => void;
   updateFamiliarSystem: (system: FamiliarSystem) => void;
+  setAphantasiaMode: (enabled: boolean) => void;
 };
 
 export const usePersonalizationStore = create<PersonalizationState & PersonalizationActions>()(
@@ -25,6 +27,7 @@ export const usePersonalizationStore = create<PersonalizationState & Personaliza
       chosenRole: null,
       familiarSystem: null,
       preferredLearningStyle: null,
+      aphantasiaMode: false,
 
       completeOnboarding: (role, system, style) => {
         set({
@@ -51,7 +54,9 @@ export const usePersonalizationStore = create<PersonalizationState & Personaliza
       updateFamiliarSystem: (system) => {
         set({ familiarSystem: system });
       },
-    }),
+      setAphantasiaMode: (enabled) => {
+        set({ aphantasiaMode: enabled });
+      },    }),
     {
       name: 'personalization-storage',
     }

@@ -107,3 +107,10 @@ export const FOCUS_SESSION_CONFIG = {
     warning: 1.0,    // At target = warning
   },
 } as const;
+
+/**
+ * Celebration modal configuration
+ */
+export const CELEBRATION_CONFIG = {
+  AUTO_DISMISS_MS: 4000,  // Auto-dismiss celebration after 4 seconds
+} as const;

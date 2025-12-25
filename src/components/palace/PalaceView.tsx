@@ -18,6 +18,7 @@ import {
     Save
 } from 'lucide-react';
 import { usePalaceStore } from '@/store/palace-store';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { getRouteById, getStreetViewUrl } from '@/constants/palace-routes';
 import {
     loadGoogleMapsAPI,
@@ -70,6 +71,10 @@ export default function PalaceView() {
     const [panoramaCheckCount, setPanoramaCheckCount] = useState(0);
     const [prebuiltPanoramaUrl, setPrebuiltPanoramaUrl] = useState<string | null>(null);
 
+    // Escape key exits Palace view (unless modals are open)
+    const hasOpenModal = showQuiz || showProgress || showGuide || showRoutePreview || showTooltip;
+    useEscapeKey(() => navigate('/learn'), !hasOpenModal);
+
     // Compute route and building info first (needed by effects below)
     const route = currentPalace 
         ? (getRouteById(currentPalace.routeId) || customRoutes.find(r => r.id === currentPalace.routeId))
@@ -88,20 +93,21 @@ export default function PalaceView() {
         }
     }, [currentPalace]);
 
-    // Show Route Preview Card on first visit to this specific palace (Advance Organizer - CLT)
+    // Show Route Preview Card only on first-ever palace visit (Advance Organizer - CLT)
+    // Once seen for any palace, don't show again on subsequent palace visits
     useEffect(() => {
         if (!currentPalace) return;
-        const previewKey = `palace-preview-seen-${currentPalace.id}`;
-        const hasSeenPreview = localStorage.getItem(previewKey);
-        if (!hasSeenPreview) {
+        const globalPreviewKey = 'palace-preview-ever-seen';
+        const hasEverSeenPreview = localStorage.getItem(globalPreviewKey);
+        if (!hasEverSeenPreview) {
             setShowRoutePreview(true);
         }
     }, [currentPalace]);
 
     const dismissRoutePreview = useCallback(() => {
         if (!currentPalace) return;
-        const previewKey = `palace-preview-seen-${currentPalace.id}`;
-        localStorage.setItem(previewKey, 'true');
+        const globalPreviewKey = 'palace-preview-ever-seen';
+        localStorage.setItem(globalPreviewKey, 'true');
         setShowRoutePreview(false);
     }, [currentPalace]);
 

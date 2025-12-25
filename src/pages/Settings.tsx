@@ -64,6 +64,8 @@ export default function Settings() {
     familiarSystem,
     onboardingComplete,
     resetOnboarding,
+    aphantasiaMode,
+    setAphantasiaMode,
   } = usePersonalizationStore();
   const updateLearningStyle = usePersonalizationStore(s => s.completeOnboarding);
   const updateFamiliarSystem = usePersonalizationStore(s => s.updateFamiliarSystem);
@@ -257,6 +259,24 @@ export default function Settings() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Aphantasia Mode Toggle */}
+            <div className={styles.settingRow}>
+              <div className={styles.settingInfo}>
+                <span className={styles.settingLabel}>Aphantasia Mode</span>
+                <span className={styles.settingDesc}>
+                  Replaces "Picture..." prompts with sequential/logical descriptions for those who can't visualize mentally
+                </span>
+              </div>
+              <button
+                onClick={() => setAphantasiaMode(!aphantasiaMode)}
+                className={`${styles.toggleButton} ${aphantasiaMode ? styles.toggleActive : ''}`}
+                aria-pressed={aphantasiaMode}
+              >
+                {aphantasiaMode ? <Eye size={16} /> : <EyeOff size={16} />}
+                <span>{aphantasiaMode ? 'Enabled' : 'Disabled'}</span>
+              </button>
             </div>
 
             {onboardingComplete && (

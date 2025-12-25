@@ -1,4 +1,5 @@
-import { SYSTEM_PROMPT_V4 } from '@/lib/system-prompt';
+import { getSystemPrompt } from '@/lib/system-prompt';
+import { usePersonalizationStore } from '@/store/personalization-store';
 import {
   getBedrockClient,
   invokeClaudeModel,
@@ -26,6 +27,10 @@ export async function generateChartIteratively(
   abortSignal?: AbortSignal
 ): Promise<GenerationResult> {
   const bedrockClient = getBedrockClient(config);
+  
+  // Get aphantasia mode preference for prompt adaptation
+  const aphantasiaMode = usePersonalizationStore.getState().aphantasiaMode;
+  const systemPrompt = getSystemPrompt(aphantasiaMode);
 
   if (abortSignal?.aborted) {
     throw new Error('Generation cancelled by user');
@@ -103,7 +108,7 @@ CRITICAL: Use the EXACT lifecycle phases provided above. Do NOT modify them.
   const pass1Text = await invokeClaudeModel(
     bedrockClient,
     [{ role: 'user', content: pass1Content }],
-    SYSTEM_PROMPT_V4,
+    systemPrompt,
     8000,
     undefined,
     abortSignal
@@ -165,7 +170,7 @@ OUTPUT: Generate only the Decision Framework Trees. No chart content yet.
   const pass2Text = await invokeClaudeModel(
     bedrockClient,
     [{ role: 'user', content: pass2Content }],
-    SYSTEM_PROMPT_V4 + '\n\n' + lifecycleScopePrompt,
+    systemPrompt + '\n\n' + lifecycleScopePrompt,
     6000,
     undefined,
     abortSignal

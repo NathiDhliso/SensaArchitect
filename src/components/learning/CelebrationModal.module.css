@@ -217,3 +217,10 @@
   background: var(--color-surface-subtle);
   border-color: var(--color-border-emphasis);
 }
+
+.autoDismissHint {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: var(--color-text-lightest);
+  opacity: 0.8;
+}

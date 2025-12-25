@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Play, Pause, SkipForward, SkipBack, X } from 'lucide-react';
+import { usePersonalizationStore } from '@/store/personalization-store';
 import type { MarkerPosition } from '@/lib/google-maps';
 import styles from './GuidedTour.module.css';
 
@@ -28,6 +29,7 @@ export default function GuidedTour({
 }: GuidedTourProps) {
   const [progress, setProgress] = useState(0);
   const intervalDuration = 8000;
+  const aphantasiaMode = usePersonalizationStore(s => s.aphantasiaMode);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -49,13 +51,15 @@ export default function GuidedTour({
   }, [isPlaying, currentIndex]);
 
   const currentMarker = markers[currentIndex];
+  const prevMarker = currentIndex > 0 ? markers[currentIndex - 1] : null;
+  const nextMarker = currentIndex < markers.length - 1 ? markers[currentIndex + 1] : null;
 
   if (!currentMarker) return null;
 
   return (
     <div className={styles.tourPanel}>
       <div className={styles.tourHeader}>
-        <span className={styles.tourLabel}>Guided Tour</span>
+        <span className={styles.tourLabel}>{aphantasiaMode ? 'Sequence Tour' : 'Guided Tour'}</span>
         <span className={styles.tourProgress}>
           {currentIndex + 1} / {markers.length}
         </span>
@@ -66,14 +70,39 @@ export default function GuidedTour({
 
       <div className={styles.conceptInfo}>
         <h3 className={styles.conceptName}>{currentMarker.conceptName}</h3>
-        <div className={styles.lifecyclePreview}>
-          <div className={styles.phasePreview}>
-            <span className={styles.phaseLabel}>{currentMarker.lifecycleLabels?.phase1 || 'Phase 1'}</span>
-            <span className={styles.phaseItem}>
-              {currentMarker.lifecycle.phase1[0] || 'N/A'}
-            </span>
+        
+        {/* Aphantasia mode: Show sequence context instead of just phase preview */}
+        {aphantasiaMode ? (
+          <div className={styles.lifecyclePreview}>
+            {prevMarker && (
+              <div className={styles.phasePreview} style={{ opacity: 0.6 }}>
+                <span className={styles.phaseLabel}>← Previous</span>
+                <span className={styles.phaseItem}>{prevMarker.conceptName}</span>
+              </div>
+            )}
+            <div className={styles.phasePreview}>
+              <span className={styles.phaseLabel}>Step {currentIndex + 1}</span>
+              <span className={styles.phaseItem}>
+                {currentMarker.lifecycle.phase1[0] || currentMarker.conceptName}
+              </span>
+            </div>
+            {nextMarker && (
+              <div className={styles.phasePreview} style={{ opacity: 0.6 }}>
+                <span className={styles.phaseLabel}>Next →</span>
+                <span className={styles.phaseItem}>{nextMarker.conceptName}</span>
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className={styles.lifecyclePreview}>
+            <div className={styles.phasePreview}>
+              <span className={styles.phaseLabel}>{currentMarker.lifecycleLabels?.phase1 || 'Phase 1'}</span>
+              <span className={styles.phaseItem}>
+                {currentMarker.lifecycle.phase1[0] || 'N/A'}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className={styles.progressBar}>

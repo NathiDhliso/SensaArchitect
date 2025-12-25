@@ -252,7 +252,7 @@ export default function Home() {
           {!bedrockConfig && (
             <div className={styles.infoBox}>
               <span>AWS credentials required. </span>
-              <button onClick={() => navigate('/settings')} className={styles.settingsLink}>
+              <button onClick={openSettingsPanel} className={styles.settingsLink}>
                 Configure in Settings
               </button>
             </div>

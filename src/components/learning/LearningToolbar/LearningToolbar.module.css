@@ -698,3 +698,168 @@
 .emptyStateText {
     font-size: 0.875rem;
 }
+
+/* Source Document Modal */
+.sourceOverlay {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-black-40);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.sourceModal {
+    background: var(--color-surface);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-xl);
+    width: min(500px, 90vw);
+    max-height: 80vh;
+    overflow: hidden;
+}
+
+.sourceHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.sourceHeader h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin: 0;
+}
+
+.sourceCloseButton {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface-subtle);
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1.25rem;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sourceCloseButton:hover {
+    background: var(--color-surface);
+    color: var(--color-text-dark);
+}
+
+.sourceContent {
+    padding: 1.5rem;
+}
+
+.sourceInfo p {
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+    color: var(--color-text-medium);
+}
+
+.sourceInfo p strong {
+    color: var(--color-text-dark);
+}
+
+.sourceHint {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface-subtle);
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--color-text-light);
+}
+
+/* Reset Button */
+.resetButton {
+    color: var(--color-text-light);
+}
+
+.resetButton:hover {
+    background: var(--color-error-bg);
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+
+/* Reset Confirmation Modal */
+.resetModal {
+    background: var(--color-surface);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-xl);
+    width: min(380px, 90vw);
+    padding: 2rem;
+    text-align: center;
+}
+
+.resetIcon {
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-error-bg);
+    border-radius: 50%;
+    color: var(--color-error);
+}
+
+.resetModal h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin: 0 0 0.75rem;
+}
+
+.resetModal p {
+    font-size: 0.875rem;
+    color: var(--color-text-medium);
+    line-height: 1.5;
+    margin: 0 0 1.5rem;
+}
+
+.resetActions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.resetCancelButton {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-medium);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.resetCancelButton:hover {
+    background: var(--color-surface);
+    border-color: var(--color-text-light);
+    color: var(--color-text-dark);
+}
+
+.resetConfirmButton {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-error);
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.resetConfirmButton:hover {
+    filter: brightness(1.1);
+}

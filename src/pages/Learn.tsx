@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Map, Zap, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Map, Zap, HelpCircle, Timer } from 'lucide-react';
 import {
   JourneyMap,
   ConceptCard,
@@ -14,6 +14,7 @@ import {
 import HelpModal from '@/components/ui/HelpModal';
 import { useLearningStore } from '@/store/learning-store';
 import { useFocusSessionStore } from '@/store/focus-session-store';
+import { UI_TIMINGS } from '@/constants/ui-constants';
 import styles from './Learn.module.css';
 
 export default function Learn() {
@@ -33,7 +34,7 @@ export default function Learn() {
     customContent,
   } = useLearningStore();
 
-  const { isSessionActive, recordConceptEnd } = useFocusSessionStore();
+  const { isSessionActive, recordConceptEnd, getFormattedTimeRemaining } = useFocusSessionStore();
 
   const stages = getStages();
   const concepts = getConcepts();
@@ -48,11 +49,23 @@ export default function Learn() {
     : 0;
 
   const [showHelp, setShowHelp] = useState(false);
+  const [showFocusToast, setShowFocusToast] = useState(false);
+  const wasSessionActiveRef = useRef(isSessionActive);
 
   useEffect(() => {
     startSession();
     return () => endSession();
   }, [startSession, endSession]);
+
+  // Show toast when focus session starts
+  useEffect(() => {
+    if (isSessionActive && !wasSessionActiveRef.current) {
+      setShowFocusToast(true);
+      const timer = setTimeout(() => setShowFocusToast(false), UI_TIMINGS.TOAST_MEDIUM);
+      return () => clearTimeout(timer);
+    }
+    wasSessionActiveRef.current = isSessionActive;
+  }, [isSessionActive]);
 
   const handleConceptComplete = () => {
     // Record concept completion in focus session if active
@@ -99,11 +112,12 @@ export default function Learn() {
         </div>
         <LearningToolbar />
         <div className={styles.headerActions}>
-          {hasContent && progressPercent >= 50 && (
+          {/* Sprint always available when content is loaded */}
+          {hasContent && (
             <button
-              className={styles.sprintButton}
+              className={`${styles.sprintButton} ${progressPercent < 50 ? styles.sprintButtonEarly : ''}`}
               onClick={() => navigate('/sprint')}
-              title="Start Automaticity Sprint"
+              title={progressPercent < 50 ? 'Start Sprint (early access)' : 'Start Automaticity Sprint'}
             >
               <Zap size={18} />
               <span className={styles.sprintButtonText}>Sprint</span>
@@ -188,6 +202,17 @@ export default function Learn() {
 
       {/* Neural Reset Banner - suggests break when cognitive load is high */}
       <NeuralResetBanner />
+
+      {/* Focus Session Started Toast */}
+      {showFocusToast && (
+        <div className={styles.focusToast}>
+          <Timer size={20} className={styles.focusToastIcon} />
+          <div className={styles.focusToastContent}>
+            <strong>Focus session started!</strong>
+            <span>{getFormattedTimeRemaining()} remaining</span>
+          </div>
+        </div>
+      )}
 
       {/* Help Modal */}
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />

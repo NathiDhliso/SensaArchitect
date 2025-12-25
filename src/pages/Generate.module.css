@@ -377,6 +377,25 @@
   gap: 0.75rem;
 }
 
+.previewButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  background: var(--gradient-accent);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.previewButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow-primary);
+}
+
 .cancelButton {
   padding: 0.5rem 1.5rem;
   border: 1px solid var(--color-border);
@@ -595,4 +614,57 @@
 
 .domainBadge strong {
   color: var(--color-text-dark);
+}
+
+/* Confirm Cancel Dialog */
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-black-40);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.confirmDialog {
+  background: var(--color-surface);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-xl);
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 90%;
+}
+
+.confirmDialog h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.confirmDialog p {
+  color: var(--color-text-light);
+  margin-bottom: 1.5rem;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.cancelConfirmButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: var(--color-error);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelConfirmButton:hover {
+  opacity: 0.9;
 }

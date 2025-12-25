@@ -1,10 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle2, Circle, Loader2, ArrowLeft, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, ArrowLeft, AlertTriangle, RefreshCw, Eye } from 'lucide-react';
 import { generateChartIteratively } from '@/lib/generation/multi-pass-generator';
 import { useGenerationStore } from '@/store/generation-store';
 import { PASS_NAMES } from '@/constants/ui-constants';
-import { DiagnosticModal, DiagnosticResults } from '@/components/diagnostic';
 import type { PassStatus, Pass1Result, ValidationResult } from '@/lib/types';
 import styles from './Generate.module.css';
 
@@ -36,17 +35,14 @@ export default function Generate() {
     clearCheckpoint,
     saveCheckpoint,
     updateGenerationProgress,
-    diagnosticResult,
-    clearDiagnosticResult,
   } = useGenerationStore();
 
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [showResumeDialog, setShowResumeDialog] = useState(false);
-  const [showDiagnostic, setShowDiagnostic] = useState(false);
-  const [showDiagnosticResults, setShowDiagnosticResults] = useState(false);
-  const [diagnosticCompleted, setDiagnosticCompleted] = useState(false);
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const hasStartedRef = useRef(false);
-  const diagnosticShownRef = useRef(false);
+  const resultIdRef = useRef<string | null>(null);
+
 
   // Shared callback function to handle progress updates
   const createProgressCallback = useCallback(() => {
@@ -131,6 +127,7 @@ export default function Generate() {
         const { pass1Data, validation } = useGenerationStore.getState();
         if (pass1Data && validation) {
           const resultId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          resultIdRef.current = resultId;
           const savedResult = {
             id: resultId,
             subject: decodedSubject,
@@ -154,6 +151,7 @@ export default function Generate() {
           // Import and use storageManager
           const { storageManager } = await import('@/lib/storage');
           await storageManager.saveResult(savedResult);
+          // Navigate directly to results - no diagnostic blocking
           navigate(`/results/${resultId}`);
         } else {
           // Fallback if validation/pass1Data not available
@@ -170,23 +168,8 @@ export default function Generate() {
       });
   }, [bedrockConfig, createProgressCallback, startGeneration, addRecentSubject, completeGeneration, clearCheckpoint, setError, navigate]);
 
-  // Show diagnostic modal after all passes complete
-  useEffect(() => {
-    if (
-      passes[1] === 'complete' && 
-      passes[2] === 'complete' && 
-      passes[3] === 'complete' && 
-      passes[4] === 'complete' && 
-      pass1Data?.concepts?.length && 
-      !diagnosticShownRef.current && 
-      !diagnosticCompleted &&
-      !diagnosticResult
-    ) {
-      diagnosticShownRef.current = true;
-      clearDiagnosticResult();
-      setShowDiagnostic(true);
-    }
-  }, [passes, pass1Data, diagnosticCompleted, diagnosticResult, clearDiagnosticResult]);
+  // Check if we can preview early (after Pass 2 completes with concepts)
+  const canPreviewEarly = passes[1] === 'complete' && passes[2] === 'complete' && pass1Data?.concepts?.length;
 
   useEffect(() => {
     if (!subject || !bedrockConfig || hasStartedRef.current) return;
@@ -206,25 +189,36 @@ export default function Generate() {
     };
   }, [subject, bedrockConfig, canResumeFromCheckpoint, startGenerationProcess, abortController]);
 
-  // Handlers for diagnostic flow
-  const handleDiagnosticComplete = () => {
-    setShowDiagnostic(false);
-    setShowDiagnosticResults(true);
+  // Warn user before leaving during active generation
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isGenerating) {
+        e.preventDefault();
+        // Most browsers ignore custom messages, but we set one anyway
+        e.returnValue = 'Generation in progress. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isGenerating]);
+
+  // Handle cancel with confirmation
+  const handleCancelClick = () => {
+    if (isGenerating && passes[1] === 'complete') {
+      // If we have some progress, confirm before canceling
+      setShowConfirmCancel(true);
+    } else {
+      abortController?.abort();
+      navigate('/');
+    }
   };
 
-  const handleDiagnosticSkip = () => {
-    setShowDiagnostic(false);
-    setDiagnosticCompleted(true);
-  };
-
-  const handleDiagnosticResultsContinue = () => {
-    setShowDiagnosticResults(false);
-    setDiagnosticCompleted(true);
-  };
-
-  const handleManualDiagnosticTrigger = () => {
-    clearDiagnosticResult();
-    setShowDiagnostic(true);
+  const handleConfirmCancel = () => {
+    setShowConfirmCancel(false);
+    abortController?.abort();
+    navigate('/');
   };
 
   const getStatusIcon = (status: string) => {
@@ -476,46 +470,49 @@ export default function Generate() {
           )}
 
           <div className={styles.actions}>
-            {passes[1] === 'complete' && 
-             passes[2] === 'complete' && 
-             passes[3] === 'complete' && 
-             passes[4] === 'complete' && 
-             !diagnosticCompleted && 
-             !showDiagnostic && 
-             !showDiagnosticResults && (
+            {/* Preview Now button - available after Pass 2 completes */}
+            {canPreviewEarly && isGenerating && (
               <button
-                onClick={handleManualDiagnosticTrigger}
-                className={styles.diagnosticButton}
+                onClick={() => {
+                  // Save current partial progress and navigate to results
+                  const partialId = `${Date.now()}-partial`;
+                  resultIdRef.current = partialId;
+                  navigate(`/results/${partialId}`);
+                }}
+                className={styles.previewButton}
+                title="View current progress (generation continues in background)"
               >
-                <Zap size={18} />
-                Take Quick Diagnostic
+                <Eye size={18} />
+                Preview Now
               </button>
             )}
             <button
-              onClick={() => {
-                abortController?.abort();
-                navigate('/');
-              }}
+              onClick={handleCancelClick}
               className={styles.cancelButton}
             >
               Cancel
             </button>
           </div>
         </div>
+
+        {/* Confirm Cancel Dialog */}
+        {showConfirmCancel && (
+          <div className={styles.confirmOverlay}>
+            <div className={styles.confirmDialog}>
+              <h3>Cancel Generation?</h3>
+              <p>You have partial progress. Are you sure you want to cancel?</p>
+              <div className={styles.confirmActions}>
+                <button onClick={() => setShowConfirmCancel(false)} className={styles.secondaryButton}>
+                  Continue Generation
+                </button>
+                <button onClick={handleConfirmCancel} className={styles.cancelConfirmButton}>
+                  Yes, Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Diagnostic Modals - shown after Pass 1 completes with concepts */}
-      {showDiagnostic && subject && (
-        <DiagnosticModal
-          subject={decodeURIComponent(subject)}
-          onComplete={handleDiagnosticComplete}
-          onSkip={handleDiagnosticSkip}
-        />
-      )}
-
-      {showDiagnosticResults && diagnosticResult && (
-        <DiagnosticResults onContinue={handleDiagnosticResultsContinue} />
-      )}
     </div>
   );
 }

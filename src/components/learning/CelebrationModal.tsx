@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Share2, Check } from 'lucide-react';
 import { LEARNING_CONCEPTS } from '@/constants/learning-content';
 import { CONFETTI_COLORS } from '@/constants/theme-colors';
@@ -36,6 +36,29 @@ const CONFETTI_PIECES = generateConfetti();
 
 export default function CelebrationModal({ data, onContinue, onTakeBreak }: CelebrationModalProps) {
   const confettiPieces = CONFETTI_PIECES;
+  const [autoDismissCountdown, setAutoDismissCountdown] = useState(4);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Auto-dismiss after countdown (pause on hover)
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return;
+
+    timerRef.current = setInterval(() => {
+      setAutoDismissCountdown(prev => {
+        if (prev <= 1) {
+          onContinue();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isPaused, onContinue]);
 
   const completedConceptNames = useMemo(() => {
     if (!data.conceptsCompleted) return [];
@@ -76,7 +99,11 @@ export default function CelebrationModal({ data, onContinue, onTakeBreak }: Cele
   };
 
   return (
-    <div className={styles.overlay}>
+    <div 
+      className={styles.overlay}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div className={styles.modal}>
         <div className={styles.confettiContainer}>
           {confettiPieces.map(piece => (
@@ -133,7 +160,7 @@ export default function CelebrationModal({ data, onContinue, onTakeBreak }: Cele
             Take a break
           </button>
           <button className={styles.continueButton} onClick={onContinue}>
-            {data.type === 'course' ? 'View Certificate' : 'Continue to next stage'}
+            {data.type === 'course' ? 'View Certificate' : `Continue${!isPaused && autoDismissCountdown > 0 ? ` (${autoDismissCountdown}s)` : ''}`}
           </button>
         </div>
 
@@ -141,6 +168,13 @@ export default function CelebrationModal({ data, onContinue, onTakeBreak }: Cele
           {shared ? <Check size={16} /> : <Share2 size={16} />}
           {shared ? 'Copied!' : 'Share achievement'}
         </button>
+
+        {/* Auto-dismiss indicator */}
+        {!isPaused && autoDismissCountdown > 0 && (
+          <div className={styles.autoDismissHint}>
+            Continuing automatically... (hover to pause)
+          </div>
+        )}
       </div>
     </div>
   );

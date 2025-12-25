@@ -1,4 +1,5 @@
-import { X, Brain, Eye, CheckCircle } from 'lucide-react';
+import { X, Brain, Eye, CheckCircle, List } from 'lucide-react';
+import { usePersonalizationStore } from '@/store/personalization-store';
 import styles from './PlacementGuide.module.css';
 
 interface PlacementGuideProps {
@@ -7,6 +8,8 @@ interface PlacementGuideProps {
 }
 
 export function PlacementGuide({ isOpen, onClose }: PlacementGuideProps) {
+    const aphantasiaMode = usePersonalizationStore(s => s.aphantasiaMode);
+    
     if (!isOpen) return null;
 
     return (
@@ -38,24 +41,45 @@ export function PlacementGuide({ isOpen, onClose }: PlacementGuideProps) {
                     <div className={styles.step}>
                         <span className={styles.stepNumber}>2</span>
                         <div className={styles.stepContent}>
-                            <h3>Place Your Concepts</h3>
+                            <h3>{aphantasiaMode ? 'Connect Your Concepts' : 'Place Your Concepts'}</h3>
                             <p>
-                                For each concept in the Placement Map, <strong>visualize it at the designated spot</strong>.
-                                Make it vivid, exaggerated, and interactive:
+                                {aphantasiaMode 
+                                    ? 'For each concept, create a logical connection to its location. Think of it as a story or sequence:'
+                                    : <>For each concept in the Placement Map, <strong>visualize it at the designated spot</strong>. Make it vivid, exaggerated, and interactive:</>
+                                }
                             </p>
                             <ul className={styles.examples}>
-                                <li>
-                                    <Eye size={14} />
-                                    <span>"Security" blocking the entrance like a bouncer</span>
-                                </li>
-                                <li>
-                                    <Eye size={14} />
-                                    <span>"Database" as a giant filing cabinet on the roof</span>
-                                </li>
-                                <li>
-                                    <Eye size={14} />
-                                    <span>"API" as a phone connecting two buildings</span>
-                                </li>
+                                {aphantasiaMode ? (
+                                    <>
+                                        <li>
+                                            <List size={14} />
+                                            <span>"Security" → Entrance: "First, I check security at the door"</span>
+                                        </li>
+                                        <li>
+                                            <List size={14} />
+                                            <span>"Database" → Roof: "Data rises to the top for storage"</span>
+                                        </li>
+                                        <li>
+                                            <List size={14} />
+                                            <span>"API" → Side entrance: "APIs are the side door for connections"</span>
+                                        </li>
+                                    </>
+                                ) : (
+                                    <>
+                                        <li>
+                                            <Eye size={14} />
+                                            <span>"Security" blocking the entrance like a bouncer</span>
+                                        </li>
+                                        <li>
+                                            <Eye size={14} />
+                                            <span>"Database" as a giant filing cabinet on the roof</span>
+                                        </li>
+                                        <li>
+                                            <Eye size={14} />
+                                            <span>"API" as a phone connecting two buildings</span>
+                                        </li>
+                                    </>
+                                )}
                             </ul>
                         </div>
                     </div>
@@ -63,10 +87,12 @@ export function PlacementGuide({ isOpen, onClose }: PlacementGuideProps) {
                     <div className={styles.step}>
                         <span className={styles.stepNumber}>3</span>
                         <div className={styles.stepContent}>
-                            <h3>Walk Through Mentally</h3>
+                            <h3>{aphantasiaMode ? 'Trace the Sequence' : 'Walk Through Mentally'}</h3>
                             <p>
-                                Close your eyes and walk through the location in your mind.
-                                See each concept at its spot. The more you practice, the stronger the memory.
+                                {aphantasiaMode 
+                                    ? 'Review the location order: Entrance → Left Wing → Right Wing → Roof. Narrate the sequence: "First I handle X, then Y, then Z." The spatial order creates a memorable story.'
+                                    : 'Close your eyes and walk through the location in your mind. See each concept at its spot. The more you practice, the stronger the memory.'
+                                }
                             </p>
                         </div>
                     </div>

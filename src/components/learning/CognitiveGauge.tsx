@@ -5,7 +5,8 @@
  * understand their mental state and take breaks when needed.
  */
 
-import { Brain, Zap, AlertTriangle, Battery } from 'lucide-react';
+import { useState } from 'react';
+import { Brain, Zap, AlertTriangle, Battery, HelpCircle } from 'lucide-react';
 import { useLearningStore } from '@/store/learning-store';
 import styles from './CognitiveGauge.module.css';
 
@@ -16,6 +17,7 @@ interface CognitiveGaugeProps {
 
 export default function CognitiveGauge({ compact = false }: CognitiveGaugeProps) {
     const { cognitiveMetrics, getCognitiveLoadLevel } = useLearningStore();
+    const [showTooltip, setShowTooltip] = useState(false);
 
     const loadLevel = getCognitiveLoadLevel();
     const loadPercent = cognitiveMetrics.currentLoad;
@@ -49,10 +51,15 @@ export default function CognitiveGauge({ compact = false }: CognitiveGaugeProps)
     };
 
     return (
-        <div className={`${styles.container} ${compact ? styles.compact : ''}`}>
+        <div 
+            className={`${styles.container} ${compact ? styles.compact : ''}`}
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+        >
             <div className={styles.label}>
                 <Brain className={styles.icon} />
                 <span>Mental Load</span>
+                <HelpCircle size={12} className={styles.helpIcon} />
             </div>
 
             <div className={styles.gaugeBar}>
@@ -66,6 +73,24 @@ export default function CognitiveGauge({ compact = false }: CognitiveGaugeProps)
                 {getIcon()}
                 {getStatusMessage()}
             </div>
+
+            {/* Tooltip explaining cognitive load */}
+            {showTooltip && (
+                <div className={styles.tooltip}>
+                    <strong>What is Mental Load?</strong>
+                    <p>
+                        Based on Cognitive Load Theory, your brain has limited 
+                        working memory. This gauge tracks your session length 
+                        and interaction patterns to suggest optimal break times.
+                    </p>
+                    <ul>
+                        <li><strong>Fresh:</strong> Ideal for challenging concepts</li>
+                        <li><strong>Focused:</strong> Peak learning zone</li>
+                        <li><strong>Warming:</strong> Consider a short break</li>
+                        <li><strong>Rest needed:</strong> Take a 5-min break</li>
+                    </ul>
+                </div>
+            )}
         </div>
     );
 }

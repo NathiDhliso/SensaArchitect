@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, MapPin, Lightbulb } from 'lucide-react';
+import { ChevronDown, MapPin, Lightbulb, ArrowRight } from 'lucide-react';
+import { usePersonalizationStore } from '@/store/personalization-store';
 import type { PlacedConcept } from '@/lib/types/palace';
 import type { PlacementSlot } from '@/lib/types/palace';
 import styles from './LifecycleCard.module.css';
@@ -19,6 +20,7 @@ export default function LifecycleCard({ concept, slot, lifecycleLabels }: Lifecy
     const phase2Label = lifecycleLabels?.phase2 || 'PHASE 2';
     const phase3Label = lifecycleLabels?.phase3 || 'PHASE 3';
     const [expanded, setExpanded] = useState(false);
+    const aphantasiaMode = usePersonalizationStore(s => s.aphantasiaMode);
 
     const getMasteryClass = () => {
         if (concept.mastery >= 0.8) return styles.masteryDotHigh;
@@ -96,11 +98,23 @@ export default function LifecycleCard({ concept, slot, lifecycleLabels }: Lifecy
                         </div>
                     )}
 
-                    {/* Visual Anchor */}
+                    {/* Memory Anchor - Adapts based on aphantasia mode */}
                     {slot?.visualAnchor && (
                         <div className={styles.visualAnchor}>
-                            <Lightbulb size={12} />
-                            <span>Visual anchor: {slot.visualAnchor}</span>
+                            {aphantasiaMode ? (
+                                <>
+                                    <ArrowRight size={12} />
+                                    <span>
+                                        Location sequence: {slot.location} → {concept.conceptName} 
+                                        {' '}(remember: "{slot.visualAnchor}" area)
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <Lightbulb size={12} />
+                                    <span>Visual anchor: {slot.visualAnchor}</span>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
