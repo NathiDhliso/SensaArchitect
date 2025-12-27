@@ -17,15 +17,15 @@ import { formatTime, getTimerUrgency } from '@/lib/utils';
 import type { SprintQuestion, SprintAnswer } from '@/lib/types/sprint';
 import styles from './Sprint.module.css';
 
-type SprintPhase = 'countdown' | 'loading' | 'active' | 'feedback' | 'complete';
+type SprintPhase = 'loading' | 'countdown' | 'active' | 'feedback' | 'complete';
 
 export default function Sprint() {
     const navigate = useNavigate();
     const { bedrockConfig } = useGenerationStore();
     const { getConcepts, customContent, setSprintResult } = useLearningStore();
 
-    // Phase state
-    const [phase, setPhase] = useState<SprintPhase>('countdown');
+    // Phase state - start with 'loading' instead of 'countdown'
+    const [phase, setPhase] = useState<SprintPhase>('loading');
     const [countdown, setCountdown] = useState(3);
 
     // Quiz state
@@ -46,9 +46,9 @@ export default function Sprint() {
     const concepts = getConcepts();
     const subject = customContent?.metadata?.domain || 'General Knowledge';
 
-    // Auto-start countdown and then load questions
+    // Generate questions immediately on mount (loading phase)
     useEffect(() => {
-        if (phase !== 'countdown') return;
+        if (phase !== 'loading') return;
 
         // Check prerequisites first
         if (!bedrockConfig) {
@@ -60,26 +60,31 @@ export default function Sprint() {
             return;
         }
 
-        // Countdown timer
+        // Start generating questions immediately
+        generateSprintQuestions(concepts, subject, bedrockConfig)
+            .then(generatedQuestions => {
+                setQuestions(generatedQuestions);
+                // When ready, transition to countdown
+                setPhase('countdown');
+            })
+            .catch(err => {
+                setError(err instanceof Error ? err.message : 'Failed to generate questions');
+            });
+    }, [phase, bedrockConfig, concepts, subject]);
+
+    // Countdown runs only after questions are ready
+    useEffect(() => {
+        if (phase !== 'countdown') return;
+
         if (countdown > 0) {
             const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
             return () => clearTimeout(timer);
         }
 
-        // Start loading questions when countdown hits 0
-        setPhase('loading');
-        generateSprintQuestions(concepts, subject, bedrockConfig)
-            .then(generatedQuestions => {
-                setQuestions(generatedQuestions);
-                setPhase('active');
-                questionStartTime.current = Date.now();
-            })
-            .catch(err => {
-                setError(err instanceof Error ? err.message : 'Failed to generate questions');
-                setPhase('countdown');
-                setCountdown(3);
-            });
-    }, [phase, countdown, bedrockConfig, concepts, subject]);
+        // Countdown finished - start the quiz immediately!
+        setPhase('active');
+        questionStartTime.current = Date.now();
+    }, [phase, countdown]);
 
     // Handle answer
     const handleAnswer = useCallback((userAnswer: boolean | null) => {
@@ -244,8 +249,8 @@ export default function Sprint() {
                         </motion.div>
                     )}
 
-                    {/* Error State */}
-                    {phase === 'countdown' && error && (
+                    {/* Error State - shows during loading if there's an error */}
+                    {phase === 'loading' && error && (
                         <motion.div
                             key="error"
                             className={styles.introScreen}
@@ -266,8 +271,8 @@ export default function Sprint() {
                         </motion.div>
                     )}
 
-                    {/* Loading State */}
-                    {phase === 'loading' && (
+                    {/* Loading State - questions being generated */}
+                    {phase === 'loading' && !error && (
                         <motion.div
                             key="loading"
                             className={styles.loadingContainer}
@@ -276,7 +281,10 @@ export default function Sprint() {
                             exit={{ opacity: 0 }}
                         >
                             <div className={styles.spinner} />
-                            <p className={styles.loadingText}>Generating sprint questions...</p>
+                            <p className={styles.loadingText}>Preparing your sprint...</p>
+                            <p className={styles.loadingSubtext}>
+                                Generating {concepts.length > 0 ? `${Math.min(15, concepts.length * 3)} questions` : 'questions'}
+                            </p>
                         </motion.div>
                     )}
 

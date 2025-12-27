@@ -95,11 +95,6 @@
   color: var(--color-primary-amethyst);
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 .availableIcon {
   color: var(--color-success);
 }

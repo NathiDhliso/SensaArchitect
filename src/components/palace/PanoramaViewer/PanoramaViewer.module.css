@@ -43,10 +43,6 @@
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
 .markerOverlay {
     position: absolute;
     inset: 0;
@@ -150,8 +146,15 @@
 }
 
 @keyframes editPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
-    50% { box-shadow: 0 0 0 8px rgba(139, 92, 246, 0); }
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(139, 92, 246, 0);
+    }
 }
 
 .editModeIndicator {

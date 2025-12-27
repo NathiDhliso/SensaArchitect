@@ -86,7 +86,7 @@
 }
 
 /* Allow Google Maps to handle its own touch/scroll events */
-.streetViewContainer > div {
+.streetViewContainer>div {
   touch-action: auto !important;
 }
 
@@ -114,10 +114,6 @@
   border-top-color: var(--color-primary-amethyst);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .instructions {
@@ -239,8 +235,17 @@
 }
 
 @keyframes pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 0.8;
+  }
 }
 
 .placementsSidebar {

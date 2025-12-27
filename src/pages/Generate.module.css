@@ -172,16 +172,6 @@
   color: var(--color-border-emphasis);
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .passText {
   font-size: 1.125rem;
   color: var(--color-text-dark);
@@ -513,18 +503,6 @@
   background: var(--color-accent);
   border-radius: 50%;
   animation: blink 1s ease-in-out infinite;
-}
-
-@keyframes blink {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.3;
-  }
 }
 
 .conceptsGrid {

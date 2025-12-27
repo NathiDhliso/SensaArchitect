@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./styles/animations.css";
 
 /* ============================================
    SensaPBL Design System - Single Source of Truth
@@ -16,7 +17,7 @@
   --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-body: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-  
+
   /* Font Weights */
   --font-weight-light: 300;
   --font-weight-normal: 400;
@@ -24,31 +25,40 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --font-weight-extrabold: 800;
-  
+
   /* Font Sizes - Fluid Scale */
-  --font-size-xs: 0.75rem;    /* 12px - captions, badges */
-  --font-size-sm: 0.875rem;   /* 14px - secondary text */
-  --font-size-base: 1rem;     /* 16px - body text */
-  --font-size-lg: 1.125rem;   /* 18px - lead text */
-  --font-size-xl: 1.25rem;    /* 20px - small headings */
-  --font-size-2xl: 1.5rem;    /* 24px - section headings */
-  --font-size-3xl: 1.875rem;  /* 30px - page headings */
-  --font-size-4xl: 2.25rem;   /* 36px - hero headings */
-  --font-size-5xl: 3rem;      /* 48px - display text */
-  
+  --font-size-xs: 0.75rem;
+  /* 12px - captions, badges */
+  --font-size-sm: 0.875rem;
+  /* 14px - secondary text */
+  --font-size-base: 1rem;
+  /* 16px - body text */
+  --font-size-lg: 1.125rem;
+  /* 18px - lead text */
+  --font-size-xl: 1.25rem;
+  /* 20px - small headings */
+  --font-size-2xl: 1.5rem;
+  /* 24px - section headings */
+  --font-size-3xl: 1.875rem;
+  /* 30px - page headings */
+  --font-size-4xl: 2.25rem;
+  /* 36px - hero headings */
+  --font-size-5xl: 3rem;
+  /* 48px - display text */
+
   /* Line Heights */
   --line-height-tight: 1.25;
   --line-height-snug: 1.375;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.625;
   --line-height-loose: 2;
-  
+
   /* Letter Spacing */
   --letter-spacing-tight: -0.025em;
   --letter-spacing-normal: 0;
   --letter-spacing-wide: 0.025em;
   --letter-spacing-wider: 0.05em;
-  
+
   /* Apply defaults */
   font-family: var(--font-body);
   line-height: var(--line-height-normal);
@@ -380,12 +390,6 @@ body::before {
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* ============================================
    SENSA TYPOGRAPHY UTILITY CLASSES
    ============================================ */
@@ -406,7 +410,12 @@ body::before {
 }
 
 /* Heading Styles - Use display font with tighter tracking */
-h1, h2, h3, h4, h5, h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 .heading {
   font-family: var(--font-display);
   font-weight: var(--font-weight-bold);
@@ -429,7 +438,9 @@ h1, h2, h3, h4, h5, h6,
 }
 
 /* Code Blocks */
-code, pre, .code {
+code,
+pre,
+.code {
   font-family: var(--font-mono);
   font-size: 0.9em;
 }

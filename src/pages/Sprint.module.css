@@ -57,18 +57,6 @@
     animation: pulse 0.5s ease-in-out infinite;
 }
 
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.6;
-    }
-}
-
 .progressDisplay {
     font-size: 0.9375rem;
     color: var(--color-text-light);
@@ -236,16 +224,6 @@
     animation: fadeIn 0.2s ease-out;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
 .feedbackCard {
     background: var(--color-bg-primary);
     padding: 2rem 3rem;
@@ -253,18 +231,6 @@
     text-align: center;
     box-shadow: var(--shadow-xl);
     animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
 }
 
 .feedbackIcon {
@@ -313,15 +279,15 @@
     margin-bottom: 1rem;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
 .loadingText {
     font-size: 1rem;
     color: var(--color-text-light);
+}
+
+.loadingSubtext {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-top: 0.25rem;
 }
 
 /* Countdown screen */

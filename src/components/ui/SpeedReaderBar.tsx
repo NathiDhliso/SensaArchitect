@@ -12,6 +12,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Clock, Zap, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useFocusSessionStore } from '@/store/focus-session-store';
 import { useLearningStore } from '@/store/learning-store';
+import { formatTime } from '@/lib/utils';
 import styles from './SpeedReaderBar.module.css';
 
 interface SpeedReaderBarProps {
@@ -118,13 +119,6 @@ export default function SpeedReaderBar({
     };
 
     const paceStatus = getPaceStatus();
-
-    // Format time display
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
 
     // Get status message
     const getStatusMessage = () => {
